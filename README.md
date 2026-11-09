@@ -22,7 +22,7 @@ Urządzenia same sprawdzają zmiany co 15 sekund – wpłata zrobiona na telefon
 
 ## Uruchomienie wspólnej bazy (jednorazowo)
 1. **Baza:** w Supabase otwórz projekt → **SQL Editor** → *New query* → wklej całą zawartość `supabase/schema.sql` → **Run**.
-2. **Klucz:** **Project Settings → API Keys** → skopiuj *Publishable key* (`sb_publishable_…`) i wklej go w `index.html` w miejsce `WKLEJ_TUTAJ_PUBLISHABLE_KEY`. Ten klucz jest publiczny – tabele są zamknięte, a wszystkie operacje idą przez funkcje, które same sprawdzają uprawnienia.
+2. **Klucz:** **Project Settings → API Keys** → skopiuj *Publishable key* (`sb_publishable_…`) i wklej go w `index.html` w stałą `SUPABASE_KEY` (już wpisany). Ten klucz jest publiczny – tabele są zamknięte, a wszystkie operacje idą przez funkcje, które same sprawdzają uprawnienia.
 3. **Adres strony:** **Authentication → URL Configuration** → w *Site URL* wpisz adres, pod którym działa aplikacja (np. `https://pgaszczyk-ctrl.github.io/rodzinkobank/`) i dodaj go też do *Redirect URLs*. Dzięki temu linki z e-maili (potwierdzenie konta, reset hasła) wrócą do aplikacji.
 4. Opcjonalnie: **Authentication → Sign In / Providers → Email** – wyłącz *Confirm email*, jeśli nie chcesz potwierdzać adresu przy zakładaniu konta.
 
