@@ -120,7 +120,7 @@ export function poseAt(g, now, still = false) {
     legL: 0, legR: 0, liftL: 0, liftR: 0,
     armL: 0.32, armR: 0.32, raiseL: 0, raiseR: 0,
     bob: 0, tilt: 0, sx: 1, sy: 1, faceShift: 0,
-    face: 'usmiech', crumb: g.carry, bubbles: false, pack: g.pack, lying: 0,
+    face: 'usmiech', crumb: g.carry, bubbles: false, pack: g.pack, sitting: 0,
   };
 
   // mruganie co kilka sekund
@@ -133,13 +133,17 @@ export function poseAt(g, now, still = false) {
   const blinking = now < g.blinkUntil;
 
   if (g.action === 'sleep') {
-    p.lying = 1;
+    // drzemka na siedząco: nóżki rozłożone, rączki oparte, głowa lekko się kiwa
+    p.sitting = 1;
     p.face = 'spiaca';
     p.bubbles = true;
     const breath = still ? 0 : Math.sin(t * 1.6);
-    p.sy = 0.56 + breath * 0.015;
-    p.sx = 1.08 - breath * 0.01;
-    p.armL = p.armR = 0.9;
+    const nod = still ? 0 : Math.sin(t * 0.8);
+    p.sy = 1 + breath * 0.012;
+    p.tilt = 0.14 + nod * 0.05;
+    p.legL = p.legR = 1.2;
+    p.armL = 0.6 + breath * 0.03;
+    p.armR = 0.5 + breath * 0.03;
     return p;
   }
 
@@ -221,35 +225,18 @@ export function drawGroszak(ctx, g, now, scale = 1, still = false) {
   // cień
   ctx.fillStyle = 'rgba(70, 40, 20, 0.18)';
   ctx.beginPath();
-  ctx.ellipse(0, 0, p.lying ? 0.62 : 0.4, p.lying ? 0.13 : 0.09, 0, 0, TAU);
+  ctx.ellipse(0, 0, p.sitting ? 0.52 : 0.4, p.sitting ? 0.11 : 0.09, 0, 0, TAU);
   ctx.fill();
 
-  if (p.lying) {
-    // śpiący: moneta leży (spłaszczona), kończyny schowane
-    const cy = -0.5 * p.sy;
-    ctx.save();
-    ctx.translate(0, cy);
-    ctx.scale(p.sx, p.sy);
-    drawPart(ctx, P.korpus, -0.5, -0.5, 1, 1, s);
-    ctx.restore();
-    const f = m.faces[p.face];
-    const fw = m.faceOn.szerokosc * 0.9;
-    const fh = fw * f.h / f.w;
-    drawPart(ctx, f, -fw / 2, cy - fh * 0.38, fw, fh * 0.75, s);
-    const t = now / 1000 + g.seed;
-    const bz = RIG.bubbles.size;
-    const rise = still ? 0 : (t * 0.35) % 1;
-    ctx.globalAlpha = still ? 0.9 : 0.95 - rise * 0.5;
-    drawPart(ctx, P.babelki, RIG.bubbles.x - bz / 2, cy - 0.15 - bz - rise * 0.25,
-      bz, bz * P.babelki.h / P.babelki.w, s);
-    ctx.globalAlpha = 1;
-    ctx.restore();
-    return;
+  if (p.sitting) {
+    // siedzi: dół korpusu na ziemi, przechył wokół punktu podparcia
+    ctx.rotate(p.tilt);
+    ctx.translate(0, -0.52);
+  } else {
+    ctx.translate(0, -footBottom);
+    ctx.translate(0, p.bob);
+    ctx.rotate(p.tilt);
   }
-
-  ctx.translate(0, -footBottom);
-  ctx.translate(0, p.bob);
-  ctx.rotate(p.tilt);
 
   // plecak za korpusem, wystaje z boku przeciwnego do kierunku marszu
   if (p.pack) {
@@ -262,7 +249,8 @@ export function drawGroszak(ctx, g, now, scale = 1, still = false) {
   }
 
   // nóżki (pod korpusem)
-  const { w: lw, len: ll, hip } = RIG.leg;
+  const { w: lw, len: ll } = RIG.leg;
+  const hip = p.sitting ? { x: 0.2, y: 0.40 } : RIG.leg.hip;
   drawLimb(ctx, P.nozka, -1, hip.x, hip.y, p.legL, lw, ll, s, p.liftL);
   drawLimb(ctx, P.nozka, 1, hip.x, hip.y, p.legR, lw, ll, s, p.liftR);
 
@@ -276,7 +264,9 @@ export function drawGroszak(ctx, g, now, scale = 1, still = false) {
 
   // korpus i buzia
   ctx.save();
+  ctx.translate(0, 0.5);           // oddech skaluje korpus od dołu
   ctx.scale(p.sx, p.sy);
+  ctx.translate(0, -0.5);
   drawPart(ctx, P.korpus, -0.5, -0.5, 1, 1, s);
   ctx.restore();
   const f = m.faces[p.face];
@@ -288,6 +278,17 @@ export function drawGroszak(ctx, g, now, scale = 1, still = false) {
   if (p.crumb) {
     const cs = RIG.crumb.size;
     drawPart(ctx, P.okruszek, -cs / 2, RIG.crumb.y - cs / 2, cs, cs * P.okruszek.h / P.okruszek.w, s);
+  }
+
+  // bąbelki snu unoszą się nad głową
+  if (p.bubbles) {
+    const t = now / 1000 + g.seed;
+    const bz = RIG.bubbles.size;
+    const rise = still ? 0 : (t * 0.35) % 1;
+    ctx.globalAlpha = still ? 0.9 : Math.min(1, rise * 5) * (1 - rise * 0.6);
+    drawPart(ctx, P.babelki, RIG.bubbles.x - bz / 2, RIG.bubbles.y - bz / 2 - rise * 0.3,
+      bz, bz * P.babelki.h / P.babelki.w, s);
+    ctx.globalAlpha = 1;
   }
   ctx.restore();
 }

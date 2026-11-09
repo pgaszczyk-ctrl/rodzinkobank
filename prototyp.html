@@ -47,6 +47,7 @@
 
 <script type="module">
 import { loadMaterial, createGroszak, drawGroszak, hitTest, wave } from './src/groszaki/kukielka.js';
+import { prepareOccluders, drawGroszakiWithDepth } from './src/groszaki/przeslony.js';
 import { seasonOfMonth } from './src/groszaki/kalendarz.js';
 
 const BASE = './assets/groszaki/';
@@ -58,6 +59,7 @@ const follow = params.has('sledz');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const manifest = await (await fetch(BASE + 'czesci.json')).json();
+const occluders = prepareOccluders((await (await fetch(BASE + 'przeslony.json')).json()).przeslony);
 const copper = await loadMaterial(BASE, manifest, 'miedziany');
 
 const maps = {};
@@ -168,10 +170,11 @@ wrap.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 // ---------------------------------------------------------------- scenariusz jednego Groszaka
-// Trasa (piksele mapy): piekarnia → rynek → schody → drzwi Skarbca.
-const BAKERY = [{ x: 712, y: 598 }];
+// Trasa (piksele mapy): piekarnia → przed sklepikiem → za niebieskim straganem → schody → drzwi Skarbca.
+const BAKERY = [{ x: 728, y: 606 }];
 const TO_VAULT = [
-  { x: 712, y: 598 }, { x: 760, y: 650 }, { x: 860, y: 668 }, { x: 950, y: 650 }, { x: 1000, y: 632 },
+  { x: 728, y: 606 }, { x: 772, y: 618 }, { x: 800, y: 638 }, { x: 850, y: 648 }, { x: 878, y: 655 },
+  { x: 910, y: 647 }, { x: 955, y: 643 }, { x: 990, y: 638 }, { x: 1000, y: 632 },
   { x: 1012, y: 600, stairs: true }, { x: 1048, y: 556, stairs: true }, { x: 1084, y: 508, stairs: true },
   { x: 1100, y: 462, stairs: true }, { x: 1088, y: 418, stairs: true }, { x: 1060, y: 384, stairs: true },
   { x: 1036, y: 346, stairs: true }, { x: 1022, y: 310, stairs: true }, { x: 1020, y: 298 },
@@ -220,11 +223,8 @@ function updateWalker(now, dt) {
   if (dist <= stepLen) { g.x = target.x; g.y = target.y; seg++; }
   else { g.x += dx / dist * stepLen; g.y += dy / dist * stepLen; }
   // dalej od widza = trochę mniejszy (perspektywa mapy)
-  g.size = 22 * (0.82 + 0.18 * (g.y - 290) / (668 - 290));
+  g.size = 22 * (0.82 + 0.18 * (g.y - 290) / (660 - 290));
 }
-
-// drugi Groszak śpi na schodach (stan pustego Skarbca do porównania)
-const sleeper = createGroszak(copper, { size: 20, x: 965, y: 640, action: 'sleep' });
 
 const bubble = document.getElementById('bubble');
 function tap(cx, cy) {
@@ -234,12 +234,7 @@ function tap(cx, cy) {
     wave(g, now);
     say.text = g.carry ? 'Niosę okruszek do Skarbca!' : 'Cześć! Pracuję na rynku';
     say.until = now + 2200;
-  } else if (hitTest(sleeper, p.x, p.y)) {
-    say.text = 'Chrr… Pierwsza wpłata obudzi Groszaki';
-    say.until = now + 2600; say.who = sleeper;
-    return;
   }
-  say.who = g;
 }
 
 // ---------------------------------------------------------------- pętla
@@ -248,6 +243,7 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   if (!still) updateWalker(now, dt);
+  else if (step < 0) { Object.assign(g, BAKERY[0]); step = 0; }
   if (follow && !pointers.size) {
     // kamera podąża za Groszakiem (do nagrań i podglądu z bliska)
     cam.z = Math.max(cam.z, cssW / 300);
@@ -255,24 +251,29 @@ function frame(now) {
     cam.y += (g.y - 20 - cam.y) * Math.min(1, dt * 3);
     clampCam();
   }
-  else if (step < 0) { g.x = 860; g.y = 668; }
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.translate(cssW / 2, cssH / 2);
   ctx.scale(cam.z, cam.z);
   ctx.translate(-cam.x, -cam.y);
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(mapImg, 0, 0, MAP_W, MAP_H);
+  const layers = [{ img: mapImg, alpha: 1 }];
   if (prevMap) {
     const k = (now - fadeStart) / 1500;
     if (k >= 1) prevMap = null;
-    else { ctx.globalAlpha = 1 - k; ctx.drawImage(prevMap, 0, 0, MAP_W, MAP_H); ctx.globalAlpha = 1; }
+    else layers.push({ img: prevMap, alpha: 1 - k });
   }
+  for (const l of layers) { ctx.globalAlpha = l.alpha; ctx.drawImage(l.img, 0, 0, MAP_W, MAP_H); }
+  ctx.globalAlpha = 1;
   const zs = cam.z * dpr;
-  drawGroszak(ctx, sleeper, now, zs, still);
-  drawGroszak(ctx, g, now, zs, still);
+  drawGroszakiWithDepth(ctx, layers, [g], occluders, now, zs, still);
+  if (params.has('przeslony')) {
+    // podgląd obrysów przesłon
+    ctx.lineWidth = 1.5 / cam.z; ctx.strokeStyle = 'rgba(0,90,255,.9)';
+    for (const o of occluders) { ctx.stroke(o.path); }
+  }
 
-  const who = say.who || g;
+  const who = g;
   if (now < say.until) {
     bubble.textContent = say.text;
     bubble.style.left = ((who.x - cam.x) * cam.z + cssW / 2) + 'px';
