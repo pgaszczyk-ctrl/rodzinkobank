@@ -4,7 +4,7 @@ import { derive, upcomingChests, chestsBetween, allocateWithdrawal, forecastReac
 import { DEFAULT_TZ, dayKey } from './calendar.js';
 import { parseZl, floorToGrosz, MICRO_PER_GROSZ } from './money.js';
 import { t, setLang, getLang, detectLang, LOCALES, hasKey, money, moneyParts, moneyMicro, fmtDate, duration } from './i18n.js';
-import { minerPortrait, chestSvg, chestIcon, logoMark, dreamImage } from './art.js';
+import { minerPortrait, chestIcon, logoMark, dreamImage, art } from './art.js';
 import { buildScene } from './scene.js';
 import { LocalBackend, CloudBackend, AppError, normalizeOp, newId, DEFAULT_DREAMS } from './backend.js';
 import { initParentZone } from './parent.js';
@@ -457,8 +457,8 @@ function showCelebration(c, away) {
     const a = (i / 12) * Math.PI * 2;
     return `<span class="burst-coin" style="--bx:${Math.round(Math.cos(a) * 110)}px;--by:${Math.round(Math.sin(a) * 80 - 30)}px;animation-delay:${1 + i * 0.03}s"></span>`;
   }).join('');
-  $('celArt').innerHTML = `<svg viewBox="-80 -90 160 110" class="w-full h-full celebrate-open"><g class="celebrate-rays">${Array.from({ length: 10 }, (_, i) => `<path d="M0 -30 L${Math.cos(i * 0.628) * 90} ${-30 + Math.sin(i * 0.628) * 90} L${Math.cos(i * 0.628 + 0.2) * 90} ${-30 + Math.sin(i * 0.628 + 0.2) * 90}Z" fill="#fde68a" opacity=".5"/>`).join('')}</g>
-    <g class="celebrate-chest" transform="scale(1.5)">${chestSvg(skin)}</g></svg>${coins}`;
+  $('celArt').innerHTML = `<svg viewBox="-27 -40 160 140" class="w-full h-full celebrate-open" style="overflow:visible"><g class="celebrate-rays">${Array.from({ length: 10 }, (_, i) => `<path d="M53 40 L${53 + Math.cos(i * 0.628) * 100} ${40 + Math.sin(i * 0.628) * 100} L${53 + Math.cos(i * 0.628 + 0.2) * 100} ${40 + Math.sin(i * 0.628 + 0.2) * 100}Z" fill="#fde68a" opacity=".5"/>`).join('')}</g>
+    <g class="celebrate-chest">${art('chest-' + skin)}</g></svg>${coins}`;
   $('celTitle').textContent = t(away ? 'cel.awayTitle' : 'cel.title');
   $('celText').textContent = away && c.count > 1 ? t('cel.awayMany', { n: c.count, amount: money(c.amount) }) : t('cel.text', { amount: money(c.amount) });
   $('celebrateDialog').showModal();

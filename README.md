@@ -9,7 +9,7 @@ Aplikacja **prowadzi ewidencję** – prawdziwe pieniądze przechowuje rodzic.
 2. **Kopalnia Marzeń** – jeden ilustrowany przekrój: nad ziemią oś czasu od znacznika **Dziś** z płynnie zmieniającymi się porami roku, pod ziemią maksymalnie trzy najbliższe skrzynie (drewniana / srebrna / złota), każda dokładnie pod swoją datą. Na telefonie przewija się poziomo tylko ta scena.
 3. **Moje marzenia** – trzy karty (Proste, Średnie, Niesamowite) liczone od tego samego salda Skarbca, z opcjonalną prognozą przy regularnych wpłatach.
 
-Kopalnia to oryginalna ilustracja z pierwszej wersji (zębatki, górnicy z kilofami, bloki rudy, wagonik), połączona z osią czasu w jeden przekrój. Groszacy: pierwsza, druga i trzecia wpłata do Skarbca odblokowują po jednym górniku (trzeci to sztygar w złotym kasku); zablokowane miejsca to kaski przy bloku rudy. Gdy kopalnia nalicza premię, Groszacy kopią, a wiaderko w szybie wwozi złoto do skarbca tak, że dociera dokładnie w chwili zmiany cyfr – z cichym „ka-ching” (przycisk głośnika przy saldzie wycisza dźwięk). Gdy nie naliczają – odpoczywają (machają, siedzą albo drzemią). Tryb ograniczonego ruchu wyłącza animacje, a liczby dalej się aktualizują.
+Scena jest złożona z ilustracji od grafika (`assets/art/`), ułożonych jak na makiecie. Animacje w CSS korzystają z punktów obrotu opisanych w plikach: kilof górnika, machająca ręka, koło drzwi skarbca, zębatki i wieko skrzyni. Groszacy: pierwsza, druga i trzecia wpłata do Skarbca odblokowują turkusowego górnika, różowego górnika i sztygara w złotym kasku; zablokowane miejsca to kaski na haczykach. Gdy kopalnia nalicza premię, Groszacy kopią i noszą bryłki do wagonika, a wiaderko w szybie wwozi złoto do skarbca tak, że dociera dokładnie w chwili zmiany cyfr – z cichym „ka-ching” (przycisk głośnika przy saldzie wycisza dźwięk). Gdy nie naliczają – odpoczywają (machają, siedzą albo drzemią). Po podmianie ilustracji: `npm run build:art`. Tryb ograniczonego ruchu wyłącza animacje, a liczby dalej się aktualizują.
 
 ## Zasady naliczania (`src/engine.js`)
 - Kwoty są w całkowitych mikrogroszach (1 zł = 1 000 000 µg).
@@ -28,7 +28,9 @@ Chroniona PIN-em (w trybie z kontami sprawdzanym po stronie serwera: 5 błędów
 | `index.html` | szkielet strony |
 | `src/engine.js` | księgowanie: kopalnia, skrzynie, limity, wypłaty, prognozy |
 | `src/app.js`, `src/parent.js` | widok dziecka i Strefa rodzica |
-| `src/scene.js` | scena SVG: krajobraz z porami roku, oś czasu, skarbiec z windą, skrzynie pod datami i oryginalna kopalnia z Rodzinobanku |
+| `src/scene.js` | scena: krajobraz z porami roku, oś czasu, skrzynie pod datami, skarbiec z wiaderkiem w szybie i kopalnia z Groszakami |
+| `assets/art/` | ilustracje od grafika (Groszaki SVG v2) – opis warstw i punktów obrotu w `assets/art/README.md` |
+| `src/artkit.js` | ilustracje zamienione na moduł JS (generowany: `npm run build:art`) |
 | `src/art.js` | ilustracje SVG (sztygar przy saldzie, skrzynie, obrazki marzeń) |
 | `src/sound.js` | delikatne „ka-ching” (Web Audio, bez plików dźwiękowych) |
 | `src/backend.js` | tryb próbny (localStorage) i Supabase – to samo API |
