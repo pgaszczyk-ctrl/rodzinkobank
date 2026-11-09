@@ -1,0 +1,84 @@
+{
+  "materialy": {
+    "miedziany": {
+      "nazwa": "Miedziany",
+      "czesci": {
+        "korpus": {
+          "plik": "miedziany/korpus.webp",
+          "w": 419,
+          "h": 419
+        },
+        "raczka": {
+          "plik": "miedziany/raczka.webp",
+          "w": 75,
+          "h": 205,
+          "pivot": [
+            32.0,
+            25.5
+          ]
+        },
+        "nozka": {
+          "plik": "miedziany/nozka.webp",
+          "w": 86,
+          "h": 226,
+          "pivot": [
+            30.0,
+            29.5
+          ]
+        },
+        "okruszek": {
+          "plik": "miedziany/okruszek.webp",
+          "w": 140,
+          "h": 156
+        },
+        "plecak": {
+          "plik": "miedziany/plecak.webp",
+          "w": 261,
+          "h": 259
+        },
+        "babelki": {
+          "plik": "miedziany/babelki.webp",
+          "w": 110,
+          "h": 151
+        }
+      },
+      "buzie": {
+        "usmiech": {
+          "plik": "miedziany/buzia-usmiech.webp",
+          "w": 191,
+          "h": 160
+        },
+        "radosna": {
+          "plik": "miedziany/buzia-radosna.webp",
+          "w": 192,
+          "h": 160
+        },
+        "zachwyt": {
+          "plik": "miedziany/buzia-zachwyt.webp",
+          "w": 187,
+          "h": 160
+        },
+        "spiaca": {
+          "plik": "miedziany/buzia-spiaca.webp",
+          "w": 173,
+          "h": 160
+        },
+        "zdziwiona": {
+          "plik": "miedziany/buzia-zdziwiona.webp",
+          "w": 166,
+          "h": 160
+        },
+        "szczesliwa": {
+          "plik": "miedziany/buzia-szczesliwa.webp",
+          "w": 187,
+          "h": 160
+        }
+      },
+      "buziaNaKorpusie": {
+        "x": 0.5,
+        "y": 0.54,
+        "szerokosc": 0.6
+      }
+    }
+  }
+}
