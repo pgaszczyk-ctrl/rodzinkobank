@@ -41,13 +41,14 @@
     <section aria-labelledby="vaultTitle" class="mt-5">
       <div class="brick bg-white p-5 sm:p-7 pt-8">
         <div class="studs stud-white"><span></span><span></span><span></span><span></span></div>
-        <h2 id="vaultTitle" class="font-display font-extrabold text-xl sm:text-2xl" data-i18n="kid.vaultTitle"></h2>
+        <div class="flex items-center justify-between gap-2"><h2 id="vaultTitle" class="font-display font-extrabold text-xl sm:text-2xl" data-i18n="kid.vaultTitle"></h2>
+          <button id="soundBtn" class="w-9 h-9 grid place-items-center rounded-full text-ink/45 hover:text-ink hover:bg-ink/5"></button></div>
         <div class="mt-3 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
           <div class="flex items-center gap-3 sm:gap-5 min-w-0">
             <div id="mascot" class="w-16 sm:w-24 shrink-0"></div>
             <div class="min-w-0 flex-1">
               <p class="font-bold text-ink/55 text-sm sm:text-base" id="balanceLabel" data-i18n="kid.balanceLabel"></p>
-              <div id="balance" class="balance font-display font-extrabold text-berry-600" aria-live="off"></div>
+              <div id="balance" class="balance font-display font-extrabold text-sun-600" aria-live="off"></div>
               <div id="tickRow" class="mt-3 max-w-sm">
                 <div class="flex justify-between gap-2 text-xs sm:text-sm font-bold text-ink/55 mb-1"><span id="tickText"></span></div>
                 <div class="tick-track"><div id="tickFill" class="tick-fill" style="width:0%"></div></div>

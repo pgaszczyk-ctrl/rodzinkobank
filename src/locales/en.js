@@ -54,6 +54,8 @@ export default {
   'kid.dreamsTitle': 'My dreams',
   'kid.dreamsSub': 'All three cards use the same vault balance.',
 
+  'sound.on': 'Turn coin sounds on',
+  'sound.off': 'Mute coin sounds',
   'scene.title': 'Dream Mine and timeline',
   'scene.today': 'Today',
   'scene.scrollHint': 'Timeline with the mine – scroll sideways',

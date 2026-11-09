@@ -5,9 +5,10 @@ import { DEFAULT_TZ, dayKey } from './calendar.js';
 import { parseZl, floorToGrosz, MICRO_PER_GROSZ } from './money.js';
 import { t, setLang, getLang, detectLang, LOCALES, hasKey, money, moneyParts, moneyMicro, fmtDate, duration } from './i18n.js';
 import { minerPortrait, chestSvg, chestIcon, logoMark, dreamImage } from './art.js';
-import { buildScene } from './scene.js';
+import { createMine } from './mine.js';
 import { LocalBackend, CloudBackend, AppError, normalizeOp, newId, DEFAULT_DREAMS } from './backend.js';
 import { initParentZone } from './parent.js';
+import { kaching, kachingGrosz, chestFanfare, soundOn, setSound } from './sound.js';
 
 /* ------------------------------------------------------------------ */
 /*  Configuration of the shared family database (Supabase).            */
@@ -26,7 +27,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private
 const lsDel = (k) => { try { localStorage.removeItem(k); } catch { /* private mode */ } };
 const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DAY = 86400_000;
-const DELIVERY_MS = 3000;
+const DELIVERY_MS = 2900; // lift travel time in the mine scene
 
 /* ------------------------------------------------------------------ */
 /*  Shared context (also used by the parent zone)                       */
@@ -146,7 +147,18 @@ ctx.stateAt = stateAt;
 /* ------------------------------------------------------------------ */
 const live = { st: null, up: [], nextAt: null, prevAt: null, delivering: false, lastMicro: null, lastGrosz: null, sceneSig: '' };
 
+function renderSoundBtn() {
+  const on = soundOn();
+  const b = $('soundBtn');
+  b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', t(on ? 'sound.off' : 'sound.on'));
+  b.title = t(on ? 'sound.off' : 'sound.on');
+  b.innerHTML = `<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/>${on ? '<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>'}</svg>`;
+}
+$('soundBtn').addEventListener('click', () => { setSound(!soundOn()); renderSoundBtn(); if (soundOn()) kaching(); });
+
 function renderHeader() {
+  renderSoundBtn();
   const name = ctx.snap ? ctx.snap.kid.name : '';
   $('greeting').textContent = name ? t('kid.greeting', { name }) : t('brand.tagline');
   const kids = ctx.mode !== 'kid' && ctx.family ? ctx.family.kids : [];
@@ -185,9 +197,11 @@ function renderBalance(st, { flash = false } = {}) {
   if (showTip) $('balMicro').classList.add('show-tip');
   el.setAttribute('aria-label', p.label);
   const grosz = Math.floor(st.vault / MICRO_PER_GROSZ);
-  if (flash && live.lastGrosz != null && grosz > live.lastGrosz && !reduceMotion()) {
+  const crossed = flash && live.lastGrosz != null && grosz > live.lastGrosz;
+  if (crossed && !reduceMotion()) {
     const main = $('balMain'); main.classList.remove('grosz-glow'); void main.offsetWidth; main.classList.add('grosz-glow');
   }
+  if (flash && live.lastMicro != null && p.micro !== live.lastMicro) (crossed ? kachingGrosz : kaching)();
   live.lastMicro = p.micro;
   live.lastGrosz = grosz;
 }
@@ -274,18 +288,14 @@ function renderRequestBox(st) {
   const b = $('reqOpen'); if (b) b.addEventListener('click', () => openWithdraw());
 }
 
-function renderScene(st, force = false) {
+let mine = null;
+function renderScene(st) {
   const vw = $('sceneScroll').clientWidth || 360;
-  const sig = JSON.stringify([live.up.map((c) => [c.at, c.amount, c.skin]), st.unlocked, st.miningActive, hasDeposits(), Math.round(vw / 40), dayKey(ctx.nowMs(), ctx.tz), getLang()]);
-  if (!force && sig === live.sceneSig) return;
-  live.sceneSig = sig;
-  const scroll = $('sceneScroll').scrollLeft;
-  const { svg } = buildScene({
+  if (!mine) mine = createMine($('scene'));
+  mine.update({
     now: ctx.nowMs(), tz: ctx.tz, chests: live.up, unlocked: st.unlocked, miningActive: st.miningActive,
-    restPoses: ctx.restPoses, hasDeposits: hasDeposits(), viewportWidth: vw,
+    restPoses: ctx.restPoses, hasDeposits: hasDeposits(), viewportWidth: vw, lang: getLang(),
   });
-  $('scene').innerHTML = svg;
-  $('sceneScroll').scrollLeft = scroll;
   const crewState = !hasDeposits() ? 'first' : st.miningActive ? 'working' : 'resting';
   $('crew').textContent = t('kid.crew', { n: st.unlocked, max: MAX_GROSZAKI }) + ' · ' + t('kid.crew.' + crewState);
   $('mineSub').textContent = t('kid.mineSub');
@@ -367,7 +377,7 @@ function renderAll(force = false) {
   renderNow(st);
   renderVaultNote(st);
   renderRequestBox(st);
-  renderScene(st, force);
+  renderScene(st);
   renderDreams(st);
 }
 
@@ -383,8 +393,7 @@ function loop() {
   // start the delivery animation so the coin lands on the heap when the digits change
   if (live.nextAt && !live.delivering && now >= live.nextAt - DELIVERY_MS && now < live.nextAt && !reduceMotion() && document.visibilityState === 'visible') {
     live.delivering = true;
-    const root = $('scene').firstElementChild;
-    if (root) { root.classList.remove('delivering'); void root.getBoundingClientRect(); root.classList.add('delivering'); }
+    if (mine) mine.deliver(live.nextAt, now);
   }
   const chestDue = live.up[0] && now >= live.up[0].at;
   if ((live.nextAt && now >= live.nextAt) || chestDue) {
@@ -394,11 +403,7 @@ function loop() {
     live.prevAt = prevNext;
     live.nextAt = nst.nextIncrementAt;
     live.delivering = false;
-    const root = $('scene').firstElementChild;
-    if (root) setTimeout(() => root.classList.remove('delivering'), 400);
     renderBalance(nst, { flash: true });
-    const heap = document.querySelector('#sceneHeap .coin-heap');
-    if (heap && !reduceMotion()) { heap.classList.remove('heap-happy'); void heap.getBoundingClientRect(); heap.classList.add('heap-happy'); }
     if (chestDue) {
       live.up = upcomingChests(ctx.ops, { from: now, tz: ctx.tz, limit: 3 });
       checkCelebrations();
@@ -450,6 +455,7 @@ function showCelebration(c, away) {
   $('celTitle').textContent = t(away ? 'cel.awayTitle' : 'cel.title');
   $('celText').textContent = away && c.count > 1 ? t('cel.awayMany', { n: c.count, amount: money(c.amount) }) : t('cel.text', { amount: money(c.amount) });
   $('celebrateDialog').showModal();
+  chestFanfare();
 }
 $('celOk').addEventListener('click', () => $('celebrateDialog').close());
 $('celebrateDialog').addEventListener('close', () => { celebrating = false; });

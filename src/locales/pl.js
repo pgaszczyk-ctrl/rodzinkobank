@@ -55,6 +55,8 @@ export default {
   'kid.dreamsTitle': 'Moje marzenia',
   'kid.dreamsSub': 'Wszystkie trzy karty liczą to samo saldo Skarbca.',
 
+  'sound.on': 'Włącz dźwięk monet',
+  'sound.off': 'Wycisz dźwięk monet',
   // Scena
   'scene.title': 'Kopalnia Marzeń i oś czasu',
   'scene.today': 'Dziś',
