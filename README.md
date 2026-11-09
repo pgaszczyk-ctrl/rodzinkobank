@@ -1,32 +1,49 @@
-# Rodzinobank
+# Groszaki (Coinlings)
 
-Domowy „Tata-Bank” dla dzieci: dziecko odkłada kieszonkowe u rodziców, a im dłużej monety czekają, tym większą dostają **Premię za cierpliwość** (od +5% po 1 miesiącu do +50% po 6 miesiącach, potem cykl zaczyna się od powiększonej kwoty).
+Rodzinna aplikacja webowa do nauki oszczędzania i odroczonej gratyfikacji. Rodzic rejestruje wpłaty, premie i wypłaty. Dziecko widzi, jak Skarbiec rośnie o mikrogrosze co 10 sekund, kiedy otworzy się kolejna skrzynia i ile brakuje do marzenia.
 
-Cała aplikacja to jeden plik: `index.html` (Tailwind CSS z CDN + czysty JavaScript). Wspólna baza rodziny działa na Supabase (`supabase/schema.sql`).
+Aplikacja **prowadzi ewidencję** – prawdziwe pieniądze przechowuje rodzic.
 
-## Co jest w środku
-- **Wielki Skarbiec** – licznik na żywo, co 10 s dolicza ułamki groszy i wypuszcza monety; pod nim kopalnia z kręcącymi się zębatkami i blokowymi górnikami.
-- **Schody Cierpliwości** – pokazują, na którym schodku premii jest najstarsza wpłata.
-- **3 Marzenia** – Proste / Średnie / Niesamowite, z własnym zdjęciem (wgranie pliku lub link) i paskiem postępu.
-- **Magiczna Oś Oszczędzania** – rok podzielony na pory roku; po wpisaniu kwoty (domyślnie 10 zł) i częstotliwości pokazuje, kiedy każde marzenie będzie w zasięgu.
-- **Strefa Rodzica** – wpłaty (także z datą wsteczną), wypłaty, historia, link/kod QR dla dziecka, kod rodziny dla drugiego rodzica, kilkoro dzieci.
+## Widok dziecka
+1. **Mój Skarbiec** – saldo w formacie `10,00₀₀₀₁ zł` (cztery małe cyfry to mikrogrosze; dotknij ich, by zobaczyć „10 000 mikrogroszy to 1 grosz”), odliczanie do kolejnego mikrogrosza, najbliższa skrzynia z kwotą i datą, osobna pula **Na teraz**, wniosek o wypłatę.
+2. **Kopalnia Marzeń** – jeden ilustrowany przekrój: nad ziemią oś czasu od znacznika **Dziś** z płynnie zmieniającymi się porami roku, pod ziemią maksymalnie trzy najbliższe skrzynie (drewniana / srebrna / złota), każda dokładnie pod swoją datą. Na telefonie przewija się poziomo tylko ta scena.
+3. **Moje marzenia** – trzy karty (Proste, Średnie, Niesamowite) liczone od tego samego salda Skarbca, z opcjonalną prognozą przy regularnych wpłatach.
 
-## Trzy tryby
-| Tryb | Kto | Co może |
-|---|---|---|
-| **Rodzic** | zalogowany e-mailem i hasłem | wszystko w skarbcach dzieci ze swojej rodziny |
-| **Dziecko** | otwiera magiczny link / kod QR od rodzica, bez konta | ogląda swój skarbiec, zmienia swoje 3 marzenia |
-| **Próbny** | bez konta | wszystko, ale dane zostają tylko w tej przeglądarce |
+Groszacy: pierwsza, druga i trzecia wpłata do Skarbca odblokowują po jednym górniku (trzeci to sztygar w złotym kasku). Gdy kopalnia nalicza premię, kopią i wysyłają monety wyciągarką na stos monet na powierzchni dokładnie w chwili zmiany cyfr; gdy nie – odpoczywają w losowej pozie. Tryb ograniczonego ruchu wyłącza animacje, a liczby dalej się aktualizują.
 
-Urządzenia same sprawdzają zmiany co 15 sekund – wpłata zrobiona na telefonie rodzica pojawia się u dziecka z animacją monety.
+## Zasady naliczania (`src/engine.js`)
+- Kwoty są w całkowitych mikrogroszach (1 zł = 1 000 000 µg).
+- Kopalnia: 1 µg co 10 s za każde 10 zł pozostającej części wpłaty; reszta z dzielenia przechodzi między krokami.
+- Każda wpłata ma plan na 6 miesięcy kalendarzowych z narastającymi progami łącznej premii (domyślnie 5/10/18/25/38/50%). Skrzynia wypłaca różnicę między progiem a premią przyznaną dotąd (kopalnia + skrzynie + bonus), zostawiając budżet na przyszłe mikrogrosze. Łączna premia nie przekracza ostatniego progu (maks. 50%).
+- Bonus rodzica (np. 20%) jest osobną operacją w tym samym limicie – saldo 10 zł po pół roku wynosi 15 zł z bonusem i bez.
+- Wypłata: najpierw premie, potem kapitał od najstarszej wpłaty; pozostała część zachowuje datę; nagrody nie są cofane; mikrogrosze poniżej grosza zostają w saldzie.
+- Mikrogrosze i skrzynie **wynikają deterministycznie** z zapisanych operacji i czasu serwera. Odświeżenie strony, druga karta czy powrót po przerwie pokazują ten sam, należny stan – nic nie jest przyznawane dwa razy.
 
-## Uruchomienie wspólnej bazy (jednorazowo)
-1. **Baza:** w Supabase otwórz projekt → **SQL Editor** → *New query* → wklej całą zawartość `supabase/schema.sql` → **Run**.
-2. **Klucz:** **Project Settings → API Keys** → skopiuj *Publishable key* (`sb_publishable_…`) i wklej go w `index.html` w stałą `SUPABASE_KEY` (już wpisany). Ten klucz jest publiczny – tabele są zamknięte, a wszystkie operacje idą przez funkcje, które same sprawdzają uprawnienia.
-3. **Adres strony:** **Authentication → URL Configuration** → w *Site URL* wpisz adres, pod którym działa aplikacja (np. `https://pgaszczyk-ctrl.github.io/rodzinkobank/`) i dodaj go też do *Redirect URLs*. Dzięki temu linki z e-maili (potwierdzenie konta, reset hasła) wrócą do aplikacji.
-4. Opcjonalnie: **Authentication → Sign In / Providers → Email** – wyłącz *Confirm email*, jeśli nie chcesz potwierdzać adresu przy zakładaniu konta.
+## Strefa rodzica
+Chroniona PIN-em (w trybie z kontami sprawdzanym po stronie serwera: 5 błędów = blokada na 5 minut, sesja 30 min). Zakładki: **Wpłata** (podział prezentu suwakiem, bonus, podgląd skrzyń), **Wypłaty** (zatwierdzanie wniosków po 24 h, wydatki z „Na teraz”, korekty), **Historia** (budżet premii każdej wpłaty i rozbicie skrzyń), **Plan nagród** (progi, tempo, wersjonowanie), **Cele** (nazwa, ilustracja, cena, harmonogram do prognozy), **Rodzina** (dzieci, link/QR, kod drugiego rodzica, PIN).
 
-Dopóki klucz nie jest wpisany, aplikacja działa w trybie próbnym.
+## Pliki
+| Ścieżka | Zawartość |
+|---|---|
+| `index.html` | szkielet strony |
+| `src/engine.js` | księgowanie: kopalnia, skrzynie, limity, wypłaty, prognozy |
+| `src/app.js`, `src/parent.js` | widok dziecka i Strefa rodzica |
+| `src/scene.js`, `src/art.js` | scena kopalni i osi czasu, ilustracje |
+| `src/backend.js` | tryb próbny (localStorage) i Supabase – to samo API |
+| `src/i18n.js`, `src/locales/` | teksty (polski, angielski), formaty kwot i dat |
+| `supabase/schema.sql` | baza, uprawnienia i funkcje RPC |
+| `assets/` | style (Tailwind zbudowany do `tailwind.css` + `app.css`) |
 
-## Hosting
-Najprościej GitHub Pages: **Settings → Pages → Deploy from a branch** → wybierz gałąź i folder `/ (root)`.
+## Uruchomienie
+Statyczna strona bez kroku budowania – wystarczy hosting plików (np. GitHub Pages, gałąź i folder `/`). Lokalnie: `npm run serve` i `http://localhost:8080` (`?local=1` wymusza tryb próbny, `?lang=en` – angielski).
+
+Po zmianie klas Tailwinda: `npm run build:css`.
+
+### Wspólna baza (Supabase)
+1. **SQL Editor** → wklej `supabase/schema.sql` → **Run**. Skrypt można uruchamiać wielokrotnie. Zachowuje rodziny, dzieci, linki i marzenia z Rodzinobanku, a stare wpłaty przenosi do nowej księgi (bieżąca kwota z oryginalną datą i domyślnym planem).
+2. Klucz *Publishable* jest w `src/app.js` (`SUPABASE_KEY`). Tabele są zamknięte – wszystko idzie przez funkcje, które sprawdzają uprawnienia, PIN, wersję stanu (`rev`) i klucze idempotencji.
+3. **Authentication → URL Configuration**: wpisz adres aplikacji w *Site URL* i *Redirect URLs*.
+
+## Testy
+- `npm test` – silnik (kryteria odbioru) i kompletność tłumaczeń.
+- `npm run test:sql` – funkcje bazy na lokalnym PostgreSQL (zmienne `PGHOST`, `PGPORT`, `PGUSER`).
