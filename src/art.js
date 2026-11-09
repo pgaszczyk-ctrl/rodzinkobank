@@ -1,39 +1,20 @@
 // Illustration helpers: chest icons, the balance mascot, the logo and dream pictures.
-// Characters, chests and mine pieces come from assets/art (see src/artkit.js).
+// Characters and mine pieces come from assets/scene (see src/scenedata.js), chests from src/chests.js.
 
-import { art, artSvg } from './artkit.js';
+import { SCENE } from './scenedata.js';
+import { chestIconSvg } from './chests.js';
 
-/* Colours used by the illustrator's Groszaki (Groszaki SVG v2). */
-export const GROSZAK_LOOK = [
-  { art: 'miner-teal', shirt: '#4ABFBC', helmet: '#FFD86D', lamp: '#FFF8E5' },
-  { art: 'miner-pink', shirt: '#F58B9F', helmet: '#FFD86D', lamp: '#FFF8E5' },
-  { art: 'foreman', shirt: '#70C77E', helmet: '#FFC136', lamp: '#FFF4BD' },   // sztygar
-];
-// colours baked into the rest poses, mapped onto a given Groszak
-const REST_BASE = {
-  'rest-wave': { shirt: '#F58B9F', helmet: '#FFD86D', lamp: '#FFF8E5' },
-  'rest-sit': { shirt: '#8D9CEB', helmet: '#FFD86D', lamp: '#FFF8E5' },
-  'rest-nap': { shirt: '#70C77E', helmet: '#FFC136', lamp: '#FFF4BD' },
-};
-export function restRecolor(pose, look) {
-  const b = REST_BASE[pose];
-  const m = {};
-  for (const k of ['shirt', 'helmet', 'lamp']) if (b[k] !== look[k]) m[b[k]] = look[k];
-  return m;
-}
-
-/** Chest icon (wood / silver / gold) from the illustrations. */
+/** Chest icon (wood / silver / gold), painted like the scene. */
 export function chestIcon(skin, cls = 'w-8 h-8') {
-  return artSvg('chest-' + (skin || 'wood'), { cls });
+  return chestIconSvg(skin || 'wood', cls);
 }
 
-/** The sztygar waving (or dozing before the first deposit) – shown next to the balance. */
+/** A Groszak from the illustration next to the balance: holding a gold nugget, or dozing before the first deposit. */
 export function minerPortrait({ cls = '', sleeping = false, title = '' } = {}) {
-  const pose = sleeping ? 'rest-nap' : 'rest-wave';
-  return artSvg(pose, { cls: 'portrait ' + cls, recolor: restRecolor(pose, GROSZAK_LOOK[2]), label: title, viewBox: sleeping ? '8 20 104 84' : '14 4 88 100' });
+  const a = SCENE.assets[sleeping ? 'gornicy/gornik-odpoczywa' : 'gornicy/gornik-ze-zlotem'];
+  const vb = sleeping ? '40 200 500 300' : '140 70 300 430';
+  return `<svg viewBox="${vb}" class="portrait ${cls}" ${title ? `role="img" aria-label="${title}"` : 'aria-hidden="true"'}><image href="${a.url}" width="${a.size[0]}" height="${a.size[1]}"/></svg>`;
 }
-
-export { art };
 
 /** Logo mark: a gold grosz coin wearing a miner's helmet. */
 export function logoMark(cls = 'w-11 h-11') {

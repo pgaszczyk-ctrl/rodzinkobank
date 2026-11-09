@@ -4,8 +4,9 @@ import { derive, upcomingChests, chestsBetween, allocateWithdrawal, forecastReac
 import { DEFAULT_TZ, dayKey } from './calendar.js';
 import { parseZl, floorToGrosz, MICRO_PER_GROSZ } from './money.js';
 import { t, setLang, getLang, detectLang, LOCALES, hasKey, money, moneyParts, moneyMicro, fmtDate, duration } from './i18n.js';
-import { minerPortrait, chestIcon, logoMark, dreamImage, art } from './art.js';
-import { buildScene } from './scene.js';
+import { minerPortrait, chestIcon, logoMark, dreamImage } from './art.js';
+import { createScene } from './scene.js';
+import { chestMarkup } from './chests.js';
 import { LocalBackend, CloudBackend, AppError, normalizeOp, newId, DEFAULT_DREAMS } from './backend.js';
 import { initParentZone } from './parent.js';
 import { kaching, kachingGrosz, chestFanfare, soundOn, setSound } from './sound.js';
@@ -288,18 +289,13 @@ function renderRequestBox(st) {
   const b = $('reqOpen'); if (b) b.addEventListener('click', () => openWithdraw());
 }
 
-function renderScene(st, force = false) {
-  const vw = $('sceneScroll').clientWidth || 360;
-  const sig = JSON.stringify([live.up.map((c) => [c.at, c.amount, c.skin]), st.unlocked, st.miningActive, hasDeposits(), Math.round(vw / 40), dayKey(ctx.nowMs(), ctx.tz), getLang()]);
-  if (!force && sig === live.sceneSig) return;
-  live.sceneSig = sig;
-  const scroll = $('sceneScroll').scrollLeft;
-  const { svg } = buildScene({
+let scene = null;
+function renderScene(st) {
+  if (!scene) scene = createScene($('scene'), $('sceneScroll'));
+  scene.update({
     now: ctx.nowMs(), tz: ctx.tz, chests: live.up, unlocked: st.unlocked, miningActive: st.miningActive,
-    restPoses: ctx.restPoses, hasDeposits: hasDeposits(), viewportWidth: vw,
+    restPoses: ctx.restPoses, hasDeposits: hasDeposits(), lang: getLang(),
   });
-  $('scene').innerHTML = svg;
-  $('sceneScroll').scrollLeft = scroll;
   const crewState = !hasDeposits() ? 'first' : st.miningActive ? 'working' : 'resting';
   $('crew').textContent = t('kid.crew', { n: st.unlocked, max: MAX_GROSZAKI }) + ' · ' + t('kid.crew.' + crewState);
   $('mineSub').textContent = t('kid.mineSub');
@@ -381,7 +377,7 @@ function renderAll(force = false) {
   renderNow(st);
   renderVaultNote(st);
   renderRequestBox(st);
-  renderScene(st, force);
+  renderScene(st);
   renderDreams(st);
 }
 
@@ -397,8 +393,7 @@ function loop() {
   // start the delivery animation so the coin lands on the heap when the digits change
   if (live.nextAt && !live.delivering && now >= live.nextAt - DELIVERY_MS && now < live.nextAt && !reduceMotion() && document.visibilityState === 'visible') {
     live.delivering = true;
-    const root = $('scene').firstElementChild;
-    if (root) { root.classList.remove('delivering'); void root.getBoundingClientRect(); root.classList.add('delivering'); }
+    if (scene) scene.deliver(live.nextAt, now);
   }
   const chestDue = live.up[0] && now >= live.up[0].at;
   if ((live.nextAt && now >= live.nextAt) || chestDue) {
@@ -408,8 +403,6 @@ function loop() {
     live.prevAt = prevNext;
     live.nextAt = nst.nextIncrementAt;
     live.delivering = false;
-    const root = $('scene').firstElementChild;
-    if (root) setTimeout(() => root.classList.remove('delivering'), 400);
     renderBalance(nst, { flash: true });
     if (chestDue) {
       live.up = upcomingChests(ctx.ops, { from: now, tz: ctx.tz, limit: 3 });
@@ -458,7 +451,7 @@ function showCelebration(c, away) {
     return `<span class="burst-coin" style="--bx:${Math.round(Math.cos(a) * 110)}px;--by:${Math.round(Math.sin(a) * 80 - 30)}px;animation-delay:${1 + i * 0.03}s"></span>`;
   }).join('');
   $('celArt').innerHTML = `<svg viewBox="-27 -40 160 140" class="w-full h-full celebrate-open" style="overflow:visible"><g class="celebrate-rays">${Array.from({ length: 10 }, (_, i) => `<path d="M53 40 L${53 + Math.cos(i * 0.628) * 100} ${40 + Math.sin(i * 0.628) * 100} L${53 + Math.cos(i * 0.628 + 0.2) * 100} ${40 + Math.sin(i * 0.628 + 0.2) * 100}Z" fill="#fde68a" opacity=".5"/>`).join('')}</g>
-    <g class="celebrate-chest">${art('chest-' + skin)}</g></svg>${coins}`;
+    <g class="celebrate-chest">${chestMarkup(skin)}</g></svg>${coins}`;
   $('celTitle').textContent = t(away ? 'cel.awayTitle' : 'cel.title');
   $('celText').textContent = away && c.count > 1 ? t('cel.awayMany', { n: c.count, amount: money(c.amount) }) : t('cel.text', { amount: money(c.amount) });
   $('celebrateDialog').showModal();

@@ -198,3 +198,12 @@ input[type=range] { accent-color: #ec4899; }
 .celebrate-open .gk-chest-lid { animation: gkLid 1s .5s cubic-bezier(.3,1.5,.5,1) both; }
 .celebrate-chest { transform-box: fill-box; transform-origin: center bottom; }
 .portrait { overflow: visible; }
+
+/* ---------- Illustrated scene "Cztery pory roku" (src/scene.js, animated with GSAP) ---------- */
+#scene { position: relative; }
+#scene .scene-svg { display: block; width: 100%; height: 100%; }
+#scene .scene-pill { font: 800 15px "Baloo 2", system-ui, sans-serif; }
+#scene .scene-month { font: 800 12px Nunito, system-ui, sans-serif; fill: #fff4dc; text-transform: uppercase; letter-spacing: .05em; paint-order: stroke; stroke: rgba(74,44,24,.45); stroke-width: 3px; }
+#scene .scene-z { font: 800 46px "Baloo 2", system-ui, sans-serif; fill: #fff4dc; stroke: #7a4a2a; stroke-width: 3px; paint-order: stroke; }
+.chest-shine { animation: sparkle 1.8s ease-in-out infinite; }
+.celebrate-open .chest-lid { animation: gkLid 1s .5s cubic-bezier(.3,1.5,.5,1) both; transform-box: view-box; transform-origin: 0 0; }

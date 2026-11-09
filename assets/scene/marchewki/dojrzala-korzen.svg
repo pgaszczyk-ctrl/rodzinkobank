@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="50" height="72" viewBox="0 0 50 72">
+<!-- Carrot root (dojrzala); same anchor as the leaves (25,28) = 1 px below the surface. -->
+<defs>
+ <linearGradient id="mr-dojrzala-g" x1="-14" y1="0" x2="14" y2="6" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffb867"/><stop offset=".45" stop-color="#f3893d"/><stop offset="1" stop-color="#c25b2c"/></linearGradient>
+ <filter id="mr-dojrzala-f" x="-20%" y="-20%" width="140%" height="140%">
+  <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="3" result="n"/>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="1.3" xChannelSelector="R" yChannelSelector="G" result="d"/>
+  <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="1" seed="7" result="g"/>
+  <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .22 0" result="ga"/>
+  <feComposite in="ga" in2="d" operator="in" result="grain"/>
+  <feMerge><feMergeNode in="d"/><feMergeNode in="grain"/></feMerge>
+</filter>
+</defs>
+<g transform="translate(25 28) scale(1.0)">
+ <ellipse cx="0" cy="1" rx="15" ry="3.2" fill="#5b3522" opacity=".35"/>
+ <g filter="url(#mr-dojrzala-f)">
+  <path d="M-13 1 Q-14 -1 -9 -2 Q0 -4 9 -2 Q14 -1 13 2 Q12 18 4 35 Q1 41 -2 40 Q-5 38 -6 33 Q-12 17 -13 1Z" fill="url(#mr-dojrzala-g)" stroke="#8a4628" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M-8 3 Q-9 14 -4 27" fill="none" stroke="#ffd598" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
+  <path d="M-11 9 q4 1.5 7 .5 M5 13 q3 0 6 -1.5 M-9 19 q3 1 5 0 M3 24 q2.5 0 4.5 -1.4 M-4 31 q2 .8 3.5 0" fill="none" stroke="#b5552b" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M-12 0.5 Q0 -3 12 0.5" fill="none" stroke="#e07a35" stroke-width="1.4" stroke-linecap="round"/>
+ </g>
+</g>
+</svg>

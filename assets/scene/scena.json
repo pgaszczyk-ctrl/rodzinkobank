@@ -1,0 +1,1212 @@
+{
+ "scene": {
+  "width": 1500,
+  "height": 720,
+  "surfaceY": 252,
+  "seasonSlotWidth": 500,
+  "slots": 3
+ },
+ "seasonOrder": [
+  "wiosna",
+  "lato",
+  "jesien",
+  "zima"
+ ],
+ "seasonTimeZone": "Europe/Warsaw",
+ "seasonByMonth": [
+  "zima",
+  "zima",
+  "wiosna",
+  "wiosna",
+  "wiosna",
+  "lato",
+  "lato",
+  "lato",
+  "jesien",
+  "jesien",
+  "jesien",
+  "zima"
+ ],
+ "carrotGrowthOrder": [
+  "kielek",
+  "mloda",
+  "dojrzala"
+ ],
+ "animationRigs": {
+  "uderzenie": {
+   "role": "miner:strike",
+   "frames": [
+    {
+     "asset": "gornicy/kilof-01-gotowosc",
+     "durationMs": 550
+    },
+    {
+     "asset": "gornicy/kilof-02-zamach",
+     "durationMs": 490
+    },
+    {
+     "asset": "gornicy/kilof-03-uderzenie",
+     "durationMs": 145
+    },
+    {
+     "asset": "gornicy/kilof-04-powrot",
+     "durationMs": 390
+    }
+   ],
+   "impactFrameIndex": 2
+  }
+ },
+ "assets": {
+  "wspolne/niebo": {
+   "file": "wspolne/niebo.svg",
+   "size": [
+    1500,
+    252
+   ]
+  },
+  "wspolne/slonce": {
+   "file": "wspolne/slonce.svg",
+   "size": [
+    150,
+    150
+   ],
+   "pivot": [
+    75,
+    75
+   ]
+  },
+  "wspolne/chmura": {
+   "file": "wspolne/chmura.svg",
+   "size": [
+    159.65,
+    66.3
+   ],
+   "pivot": [
+    79.82,
+    35.78
+   ]
+  },
+  "pory-roku/wiosna/poswiata": {
+   "file": "pory-roku/wiosna/poswiata.svg",
+   "size": [
+    500,
+    252
+   ]
+  },
+  "pory-roku/wiosna/wzgorza-i-powierzchnia": {
+   "file": "pory-roku/wiosna/wzgorza-i-powierzchnia.svg",
+   "size": [
+    500,
+    252
+   ]
+  },
+  "pory-roku/wiosna/drzewo": {
+   "file": "pory-roku/wiosna/drzewo.svg",
+   "size": [
+    144.14,
+    168.59
+   ],
+   "pivot": [
+    72.07,
+    161.3
+   ]
+  },
+  "pory-roku/wiosna/dekoracja": {
+   "file": "pory-roku/wiosna/dekoracja.svg",
+   "size": [
+    120,
+    96
+   ],
+   "pivot": [
+    60,
+    89
+   ]
+  },
+  "pory-roku/wiosna/czastka": {
+   "file": "pory-roku/wiosna/czastka.svg",
+   "size": [
+    32,
+    32
+   ],
+   "pivot": [
+    16,
+    16
+   ]
+  },
+  "pory-roku/lato/poswiata": {
+   "file": "pory-roku/lato/poswiata.svg",
+   "size": [
+    500,
+    252
+   ]
+  },
+  "pory-roku/lato/wzgorza-i-powierzchnia": {
+   "file": "pory-roku/lato/wzgorza-i-powierzchnia.svg",
+   "size": [
+    500,
+    252
+   ]
+  },
+  "pory-roku/lato/drzewo": {
+   "file": "pory-roku/lato/drzewo.svg",
+   "size": [
+    144.14,
+    168.59
+   ],
+   "pivot": [
+    72.07,
+    161.3
+   ]
+  },
+  "pory-roku/lato/dekoracja": {
+   "file": "pory-roku/lato/dekoracja.svg",
+   "size": [
+    120,
+    96
+   ],
+   "pivot": [
+    60,
+    89
+   ]
+  },
+  "pory-roku/lato/czastka": {
+   "file": "pory-roku/lato/czastka.svg",
+   "size": [
+    32,
+    32
+   ],
+   "pivot": [
+    16,
+    16
+   ]
+  },
+  "pory-roku/jesien/poswiata": {
+   "file": "pory-roku/jesien/poswiata.svg",
+   "size": [
+    500,
+    252
+   ]
+  },
+  "pory-roku/jesien/wzgorza-i-powierzchnia": {
+   "file": "pory-roku/jesien/wzgorza-i-powierzchnia.svg",
+   "size": [
+    500,
+    252
+   ]
+  },
+  "pory-roku/jesien/drzewo": {
+   "file": "pory-roku/jesien/drzewo.svg",
+   "size": [
+    144.14,
+    168.59
+   ],
+   "pivot": [
+    72.07,
+    161.3
+   ]
+  },
+  "pory-roku/jesien/dekoracja": {
+   "file": "pory-roku/jesien/dekoracja.svg",
+   "size": [
+    120,
+    96
+   ],
+   "pivot": [
+    60,
+    89
+   ]
+  },
+  "pory-roku/jesien/czastka": {
+   "file": "pory-roku/jesien/czastka.svg",
+   "size": [
+    32,
+    32
+   ],
+   "pivot": [
+    16,
+    16
+   ]
+  },
+  "pory-roku/zima/poswiata": {
+   "file": "pory-roku/zima/poswiata.svg",
+   "size": [
+    500,
+    252
+   ]
+  },
+  "pory-roku/zima/wzgorza-i-powierzchnia": {
+   "file": "pory-roku/zima/wzgorza-i-powierzchnia.svg",
+   "size": [
+    500,
+    252
+   ]
+  },
+  "pory-roku/zima/drzewo": {
+   "file": "pory-roku/zima/drzewo.svg",
+   "size": [
+    142.3,
+    170.76
+   ],
+   "pivot": [
+    71.15,
+    163.38
+   ]
+  },
+  "pory-roku/zima/dekoracja": {
+   "file": "pory-roku/zima/dekoracja.svg",
+   "size": [
+    91.48,
+    125.93
+   ],
+   "pivot": [
+    45.74,
+    116.75
+   ]
+  },
+  "pory-roku/zima/czastka": {
+   "file": "pory-roku/zima/czastka.svg",
+   "size": [
+    32,
+    32
+   ],
+   "pivot": [
+    16,
+    16
+   ]
+  },
+  "wspolne/ziemia-przekroj": {
+   "file": "wspolne/ziemia-przekroj.svg",
+   "size": [
+    1500,
+    128
+   ]
+  },
+  "marchewki/kielek-korzen": {
+   "file": "marchewki/kielek-korzen.svg",
+   "size": [
+    50,
+    72
+   ],
+   "pivot": [
+    25,
+    28
+   ]
+  },
+  "marchewki/kielek-nac": {
+   "file": "marchewki/kielek-nac.svg",
+   "size": [
+    50,
+    72
+   ],
+   "pivot": [
+    25,
+    28
+   ]
+  },
+  "marchewki/mloda-korzen": {
+   "file": "marchewki/mloda-korzen.svg",
+   "size": [
+    50,
+    72
+   ],
+   "pivot": [
+    25,
+    28
+   ]
+  },
+  "marchewki/mloda-nac": {
+   "file": "marchewki/mloda-nac.svg",
+   "size": [
+    50,
+    72
+   ],
+   "pivot": [
+    25,
+    28
+   ]
+  },
+  "marchewki/dojrzala-korzen": {
+   "file": "marchewki/dojrzala-korzen.svg",
+   "size": [
+    50,
+    72
+   ],
+   "pivot": [
+    25,
+    28
+   ]
+  },
+  "marchewki/dojrzala-nac": {
+   "file": "marchewki/dojrzala-nac.svg",
+   "size": [
+    50,
+    72
+   ],
+   "pivot": [
+    25,
+    28
+   ]
+  },
+  "kopalnia/tlo-tunelu": {
+   "file": "kopalnia/tlo-tunelu.svg",
+   "size": [
+    1500,
+    354
+   ]
+  },
+  "kopalnia/belka": {
+   "file": "kopalnia/belka.svg",
+   "size": [
+    300,
+    36
+   ]
+  },
+  "kopalnia/podpora": {
+   "file": "kopalnia/podpora.svg",
+   "size": [
+    140,
+    289
+   ],
+   "pivot": [
+    71,
+    288
+   ]
+  },
+  "kopalnia/tor-i-posadzka": {
+   "file": "kopalnia/tor-i-posadzka.svg",
+   "size": [
+    300,
+    54
+   ]
+  },
+  "kopalnia/szyb-prowadnice": {
+   "file": "kopalnia/szyb-prowadnice.svg",
+   "size": [
+    101,
+    390
+   ]
+  },
+  "kopalnia/szyb-nadszybie": {
+   "file": "kopalnia/szyb-nadszybie.svg",
+   "size": [
+    199.99,
+    198.3
+   ],
+   "pivot": [
+    100.0,
+    189.07
+   ]
+  },
+  "kopalnia/klatka-windy": {
+   "file": "kopalnia/klatka-windy.svg",
+   "size": [
+    90.08,
+    80.19
+   ],
+   "pivot": [
+    45.04,
+    3.73
+   ]
+  },
+  "kopalnia/latarnia": {
+   "file": "kopalnia/latarnia.svg",
+   "size": [
+    47.12,
+    94.23
+   ],
+   "pivot": [
+    23.56,
+    0.0
+   ]
+  },
+  "efekty/blask-latarni": {
+   "file": "efekty/blask-latarni.svg",
+   "size": [
+    140,
+    140
+   ],
+   "pivot": [
+    70,
+    70
+   ]
+  },
+  "efekty/iskra": {
+   "file": "efekty/iskra.svg",
+   "size": [
+    30,
+    30
+   ],
+   "pivot": [
+    15,
+    15
+   ]
+  },
+  "efekty/pyl": {
+   "file": "efekty/pyl.svg",
+   "size": [
+    44,
+    35
+   ],
+   "pivot": [
+    22,
+    18
+   ]
+  },
+  "efekty/swiatlo-kasku": {
+   "file": "efekty/swiatlo-kasku.svg",
+   "size": [
+    135,
+    70
+   ],
+   "pivot": [
+    0,
+    34
+   ]
+  },
+  "kopalnia/brylki-zlota": {
+   "file": "kopalnia/brylki-zlota.svg",
+   "size": [
+    96.25,
+    27.68
+   ],
+   "pivot": [
+    48.12,
+    26.18
+   ]
+  },
+  "kopalnia/wozek-korpus": {
+   "file": "kopalnia/wozek-korpus.svg",
+   "size": [
+    138,
+    60
+   ],
+   "pivot": [
+    69,
+    58
+   ]
+  },
+  "kopalnia/wozek-kolo": {
+   "file": "kopalnia/wozek-kolo.svg",
+   "size": [
+    29,
+    29
+   ],
+   "pivot": [
+    14.5,
+    14.5
+   ]
+  },
+  "kopalnia/wiadro": {
+   "file": "kopalnia/wiadro.svg",
+   "size": [
+    66.61,
+    42.11
+   ],
+   "pivot": [
+    32.7,
+    39.63
+   ]
+  },
+  "kopalnia/skala-z-makiety": {
+   "file": "kopalnia/skala-z-makiety.svg",
+   "size": [
+    455,
+    340
+   ]
+  },
+  "gornicy/kilof-01-gotowosc": {
+   "file": "gornicy/kilof-01-gotowosc.svg",
+   "size": [
+    560,
+    510
+   ],
+   "pivot": [
+    245,
+    490
+   ],
+   "raster": "gornicy/klatki/kilof-01-gotowosc.png"
+  },
+  "gornicy/kilof-02-zamach": {
+   "file": "gornicy/kilof-02-zamach.svg",
+   "size": [
+    560,
+    510
+   ],
+   "pivot": [
+    245,
+    490
+   ],
+   "raster": "gornicy/klatki/kilof-02-zamach.png"
+  },
+  "gornicy/kilof-03-uderzenie": {
+   "file": "gornicy/kilof-03-uderzenie.svg",
+   "size": [
+    560,
+    510
+   ],
+   "pivot": [
+    245,
+    490
+   ],
+   "raster": "gornicy/klatki/kilof-03-uderzenie.png"
+  },
+  "gornicy/kilof-04-powrot": {
+   "file": "gornicy/kilof-04-powrot.svg",
+   "size": [
+    560,
+    510
+   ],
+   "pivot": [
+    245,
+    490
+   ],
+   "raster": "gornicy/klatki/kilof-04-powrot.png"
+  },
+  "gornicy/gornik-ze-zlotem": {
+   "file": "gornicy/gornik-ze-zlotem.svg",
+   "size": [
+    560,
+    510
+   ],
+   "pivot": [
+    245,
+    490
+   ],
+   "raster": "gornicy/klatki/gornik-ze-zlotem.png"
+  },
+  "gornicy/gornik-odpoczywa": {
+   "file": "gornicy/gornik-odpoczywa.svg",
+   "size": [
+    560,
+    510
+   ],
+   "pivot": [
+    245,
+    490
+   ],
+   "raster": "gornicy/klatki/gornik-odpoczywa.png"
+  }
+ },
+ "layers": [
+  {
+   "asset": "wspolne/niebo",
+   "x": 0,
+   "y": 0
+  },
+  {
+   "asset": "pory-roku/jesien/poswiata",
+   "x": 0,
+   "y": 0,
+   "role": "season:0:poswiata"
+  },
+  {
+   "asset": "pory-roku/jesien/poswiata",
+   "x": 500,
+   "y": 0,
+   "role": "season:1:poswiata"
+  },
+  {
+   "asset": "pory-roku/jesien/poswiata",
+   "x": 1000,
+   "y": 0,
+   "role": "season:2:poswiata"
+  },
+  {
+   "asset": "wspolne/slonce",
+   "x": 352,
+   "y": 69,
+   "scale": 0.92,
+   "role": "sun"
+  },
+  {
+   "asset": "wspolne/chmura",
+   "x": 89,
+   "y": 89,
+   "scale": 0.8,
+   "role": "cloud"
+  },
+  {
+   "asset": "wspolne/chmura",
+   "x": 460,
+   "y": 55,
+   "scale": 0.82,
+   "role": "cloud"
+  },
+  {
+   "asset": "wspolne/chmura",
+   "x": 712,
+   "y": 91,
+   "scale": 0.7,
+   "role": "cloud"
+  },
+  {
+   "asset": "wspolne/chmura",
+   "x": 1039,
+   "y": 63,
+   "scale": 0.73,
+   "role": "cloud"
+  },
+  {
+   "asset": "wspolne/chmura",
+   "x": 1360,
+   "y": 81,
+   "scale": 0.81,
+   "role": "cloud"
+  },
+  {
+   "asset": "pory-roku/jesien/wzgorza-i-powierzchnia",
+   "x": 0,
+   "y": 0,
+   "role": "season:0:wzgorza-i-powierzchnia"
+  },
+  {
+   "asset": "pory-roku/jesien/drzewo",
+   "x": 265,
+   "y": 231,
+   "scale": 0.92,
+   "role": "season:0:drzewo"
+  },
+  {
+   "asset": "pory-roku/jesien/drzewo",
+   "x": 364,
+   "y": 235,
+   "scale": 0.66,
+   "role": "season:0:drzewo"
+  },
+  {
+   "asset": "pory-roku/jesien/dekoracja",
+   "x": 425,
+   "y": 246,
+   "scale": 0.77,
+   "role": "season:0:dekoracja"
+  },
+  {
+   "asset": "pory-roku/jesien/czastka",
+   "x": 170,
+   "y": 112,
+   "scale": 0.39,
+   "role": "season:0:czastka"
+  },
+  {
+   "asset": "pory-roku/jesien/czastka",
+   "x": 389,
+   "y": 153,
+   "scale": 0.48,
+   "role": "season:0:czastka"
+  },
+  {
+   "asset": "pory-roku/jesien/czastka",
+   "x": 460,
+   "y": 115,
+   "scale": 0.31,
+   "role": "season:0:czastka"
+  },
+  {
+   "asset": "pory-roku/jesien/wzgorza-i-powierzchnia",
+   "x": 500,
+   "y": 0,
+   "role": "season:1:wzgorza-i-powierzchnia"
+  },
+  {
+   "asset": "pory-roku/jesien/drzewo",
+   "x": 765,
+   "y": 231,
+   "scale": 0.92,
+   "role": "season:1:drzewo"
+  },
+  {
+   "asset": "pory-roku/jesien/drzewo",
+   "x": 864,
+   "y": 235,
+   "scale": 0.66,
+   "role": "season:1:drzewo"
+  },
+  {
+   "asset": "pory-roku/jesien/dekoracja",
+   "x": 925,
+   "y": 246,
+   "scale": 0.77,
+   "role": "season:1:dekoracja"
+  },
+  {
+   "asset": "pory-roku/jesien/czastka",
+   "x": 670,
+   "y": 112,
+   "scale": 0.39,
+   "role": "season:1:czastka"
+  },
+  {
+   "asset": "pory-roku/jesien/czastka",
+   "x": 889,
+   "y": 153,
+   "scale": 0.48,
+   "role": "season:1:czastka"
+  },
+  {
+   "asset": "pory-roku/jesien/czastka",
+   "x": 960,
+   "y": 115,
+   "scale": 0.31,
+   "role": "season:1:czastka"
+  },
+  {
+   "asset": "pory-roku/jesien/wzgorza-i-powierzchnia",
+   "x": 1000,
+   "y": 0,
+   "role": "season:2:wzgorza-i-powierzchnia"
+  },
+  {
+   "asset": "pory-roku/jesien/drzewo",
+   "x": 1265,
+   "y": 231,
+   "scale": 0.92,
+   "role": "season:2:drzewo"
+  },
+  {
+   "asset": "pory-roku/jesien/drzewo",
+   "x": 1364,
+   "y": 235,
+   "scale": 0.66,
+   "role": "season:2:drzewo"
+  },
+  {
+   "asset": "pory-roku/jesien/dekoracja",
+   "x": 1425,
+   "y": 246,
+   "scale": 0.77,
+   "role": "season:2:dekoracja"
+  },
+  {
+   "asset": "pory-roku/jesien/czastka",
+   "x": 1170,
+   "y": 112,
+   "scale": 0.39,
+   "role": "season:2:czastka"
+  },
+  {
+   "asset": "pory-roku/jesien/czastka",
+   "x": 1389,
+   "y": 153,
+   "scale": 0.48,
+   "role": "season:2:czastka"
+  },
+  {
+   "asset": "pory-roku/jesien/czastka",
+   "x": 1460,
+   "y": 115,
+   "scale": 0.31,
+   "role": "season:2:czastka"
+  },
+  {
+   "asset": "wspolne/ziemia-przekroj",
+   "x": 0,
+   "y": 252
+  },
+  {
+   "asset": "marchewki/mloda-korzen",
+   "x": 345,
+   "y": 253,
+   "scale": 0.84,
+   "role": "carrot:0:1:korzen"
+  },
+  {
+   "asset": "marchewki/mloda-nac",
+   "x": 345,
+   "y": 253,
+   "scale": 0.84,
+   "role": "carrot:0:1:nac"
+  },
+  {
+   "asset": "marchewki/dojrzala-korzen",
+   "x": 384,
+   "y": 253,
+   "role": "carrot:1:2:korzen"
+  },
+  {
+   "asset": "marchewki/dojrzala-nac",
+   "x": 384,
+   "y": 253,
+   "role": "carrot:1:2:nac"
+  },
+  {
+   "asset": "marchewki/kielek-korzen",
+   "x": 425,
+   "y": 253,
+   "scale": 0.83,
+   "role": "carrot:2:0:korzen"
+  },
+  {
+   "asset": "marchewki/kielek-nac",
+   "x": 425,
+   "y": 253,
+   "scale": 0.83,
+   "role": "carrot:2:0:nac"
+  },
+  {
+   "asset": "marchewki/dojrzala-korzen",
+   "x": 599,
+   "y": 253,
+   "scale": 0.92,
+   "role": "carrot:3:2:korzen"
+  },
+  {
+   "asset": "marchewki/dojrzala-nac",
+   "x": 599,
+   "y": 253,
+   "scale": 0.92,
+   "role": "carrot:3:2:nac"
+  },
+  {
+   "asset": "marchewki/mloda-korzen",
+   "x": 637,
+   "y": 253,
+   "scale": 0.87,
+   "role": "carrot:4:1:korzen"
+  },
+  {
+   "asset": "marchewki/mloda-nac",
+   "x": 637,
+   "y": 253,
+   "scale": 0.87,
+   "role": "carrot:4:1:nac"
+  },
+  {
+   "asset": "marchewki/kielek-korzen",
+   "x": 698,
+   "y": 253,
+   "scale": 0.8,
+   "role": "carrot:5:0:korzen"
+  },
+  {
+   "asset": "marchewki/kielek-nac",
+   "x": 698,
+   "y": 253,
+   "scale": 0.8,
+   "role": "carrot:5:0:nac"
+  },
+  {
+   "asset": "marchewki/mloda-korzen",
+   "x": 1090,
+   "y": 253,
+   "scale": 0.86,
+   "role": "carrot:6:1:korzen"
+  },
+  {
+   "asset": "marchewki/mloda-nac",
+   "x": 1090,
+   "y": 253,
+   "scale": 0.86,
+   "role": "carrot:6:1:nac"
+  },
+  {
+   "asset": "marchewki/dojrzala-korzen",
+   "x": 1130,
+   "y": 253,
+   "scale": 0.92,
+   "role": "carrot:7:2:korzen"
+  },
+  {
+   "asset": "marchewki/dojrzala-nac",
+   "x": 1130,
+   "y": 253,
+   "scale": 0.92,
+   "role": "carrot:7:2:nac"
+  },
+  {
+   "asset": "marchewki/kielek-korzen",
+   "x": 1180,
+   "y": 253,
+   "scale": 0.86,
+   "role": "carrot:8:0:korzen"
+  },
+  {
+   "asset": "marchewki/kielek-nac",
+   "x": 1180,
+   "y": 253,
+   "scale": 0.86,
+   "role": "carrot:8:0:nac"
+  },
+  {
+   "asset": "marchewki/dojrzala-korzen",
+   "x": 1390,
+   "y": 253,
+   "role": "carrot:9:2:korzen"
+  },
+  {
+   "asset": "marchewki/dojrzala-nac",
+   "x": 1390,
+   "y": 253,
+   "role": "carrot:9:2:nac"
+  },
+  {
+   "asset": "kopalnia/tlo-tunelu",
+   "x": 0,
+   "y": 366
+  },
+  {
+   "asset": "kopalnia/belka",
+   "x": 0,
+   "y": 371
+  },
+  {
+   "asset": "kopalnia/belka",
+   "x": 300,
+   "y": 371
+  },
+  {
+   "asset": "kopalnia/belka",
+   "x": 600,
+   "y": 371
+  },
+  {
+   "asset": "kopalnia/belka",
+   "x": 900,
+   "y": 371
+  },
+  {
+   "asset": "kopalnia/belka",
+   "x": 1200,
+   "y": 371
+  },
+  {
+   "asset": "kopalnia/podpora",
+   "x": 32,
+   "y": 680
+  },
+  {
+   "asset": "kopalnia/podpora",
+   "x": 362,
+   "y": 680
+  },
+  {
+   "asset": "kopalnia/podpora",
+   "x": 654,
+   "y": 680
+  },
+  {
+   "asset": "kopalnia/podpora",
+   "x": 950,
+   "y": 680
+  },
+  {
+   "asset": "kopalnia/podpora",
+   "x": 1244,
+   "y": 680
+  },
+  {
+   "asset": "kopalnia/tor-i-posadzka",
+   "x": 0,
+   "y": 666
+  },
+  {
+   "asset": "kopalnia/tor-i-posadzka",
+   "x": 300,
+   "y": 666
+  },
+  {
+   "asset": "kopalnia/tor-i-posadzka",
+   "x": 600,
+   "y": 666
+  },
+  {
+   "asset": "kopalnia/tor-i-posadzka",
+   "x": 900,
+   "y": 666
+  },
+  {
+   "asset": "kopalnia/tor-i-posadzka",
+   "x": 1200,
+   "y": 666
+  },
+  {
+   "asset": "kopalnia/szyb-prowadnice",
+   "x": 81,
+   "y": 248,
+   "scale": 1.08
+  },
+  {
+   "asset": "kopalnia/szyb-nadszybie",
+   "x": 136,
+   "y": 255,
+   "scale": 0.94
+  },
+  {
+   "asset": "kopalnia/klatka-windy",
+   "x": 135,
+   "y": 430,
+   "scale": 1.03,
+   "role": "lift"
+  },
+  {
+   "asset": "efekty/blask-latarni",
+   "x": 306,
+   "y": 466,
+   "scale": 1.13,
+   "role": "glow"
+  },
+  {
+   "asset": "kopalnia/latarnia",
+   "x": 306,
+   "y": 411,
+   "scale": 1.02
+  },
+  {
+   "asset": "efekty/blask-latarni",
+   "x": 551,
+   "y": 466,
+   "scale": 1.13,
+   "role": "glow"
+  },
+  {
+   "asset": "kopalnia/latarnia",
+   "x": 551,
+   "y": 411,
+   "scale": 1.02
+  },
+  {
+   "asset": "efekty/blask-latarni",
+   "x": 821,
+   "y": 466,
+   "scale": 1.13,
+   "role": "glow"
+  },
+  {
+   "asset": "kopalnia/latarnia",
+   "x": 821,
+   "y": 411,
+   "scale": 1.02
+  },
+  {
+   "asset": "efekty/blask-latarni",
+   "x": 1036,
+   "y": 466,
+   "scale": 1.13,
+   "role": "glow"
+  },
+  {
+   "asset": "kopalnia/latarnia",
+   "x": 1036,
+   "y": 411,
+   "scale": 1.02
+  },
+  {
+   "asset": "kopalnia/skala-z-makiety",
+   "x": 1045,
+   "y": 380
+  },
+  {
+   "asset": "gornicy/gornik-ze-zlotem",
+   "x": 499,
+   "y": 675,
+   "scale": 0.43
+  },
+  {
+   "asset": "gornicy/gornik-odpoczywa",
+   "x": 755,
+   "y": 675,
+   "scale": 0.43
+  },
+  {
+   "asset": "gornicy/kilof-01-gotowosc",
+   "x": 1001,
+   "y": 675,
+   "scale": 0.42,
+   "role": "miner:strike"
+  },
+  {
+   "asset": "kopalnia/brylki-zlota",
+   "x": 241,
+   "y": 626,
+   "scale": 1.24,
+   "role": "cart"
+  },
+  {
+   "asset": "kopalnia/wozek-korpus",
+   "x": 241,
+   "y": 669,
+   "scale": 1.04,
+   "role": "cart"
+  },
+  {
+   "asset": "kopalnia/wozek-kolo",
+   "x": 203,
+   "y": 663,
+   "scale": 0.94,
+   "role": "wheel"
+  },
+  {
+   "asset": "kopalnia/wozek-kolo",
+   "x": 281,
+   "y": 663,
+   "scale": 0.94,
+   "role": "wheel"
+  },
+  {
+   "asset": "kopalnia/wiadro",
+   "x": 617,
+   "y": 674,
+   "scale": 0.84
+  },
+  {
+   "asset": "kopalnia/brylki-zlota",
+   "x": 617,
+   "y": 638,
+   "scale": 0.4
+  },
+  {
+   "asset": "efekty/pyl",
+   "x": 1101,
+   "y": 529,
+   "scale": 1.25,
+   "role": "dust"
+  },
+  {
+   "asset": "efekty/iskra",
+   "x": 1043,
+   "y": 544,
+   "role": "spark"
+  },
+  {
+   "asset": "efekty/iskra",
+   "x": 1080,
+   "y": 561,
+   "scale": 0.66,
+   "role": "spark"
+  },
+  {
+   "asset": "efekty/iskra",
+   "x": 1101,
+   "y": 531,
+   "scale": 0.56,
+   "role": "spark"
+  },
+  {
+   "asset": "efekty/iskra",
+   "x": 268,
+   "y": 591,
+   "scale": 0.58,
+   "role": "spark"
+  },
+  {
+   "asset": "efekty/iskra",
+   "x": 197,
+   "y": 606,
+   "scale": 0.48,
+   "role": "spark"
+  },
+  {
+   "asset": "efekty/iskra",
+   "x": 785,
+   "y": 524,
+   "scale": 0.46,
+   "role": "spark"
+  },
+  {
+   "asset": "efekty/iskra",
+   "x": 508,
+   "y": 574,
+   "scale": 0.55,
+   "role": "spark"
+  }
+ ]
+}
