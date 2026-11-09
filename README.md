@@ -41,7 +41,7 @@ Chroniona PIN-em (w trybie z kontami sprawdzanym po stronie serwera: 5 błędów
 ## Uruchomienie
 Statyczna strona bez kroku budowania – wystarczy hosting plików (np. GitHub Pages, gałąź i folder `/`). Lokalnie: `npm run serve` i `http://localhost:8080` (`?local=1` wymusza tryb próbny, `?lang=en` – angielski).
 
-Po zmianie klas Tailwinda: `npm run build:css`.
+Po każdej zmianie plików: `npm run build` (ilustracje → `src/artkit.js`, Tailwind → `assets/tailwind.css`, znaczniki wersji w `index.html`, żeby przeglądarki i GitHub Pages nie podawały starych plików).
 
 ### Wspólna baza (Supabase)
 1. **SQL Editor** → wklej `supabase/schema.sql` → **Run**. Skrypt można uruchamiać wielokrotnie. Zachowuje rodziny, dzieci, linki i marzenia z Rodzinobanku, a stare wpłaty przenosi do nowej księgi (bieżąca kwota z oryginalną datą i domyślnym planem).

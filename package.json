@@ -9,6 +9,8 @@
     "serve": "python3 -m http.server 8080",
     "build:css": "npx --yes tailwindcss@3.4.16 -c tailwind.config.cjs -i assets/tailwind.src.css -o assets/tailwind.css --minify",
     "test:sql": "tests/sql/run.sh",
-    "build:art": "node tools/build-art.mjs"
+    "build:art": "node tools/build-art.mjs",
+    "stamp": "node tools/stamp.mjs",
+    "build": "npm run build:art && npm run build:css && npm run stamp"
   }
 }
