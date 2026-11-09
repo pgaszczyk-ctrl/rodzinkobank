@@ -33,6 +33,8 @@
     },
   };
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root { color-scheme: light; }
   html { scroll-behavior: smooth; }
@@ -197,6 +199,9 @@
   .celebrate { animation: celebrate 1.4s ease-in-out infinite; }
 
   input[type=number]::-webkit-inner-spin-button { opacity: 1; }
+  @keyframes toastIn { from { transform: translate(-50%, 20px); opacity: 0 } to { transform: translate(-50%, 0); opacity: 1 } }
+  .toast-in { animation: toastIn .3s ease-out both; }
+  #kidQr img, #kidQr canvas { width: 100%; height: auto; image-rendering: pixelated; }
   .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 
   dialog::backdrop { background: rgba(43,58,85,.35); backdrop-filter: blur(3px); }
@@ -258,6 +263,7 @@
       <span class="hidden sm:inline">Strefa Rodzica</span>
     </button>
   </header>
+  <div id="modeBar" class="flex flex-wrap items-center gap-2 min-h-[8px]"></div>
 
   <!-- ================= 1. SKARBIEC ================= -->
   <section aria-labelledby="vaultTitle" class="mt-6">
@@ -379,7 +385,8 @@
     </div>
   </section>
 
-  <footer class="text-center text-sm font-bold text-ink/40 mt-10">Rodzinobank · domowa szkoła oszczędzania · dane zapisują się tylko na tym urządzeniu</footer>
+  <footer class="text-center text-sm font-bold text-ink/40 mt-10"><span id="footerText">Rodzinobank · domowa szkoła oszczędzania</span>
+    <button id="unlinkBtn" class="hidden ml-2 underline hover:text-berry-500">Odłącz to urządzenie</button></footer>
 </div>
 
 <!-- ================= DIALOG: DREAM EDIT ================= -->
@@ -437,6 +444,7 @@
     </div>
 
     <div id="parentPanel" class="hidden">
+      <div id="familyBox" class="hidden mt-5 grid gap-3"></div>
       <form id="depForm" class="mt-5 grid sm:grid-cols-[1fr_1fr_auto] gap-2 items-end bg-mint-50 rounded-2xl p-4">
         <label class="block"><span class="text-xs font-bold text-ink/60">Wpłata (zł)</span>
           <input id="depAmount" type="number" min="0.01" step="0.01" value="10" required class="mt-1 w-full rounded-xl bg-white ring-2 ring-mint-200 focus:ring-mint-400 outline-none px-3 py-2 font-bold" /></label>
@@ -458,6 +466,7 @@
           <tbody id="depList" class="font-bold"></tbody>
         </table>
       </div>
+      <div id="wdList" class="mt-3"></div>
 
       <details class="mt-5 bg-sky-50 rounded-2xl p-4 text-sm">
         <summary class="font-bold cursor-pointer">Jak działa Premia za cierpliwość?</summary>
@@ -468,7 +477,10 @@
         </div>
       </details>
 
-      <div class="mt-5 flex flex-wrap gap-2 justify-end">
+      <div id="cloudCta" class="hidden mt-5 bg-grape-50 rounded-2xl p-4 text-sm font-semibold text-ink/70">
+        Teraz dane są tylko na tym urządzeniu. <button id="cloudCtaBtn" class="font-extrabold text-grape-600 underline">Załóż konto Rodzica</button>, żeby dziecko widziało swój skarbiec na swoim tablecie, a drugi rodzic też mógł wpłacać.
+      </div>
+      <div id="localTools" class="mt-5 flex flex-wrap gap-2 justify-end">
         <button id="demoBtn" class="px-4 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 font-bold text-sky-700">Wczytaj przykładowe dane</button>
         <button id="clearBtn" class="px-4 py-2 rounded-xl bg-berry-100 hover:bg-berry-200 font-bold text-berry-600">Wyczyść wszystko</button>
       </div>
@@ -476,9 +488,94 @@
   </div>
 </dialog>
 
+<!-- ================= WELCOME ================= -->
+<div id="welcome" class="hidden fixed inset-0 z-50 overflow-y-auto bg-[#fdfbf4]">
+  <div class="min-h-full grid place-items-center p-4 bg-[radial-gradient(900px_500px_at_10%_0%,#dff3ff,transparent_60%),radial-gradient(800px_500px_at_100%_100%,#fff4c9,transparent_60%)]">
+    <div class="brick bg-white p-6 sm:p-8 pt-10 w-full max-w-lg text-center pop-in">
+      <div class="studs stud-bg-white"><span></span><span></span><span></span><span></span></div>
+      <h2 class="font-display font-extrabold text-4xl">Rodzino<span class="text-berry-500">bank</span></h2>
+      <p class="font-bold text-ink/60 mt-1">Domowy bank, w którym cierpliwość się opłaca!</p>
+      <div class="grid gap-3 mt-6 text-left">
+        <button id="wParent" class="text-left rounded-3xl bg-sun-100 hover:bg-sun-200 p-4 flex items-center gap-4 shadow-brickSm active:translate-y-0.5">
+          <span class="w-12 h-12 rounded-2xl bg-sun-400 grid place-items-center shrink-0"><svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="#2b3a55" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></span>
+          <span><span class="block font-display font-extrabold text-xl">Jestem Rodzicem</span><span class="block text-sm font-bold text-ink/60">Zaloguj się lub załóż konto rodziny</span></span>
+        </button>
+        <button id="wKid" class="text-left rounded-3xl bg-mint-100 hover:bg-mint-200 p-4 flex items-center gap-4 shadow-brickSm active:translate-y-0.5">
+          <span class="w-12 h-12 rounded-2xl bg-mint-400 grid place-items-center shrink-0"><svg viewBox="0 0 24 24" class="w-7 h-7"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.2l7.1-.6z" fill="#fff" stroke="#047857" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+          <span><span class="block font-display font-extrabold text-xl">Jestem Dzieckiem</span><span class="block text-sm font-bold text-ink/60">Otwórz swój skarbiec</span></span>
+        </button>
+        <div id="wKidInfo" class="hidden rounded-2xl bg-mint-50 p-4 text-sm font-bold text-ink/70">
+          Poproś Rodzica, żeby otworzył <span class="text-mint-700">Strefę Rodzica</span> na swoim telefonie i pokazał Ci <span class="text-mint-700">kod QR</span> albo wysłał magiczny link. Zeskanuj go aparatem tego urządzenia – i gotowe!
+        </div>
+        <button id="wLocal" class="rounded-2xl p-3 font-bold text-ink/50 hover:bg-ink/5 text-center">Tylko wypróbuj (bez konta, dane na tym urządzeniu)</button>
+      </div>
+      <p id="wError" class="hidden mt-3 text-sm font-bold text-berry-600"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DIALOG: AUTH ================= -->
+<dialog id="authDialog">
+  <form id="authForm" class="brick bg-white p-6 pt-8 m-0">
+    <div class="studs stud-bg-white"><span></span><span></span><span></span></div>
+    <div class="flex items-start justify-between">
+      <h3 class="font-display font-extrabold text-2xl">Konto Rodzica</h3>
+      <button type="button" id="authClose" class="w-10 h-10 rounded-xl hover:bg-ink/5 text-2xl font-bold text-ink/50" aria-label="Zamknij">×</button>
+    </div>
+    <div class="flex bg-sky-50 rounded-2xl p-1 mt-3" role="tablist">
+      <button type="button" data-auth="login" class="authTab flex-1 py-2 rounded-xl font-bold">Logowanie</button>
+      <button type="button" data-auth="signup" class="authTab flex-1 py-2 rounded-xl font-bold">Nowe konto</button>
+    </div>
+    <div class="grid gap-3 mt-4">
+      <label class="block"><span class="text-sm font-bold text-ink/70">E-mail</span>
+        <input id="authEmail" type="email" required autocomplete="email" class="mt-1 w-full rounded-2xl bg-sky-50 ring-2 ring-sky-200 focus:ring-sky-400 outline-none px-4 py-3 font-bold" /></label>
+      <label class="block"><span class="text-sm font-bold text-ink/70">Hasło <span class="font-semibold text-ink/40">(min. 8 znaków)</span></span>
+        <input id="authPass" type="password" required minlength="8" autocomplete="current-password" class="mt-1 w-full rounded-2xl bg-sky-50 ring-2 ring-sky-200 focus:ring-sky-400 outline-none px-4 py-3 font-bold" /></label>
+    </div>
+    <p id="authMsg" class="hidden mt-3 text-sm font-bold rounded-2xl p-3"></p>
+    <div class="mt-5 flex items-center justify-between gap-3">
+      <button type="button" id="authForgot" class="text-sm font-bold text-ink/50 underline">Nie pamiętam hasła</button>
+      <button id="authSubmit" class="px-6 py-2.5 rounded-2xl font-display font-extrabold text-white bg-grape-500 hover:bg-grape-600 shadow-brickSm active:translate-y-0.5 disabled:opacity-50">Zaloguj</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ================= DIALOG: ONBOARDING ================= -->
+<dialog id="onboardDialog">
+  <div class="brick bg-white p-6 pt-8 m-0">
+    <div class="studs stud-bg-white"><span></span><span></span><span></span></div>
+    <h3 class="font-display font-extrabold text-2xl">Witaj w Rodzinobanku!</h3>
+    <p class="text-sm font-semibold text-ink/60">Załóż skarbiec dla dziecka albo dołącz do rodziny, którą założył drugi rodzic.</p>
+    <form id="obCreate" class="mt-4 bg-sun-50 rounded-2xl p-4 grid gap-2">
+      <label class="block"><span class="text-sm font-bold text-ink/70">Jak ma na imię Twoje dziecko?</span>
+        <input id="obKid" required maxlength="30" class="mt-1 w-full rounded-xl bg-white ring-2 ring-sun-200 focus:ring-sun-400 outline-none px-3 py-2.5 font-bold" /></label>
+      <button class="justify-self-end px-5 py-2.5 rounded-xl bg-sun-400 hover:bg-sun-500 font-display font-extrabold">Załóż skarbiec</button>
+    </form>
+    <form id="obJoin" class="mt-3 bg-sky-50 rounded-2xl p-4 grid gap-2">
+      <label class="block"><span class="text-sm font-bold text-ink/70">…albo wpisz kod rodziny od drugiego rodzica</span>
+        <input id="obCode" required maxlength="12" class="mt-1 w-full rounded-xl bg-white ring-2 ring-sky-200 focus:ring-sky-400 outline-none px-3 py-2.5 font-bold uppercase tracking-widest" /></label>
+      <button class="justify-self-end px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-display font-extrabold">Dołącz</button>
+    </form>
+    <div class="mt-4 text-right"><button id="obLogout" class="text-sm font-bold text-ink/50 underline">Wyloguj</button></div>
+  </div>
+</dialog>
+
+<div id="toast" class="hidden fixed bottom-5 left-1/2 z-[60] max-w-[calc(100vw-32px)] px-5 py-3 rounded-2xl font-bold shadow-brick"></div>
+
 <script>
 (() => {
   'use strict';
+
+  /* =====================================================================
+   *  0. KONFIGURACJA WSPÓLNEJ BAZY (Supabase)
+   *  Wklej tu „Publishable key” z: Supabase → Project Settings → API Keys.
+   *  Ten klucz jest publiczny – bezpieczeństwo zapewniają funkcje w bazie.
+   *  Dopóki klucza nie ma, aplikacja działa w trybie próbnym (bez konta).
+   * ===================================================================== */
+  const SUPABASE_URL = 'https://kjvwvgvwsdtlfogliizz.supabase.co';
+  const SUPABASE_KEY = 'WKLEJ_TUTAJ_PUBLISHABLE_KEY';
+  const cloudReady = !!(window.supabase && SUPABASE_KEY && !SUPABASE_KEY.startsWith('WKLEJ'));
+  const sb = cloudReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
   /* =====================================================================
    *  1. MODEL ODSETEK – progresywna Premia za cierpliwość + procent składany
@@ -568,11 +665,27 @@
     return demoState();
   }
   function save() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (e) { console.warn('Nie udało się zapisać danych (np. za duży obrazek).', e); }
+    try {
+      localStorage.setItem('rb.sim', JSON.stringify(state.sim));
+      if (mode === 'local') localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) { console.warn('Nie udało się zapisać danych (np. za duży obrazek).', e); }
+  }
+  const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* tryb prywatny */ } };
+  const lsDel = (k) => { try { localStorage.removeItem(k); } catch (e) { /* tryb prywatny */ } };
+  function loadSim() {
+    try { const s = JSON.parse(lsGet('rb.sim')); if (s && s.freq) return s; } catch (e) { /* brak */ }
+    return { amount: 10, freq: 'week' };
   }
 
+  // mode: 'local' (tylko to urządzenie) | 'parent' (zalogowany rodzic) | 'kid' (link dziecka)
+  let mode = 'local';
   let state = load();
+  let family = null;          // dane rodziny (tryb rodzica)
+  let currentKidId = null;    // wybrane dziecko (tryb rodzica)
+  let kidToken = null;        // token z linku (tryb dziecka)
+  let remoteVersion = null;   // „odcisk” stanu z bazy do wykrywania zmian
+  let userEmail = '';
 
   /* =====================================================================
    *  3. POMOCNICZE – formatowanie po polsku
@@ -1040,12 +1153,12 @@
   $('dreamDialog').addEventListener('close', () => {
     if ($('dreamDialog').returnValue !== 'save') return;
     const price = parseFloat($('dPrice').value);
-    state.dreams[editIdx] = {
-      name: $('dName').value.trim() || state.dreams[editIdx].name,
-      price: price > 0 ? price : state.dreams[editIdx].price,
+    const dream = {
+      name: ($('dName').value.trim() || state.dreams[editIdx].name).slice(0, 40),
+      price: price > 0 ? Math.round(price * 100) / 100 : state.dreams[editIdx].price,
       img: editImg || '',
     };
-    save(); renderAll();
+    actions.saveDream(editIdx, dream);
   });
 
   /* =====================================================================
@@ -1192,7 +1305,108 @@
   }));
 
   /* =====================================================================
-   *  10. STREFA RODZICA
+   *  10. KOMUNIKATY + AKCJE (lokalnie albo przez wspólną bazę)
+   * ===================================================================== */
+  let toastTimer = null;
+  function toast(msg, kind = 'info') {
+    const t = $('toast');
+    (document.querySelector('dialog[open]') || document.body).appendChild(t); // nad otwartym oknem
+    t.textContent = msg;
+    t.className = 'toast-in fixed bottom-5 left-1/2 z-[60] max-w-[calc(100vw-32px)] px-5 py-3 rounded-2xl font-bold shadow-brick ' +
+      (kind === 'error' ? 'bg-berry-100 text-berry-600' : 'bg-mint-100 text-mint-700');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.add('hidden'), 4000);
+  }
+
+  async function rpc(fn, args) {
+    const { data, error } = await sb.rpc(fn, args || {});
+    if (error) throw new Error(error.message || 'Błąd połączenia');
+    return data;
+  }
+
+  // Każda akcja: blokada podwójnego kliknięcia + komunikat o błędzie
+  let busy = false;
+  async function run(fn) {
+    if (busy) return;
+    busy = true; document.body.style.cursor = 'progress';
+    try { await fn(); }
+    catch (e) { console.error(e); toast(e.message && !/fetch/i.test(e.message) ? e.message : 'Brak połączenia z bankiem. Spróbuj za chwilę.', 'error'); }
+    finally { busy = false; document.body.style.cursor = ''; }
+  }
+
+  const DEFAULT_DREAMS = demoState().dreams;
+  function applyServer(js) {
+    state.kidName = js.kid.name;
+    state.deposits = (js.deposits || []).map((d) => ({ id: d.id, ts: Date.parse(d.ts), amount: Number(d.amount) }));
+    state.dreams = [0, 1, 2].map((i) => {
+      const r = (js.dreams || []).find((x) => Number(x.slot) === i);
+      return r ? { name: r.name, price: Number(r.price), img: r.img || '' } : { ...DEFAULT_DREAMS[i] };
+    });
+    state.withdrawals = (js.withdrawals || []).map((w) => ({ ts: Date.parse(w.ts), amount: Number(w.amount) }));
+    remoteVersion = js.version;
+  }
+
+  async function reload(fromPoll = false) {
+    const before = totalAt(Date.now());
+    const js = mode === 'kid'
+      ? await rpc('kid_state_by_token', { p_token: kidToken })
+      : await rpc('kid_state', { p_kid: currentKidId });
+    if (!js) throw new Error('Nie znaleziono skarbca');
+    applyServer(js);
+    renderName(); renderAll(true);
+    if ($('parentDialog').open) renderDepList();
+    const diff = totalAt(Date.now()) - before;
+    if (fromPoll && diff > 0.5) { spawnCoin('+' + zl(diff)); toast('Nowa wpłata w skarbcu: +' + zl(diff)); }
+  }
+
+  function planWithdrawal(w) {
+    const now = Date.now(), changes = [];
+    const sorted = [...state.deposits].sort((a, b) => b.ts - a.ts); // od najmłodszych
+    for (const d of sorted) {
+      if (w <= 1e-9) break;
+      const v = valueAfter(d.amount, ageDays(d.ts, now));
+      if (v <= w + 1e-9) { w -= v; changes.push({ id: d.id, amount: 0 }); }
+      else { changes.push({ id: d.id, amount: d.amount * (v - w) / v }); w = 0; }
+    }
+    return changes;
+  }
+
+  const actions = {
+    addDeposit: (amount, ts) => run(async () => {
+      if (mode === 'local') { state.deposits.push({ id: uid(), ts, amount }); save(); renderAll(true); renderDepList(); }
+      else { await rpc('add_deposit', { p_kid: currentKidId, p_amount: amount, p_ts: new Date(ts).toISOString() }); await reload(); }
+      spawnCoin('+' + zl(amount)); toast('Wpłacono ' + zl(amount));
+    }),
+    deleteDeposit: (id) => run(async () => {
+      if (mode === 'local') { state.deposits = state.deposits.filter((d) => d.id !== id); save(); renderAll(true); renderDepList(); }
+      else { await rpc('delete_deposit', { p_id: id }); await reload(); }
+    }),
+    withdraw: (amount) => run(async () => {
+      const changes = planWithdrawal(amount);
+      if (mode === 'local') {
+        changes.forEach((c) => { const d = state.deposits.find((x) => x.id === c.id); if (d) d.amount = c.amount; });
+        state.deposits = state.deposits.filter((d) => d.amount > 1e-6);
+        state.withdrawals = [{ ts: Date.now(), amount }, ...(state.withdrawals || [])];
+        save(); renderAll(true); renderDepList();
+      } else { await rpc('apply_withdrawal', { p_kid: currentKidId, p_amount: amount, p_changes: changes }); await reload(); }
+      $('wdAmount').value = ''; toast('Wypłacono ' + zl(amount) + '. Gratulacje z okazji spełnionego marzenia!');
+    }),
+    saveDream: (i, d) => run(async () => {
+      if (mode === 'local') { state.dreams[i] = d; save(); renderAll(); return; }
+      const args = { p_slot: i, p_name: d.name, p_price: d.price, p_img: d.img || null };
+      if (mode === 'kid') await rpc('save_dream_by_token', { p_token: kidToken, ...args });
+      else await rpc('save_dream', { p_kid: currentKidId, ...args });
+      await reload(); toast('Marzenie zapisane!');
+    }),
+    renameKid: (name) => run(async () => {
+      if (mode === 'local') { state.kidName = name; save(); renderName(); return; }
+      await rpc('rename_kid', { p_kid: currentKidId, p_name: name });
+      family = await rpc('my_family'); await reload(); renderModeUI();
+    }),
+  };
+
+  /* =====================================================================
+   *  11. STREFA RODZICA
    * ===================================================================== */
   let gateAnswer = 0;
   function newGate() {
@@ -1201,21 +1415,95 @@
     $('gateQ').textContent = `${a} × ${b}`;
     $('gateA').value = ''; $('gateErr').classList.add('hidden');
   }
+  function openParentPanel() {
+    $('gate').classList.add('hidden'); $('parentPanel').classList.remove('hidden');
+    renderFamilyBox(); renderDepList();
+  }
   $('parentBtn').addEventListener('click', () => {
+    $('depDate').value = new Date().toISOString().slice(0, 10);
+    $('cloudCta').classList.toggle('hidden', !(cloudReady && mode === 'local'));
+    $('localTools').classList.toggle('hidden', mode !== 'local');
+    $('parentDialog').showModal();
+    if (mode === 'parent') { openParentPanel(); return; } // zalogowany rodzic – bez zagadki
     newGate();
     $('gate').classList.remove('hidden'); $('parentPanel').classList.add('hidden');
-    $('depDate').value = new Date().toISOString().slice(0, 10);
-    $('parentDialog').showModal();
     setTimeout(() => $('gateA').focus(), 50);
   });
   $('parentClose').addEventListener('click', () => $('parentDialog').close());
   function tryGate() {
-    if (Number($('gateA').value) === gateAnswer) {
-      $('gate').classList.add('hidden'); $('parentPanel').classList.remove('hidden'); renderDepList();
-    } else { $('gateErr').classList.remove('hidden'); }
+    if (Number($('gateA').value) === gateAnswer) openParentPanel();
+    else $('gateErr').classList.remove('hidden');
   }
   $('gateBtn').addEventListener('click', tryGate);
   $('gateA').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryGate(); });
+  $('cloudCtaBtn').addEventListener('click', () => { $('parentDialog').close(); openAuth('signup'); });
+
+  const kidLink = (token) => `${location.origin}${location.pathname}?dziecko=${token}`;
+
+  function renderFamilyBox() {
+    const box = $('familyBox');
+    if (mode !== 'parent' || !family) { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    const kid = family.kids.find((k) => k.id === currentKidId) || family.kids[0];
+    box.innerHTML = `
+      <div class="bg-sun-50 rounded-2xl p-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-bold text-ink/60 mr-1">Skarbiec dziecka:</span>
+          ${family.kids.map((k) => `<button data-kid="${k.id}" class="px-3 py-1.5 rounded-xl font-display font-extrabold text-sm ${k.id === currentKidId ? 'bg-sun-400 text-ink shadow-brickSm' : 'bg-white text-ink/60 hover:bg-sun-100'}">${esc(k.name)}</button>`).join('')}
+          <button id="addKidBtn" class="px-3 py-1.5 rounded-xl font-bold text-sm text-sun-700 hover:bg-sun-100">+ dodaj dziecko</button>
+        </div>
+      </div>
+      <div class="bg-mint-50 rounded-2xl p-4">
+        <p class="font-display font-extrabold">Magiczny link dla: ${esc(kid.name)}</p>
+        <p class="text-xs font-semibold text-ink/60">Otwórz go na urządzeniu dziecka (albo zeskanuj kod aparatem). Dziecko widzi swój skarbiec i może zmieniać marzenia, ale nie może wpłacać ani wypłacać.</p>
+        <div class="mt-3 flex gap-3 items-start">
+          <div id="kidQr" class="w-28 h-28 shrink-0 bg-white rounded-xl p-1.5 ring-2 ring-mint-200"></div>
+          <div class="flex-1 min-w-0 grid gap-2">
+            <input id="kidLinkInput" readonly value="${esc(kidLink(kid.view_token))}" class="w-full rounded-xl bg-white ring-2 ring-mint-200 px-3 py-2 text-xs font-bold text-ink/70" />
+            <div class="flex flex-wrap gap-2">
+              <button id="copyLinkBtn" class="px-3 py-1.5 rounded-xl bg-mint-500 hover:bg-mint-600 text-white font-bold text-sm">Kopiuj link</button>
+              <button id="newLinkBtn" class="px-3 py-1.5 rounded-xl bg-white hover:bg-mint-100 text-mint-700 font-bold text-sm" title="Stary link przestanie działać">Nowy link</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-sky-50 rounded-2xl p-4 text-sm font-semibold text-ink/70">
+        <span class="font-display font-extrabold text-ink">Drugi rodzic?</span> Niech założy konto i wpisze kod rodziny:
+        <span class="font-display font-extrabold text-lg tracking-widest text-sky-700 bg-white rounded-lg px-2 py-0.5 ml-1">${esc(family.join_code)}</span>
+        <span class="block text-xs mt-1">Rodziców w rodzinie: ${family.members}</span>
+      </div>
+      <div class="flex justify-between items-center text-sm font-bold text-ink/50">
+        <span>Zalogowano: ${esc(userEmail)}</span>
+        <button id="logoutBtn" class="underline hover:text-berry-500">Wyloguj</button>
+      </div>`;
+
+    try {
+      if (window.QRCode) new QRCode($('kidQr'), { text: kidLink(kid.view_token), width: 256, height: 256, colorDark: '#2b3a55', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    } catch (e) { /* QR jest tylko dodatkiem */ }
+
+    box.querySelectorAll('[data-kid]').forEach((b) => b.addEventListener('click', () => run(async () => {
+      currentKidId = b.dataset.kid; lsSet('rb.kidId', currentKidId);
+      await reload(); renderModeUI(); renderFamilyBox();
+    })));
+    $('addKidBtn').addEventListener('click', () => {
+      const n = prompt('Jak ma na imię dziecko?');
+      if (!n || !n.trim()) return;
+      run(async () => {
+        family = await rpc('add_kid', { p_name: n.trim().slice(0, 30) });
+        currentKidId = family.kids[family.kids.length - 1].id; lsSet('rb.kidId', currentKidId);
+        await reload(); renderModeUI(); renderFamilyBox();
+      });
+    });
+    $('copyLinkBtn').addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText($('kidLinkInput').value); toast('Link skopiowany!'); }
+      catch (e) { $('kidLinkInput').select(); toast('Zaznaczyłem link – skopiuj go ręcznie.'); }
+    });
+    $('newLinkBtn').addEventListener('click', () => {
+      if (!confirm('Utworzyć nowy link? Stary przestanie działać na urządzeniach dziecka.')) return;
+      run(async () => { await rpc('regenerate_kid_link', { p_kid: currentKidId }); family = await rpc('my_family'); renderFamilyBox(); toast('Nowy link gotowy.'); });
+    });
+    $('logoutBtn').addEventListener('click', logout);
+  }
 
   function renderDepList() {
     const now = Date.now();
@@ -1227,14 +1515,15 @@
         <td class="p-2 text-right">${zl(d.amount)}</td>
         <td class="p-2 text-right text-mint-600">+${nf2.format(((v / d.amount) - 1) * 100)}%</td>
         <td class="p-2 text-right">${zl(v)}</td>
-        <td class="p-2 text-right"><button data-del="${d.id}" class="w-7 h-7 rounded-lg hover:bg-berry-100 text-berry-500" aria-label="Usuń wpłatę">×</button></td>
+        <td class="p-2 text-right"><button data-del="${esc(d.id)}" class="w-7 h-7 rounded-lg hover:bg-berry-100 text-berry-500" aria-label="Usuń wpłatę">×</button></td>
       </tr>`;
     }).join('') : `<tr><td colspan="5" class="p-4 text-center text-ink/50">Brak wpłat</td></tr>`;
     $('depList').querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => {
-      if (!confirm('Usunąć tę wpłatę?')) return;
-      state.deposits = state.deposits.filter((d) => d.id !== b.dataset.del);
-      save(); renderAll(true); renderDepList();
+      if (confirm('Usunąć tę wpłatę?')) actions.deleteDeposit(b.dataset.del);
     }));
+    const wds = state.withdrawals || [];
+    $('wdList').innerHTML = wds.length ? `<p class="text-xs font-bold text-ink/50 mb-1">Wypłaty na spełnione marzenia:</p>
+      <div class="flex flex-wrap gap-2">${wds.slice(0, 8).map((w) => `<span class="text-xs font-bold bg-berry-50 text-berry-600 rounded-lg px-2 py-1">${new Date(w.ts).toLocaleDateString('pl-PL')} · −${zl(w.amount)}</span>`).join('')}</div>` : '';
   }
 
   $('depForm').addEventListener('submit', (e) => {
@@ -1244,53 +1533,222 @@
     const [y, m, d] = $('depDate').value.split('-').map(Number);
     let ts = new Date(y, m - 1, d, 12).getTime();
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (ts >= today.getTime()) ts = Date.now(); // dzisiejsza wpłata liczy się od teraz
-    if (ts > Date.now()) ts = Date.now();
-    state.deposits.push({ id: uid(), ts, amount });
-    save(); renderAll(true); renderDepList();
-    spawnCoin('+' + zl(amount));
+    if (!(ts < today.getTime())) ts = Date.now(); // dzisiejsza wpłata liczy się od teraz
+    actions.addDeposit(amount, ts);
   });
 
   $('wdForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    let w = parseFloat($('wdAmount').value);
-    const now = Date.now();
-    const total = totalAt(now);
+    const w = parseFloat($('wdAmount').value);
+    const total = totalAt(Date.now());
     if (!(w > 0)) return;
     if (w > total + 1e-9) { alert('W skarbcu jest tylko ' + zl(total) + '.'); return; }
-    // zabieramy od najmłodszych wpłat
-    const sorted = [...state.deposits].sort((a, b) => b.ts - a.ts);
-    for (const d of sorted) {
-      if (w <= 0) break;
-      const v = valueAfter(d.amount, ageDays(d.ts, now));
-      if (v <= w + 1e-9) { w -= v; d.amount = 0; }
-      else { d.amount = d.amount * (v - w) / v; w = 0; }
-    }
-    state.deposits = state.deposits.filter((d) => d.amount > 1e-6);
-    $('wdAmount').value = '';
-    save(); renderAll(true); renderDepList();
+    actions.withdraw(Math.round(w * 100) / 100);
   });
 
   $('demoBtn').addEventListener('click', () => {
     if (!confirm('Zastąpić obecne dane przykładowymi?')) return;
-    const keepDreams = state.dreams;
-    state = demoState(); state.dreams = keepDreams;
-    save(); $('simAmount').value = state.sim.amount; syncFreqButtons(); renderAll(true); renderDepList(); renderName();
+    const keepDreams = state.dreams, sim = state.sim;
+    state = demoState(); state.dreams = keepDreams; state.sim = sim;
+    save(); renderAll(true); renderDepList(); renderName();
   });
   $('clearBtn').addEventListener('click', () => {
     if (!confirm('Na pewno usunąć wszystkie wpłaty?')) return;
-    state.deposits = []; save(); renderAll(true); renderDepList();
+    state.deposits = []; state.withdrawals = []; save(); renderAll(true); renderDepList();
   });
 
   // imię dziecka
   function renderName() { $('kidName').textContent = state.kidName || 'Skarbniku'; }
   $('kidNameBtn').addEventListener('click', () => {
+    if (mode === 'kid') { toast('Imię może zmienić Rodzic w Strefie Rodzica.'); return; }
     const n = prompt('Jak masz na imię?', state.kidName === 'Skarbniku' ? '' : state.kidName);
-    if (n !== null) { state.kidName = n.trim().slice(0, 20) || 'Skarbniku'; save(); renderName(); }
+    if (n !== null && n.trim()) actions.renameKid(n.trim().slice(0, 20));
   });
 
   /* =====================================================================
-   *  11. START
+   *  12. KONTA, TRYBY I SYNCHRONIZACJA
+   * ===================================================================== */
+  function renderModeUI() {
+    const bar = $('modeBar');
+    let html = '';
+    if (mode === 'parent' && family) {
+      if (family.kids.length > 1) {
+        html += family.kids.map((k) => `<button data-tab="${k.id}" class="px-3 py-1.5 rounded-2xl font-display font-extrabold text-sm ${k.id === currentKidId ? 'bg-white shadow-brickSm text-ink' : 'text-ink/50 hover:bg-white/60'}">${esc(k.name)}</button>`).join('');
+      }
+      html += `<span class="ml-auto text-xs font-bold text-mint-700 bg-mint-100 rounded-full px-3 py-1">Wspólny bank rodziny · widok Rodzica</span>`;
+    } else if (mode === 'local') {
+      html += `<span class="ml-auto text-xs font-bold text-ink/50 bg-white/70 rounded-full px-3 py-1">Tryb próbny – dane tylko na tym urządzeniu${cloudReady ? ' · <button id="modeLogin" class="underline text-grape-600">Zaloguj się</button>' : ''}</span>`;
+    }
+    bar.innerHTML = html;
+    bar.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => run(async () => {
+      currentKidId = b.dataset.tab; lsSet('rb.kidId', currentKidId); await reload(); renderModeUI();
+    })));
+    const ml = $('modeLogin'); if (ml) ml.addEventListener('click', () => openAuth('login'));
+
+    $('parentBtn').classList.toggle('hidden', mode === 'kid');
+    $('unlinkBtn').classList.toggle('hidden', mode !== 'kid');
+    $('kidNameBtn').title = mode === 'kid' ? '' : 'Zmień imię';
+    $('footerText').textContent = mode === 'local'
+      ? 'Rodzinobank · domowa szkoła oszczędzania · dane zapisują się tylko na tym urządzeniu'
+      : 'Rodzinobank · domowa szkoła oszczędzania · wspólny skarbiec rodziny';
+  }
+
+  let pollTimer = null;
+  function startPolling() {
+    clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+      if (mode === 'local' || busy || document.visibilityState !== 'visible') return;
+      try {
+        const v = mode === 'kid'
+          ? await rpc('kid_version_by_token', { p_token: kidToken })
+          : await rpc('kid_version', { p_kid: currentKidId });
+        if (v !== remoteVersion) await reload(true);
+      } catch (e) { /* chwilowy brak sieci – spróbujemy za moment */ }
+    }, 15000);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && mode !== 'local') reload(true).catch(() => {});
+  });
+
+  function showWelcome(err) {
+    $('welcome').classList.remove('hidden');
+    $('wError').classList.toggle('hidden', !err);
+    if (err) $('wError').textContent = err;
+  }
+  const hideWelcome = () => $('welcome').classList.add('hidden');
+  $('wParent').addEventListener('click', () => openAuth('login'));
+  $('wKid').addEventListener('click', () => $('wKidInfo').classList.toggle('hidden'));
+  $('wLocal').addEventListener('click', () => { lsSet('rb.mode', 'local'); enterLocal(); });
+
+  function enterLocal() {
+    mode = 'local'; state = load(); state.sim = loadSim();
+    hideWelcome(); renderName(); renderAll(true); renderModeUI();
+  }
+
+  async function enterParent(session) {
+    userEmail = (session && session.user && session.user.email) || '';
+    mode = 'parent';
+    family = await rpc('my_family');
+    if (!family) { hideWelcome(); renderModeUI(); $('onboardDialog').showModal(); return; }
+    const saved = lsGet('rb.kidId');
+    currentKidId = (family.kids.find((k) => k.id === saved) || family.kids[0]).id;
+    await reload();
+    hideWelcome(); renderModeUI(); startPolling();
+  }
+
+  async function enterKid(token) {
+    mode = 'kid'; kidToken = token;
+    try { await reload(); }
+    catch (e) {
+      mode = 'local'; kidToken = null; lsDel('rb.kidToken');
+      showWelcome(/fetch/i.test(e.message) ? 'Brak połączenia z bankiem. Sprawdź internet i odśwież stronę.' : e.message);
+      return;
+    }
+    hideWelcome(); renderModeUI(); startPolling();
+  }
+
+  async function logout() {
+    try { await sb.auth.signOut(); } catch (e) { /* i tak czyścimy */ }
+    lsDel('rb.kidId'); lsDel('rb.mode');
+    location.reload();
+  }
+  $('obLogout').addEventListener('click', logout);
+  $('unlinkBtn').addEventListener('click', () => {
+    if (!confirm('Odłączyć to urządzenie od skarbca? Będzie potrzebny nowy link od Rodzica.')) return;
+    lsDel('rb.kidToken'); location.reload();
+  });
+
+  // --- onboarding ---
+  $('obCreate').addEventListener('submit', (e) => {
+    e.preventDefault();
+    run(async () => {
+      family = await rpc('create_family', { p_kid_name: $('obKid').value.trim().slice(0, 30) });
+      $('onboardDialog').close();
+      await enterParent((await sb.auth.getSession()).data.session);
+      toast('Skarbiec założony! W Strefie Rodzica znajdziesz link dla dziecka.');
+    });
+  });
+  $('obJoin').addEventListener('submit', (e) => {
+    e.preventDefault();
+    run(async () => {
+      family = await rpc('join_family', { p_code: $('obCode').value.trim() });
+      $('onboardDialog').close();
+      await enterParent((await sb.auth.getSession()).data.session);
+      toast('Dołączono do rodziny!');
+    });
+  });
+  $('onboardDialog').addEventListener('cancel', (e) => e.preventDefault());
+
+  // --- logowanie ---
+  let authMode = 'login';
+  function setAuthMode(m) {
+    authMode = m;
+    document.querySelectorAll('.authTab').forEach((b) => {
+      b.className = 'authTab flex-1 py-2 rounded-xl font-bold ' + (b.dataset.auth === m ? 'bg-white shadow-brickSm text-ink' : 'text-ink/50');
+    });
+    $('authSubmit').textContent = m === 'login' ? 'Zaloguj' : 'Załóż konto';
+    $('authPass').autocomplete = m === 'login' ? 'current-password' : 'new-password';
+    $('authForgot').classList.toggle('invisible', m !== 'login');
+    authMsg('');
+  }
+  function authMsg(text, kind = 'error') {
+    const el = $('authMsg');
+    el.classList.toggle('hidden', !text);
+    el.textContent = text;
+    el.className = 'mt-3 text-sm font-bold rounded-2xl p-3 ' + (text ? '' : 'hidden ') + (kind === 'error' ? 'bg-berry-50 text-berry-600' : 'bg-mint-50 text-mint-700');
+  }
+  function openAuth(m) {
+    if (!cloudReady) { toast('Wspólna baza nie jest jeszcze podłączona (brak klucza w pliku).', 'error'); return; }
+    setAuthMode(m); $('authDialog').showModal(); setTimeout(() => $('authEmail').focus(), 50);
+  }
+  document.querySelectorAll('.authTab').forEach((b) => b.addEventListener('click', () => setAuthMode(b.dataset.auth)));
+  $('authClose').addEventListener('click', () => $('authDialog').close());
+  const plAuthError = (m) => /invalid login/i.test(m) ? 'Nieprawidłowy e-mail lub hasło.'
+    : /not confirmed/i.test(m) ? 'Najpierw potwierdź e-mail – kliknij link w wiadomości od nas.'
+    : /already registered/i.test(m) ? 'To konto już istnieje – zaloguj się.'
+    : /password/i.test(m) && /6|8|weak|short/i.test(m) ? 'Hasło jest za słabe – użyj co najmniej 8 znaków.'
+    : /rate limit/i.test(m) ? 'Za dużo prób. Odczekaj chwilę.' : m;
+
+  $('authForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('authEmail').value.trim(), password = $('authPass').value;
+    $('authSubmit').disabled = true; authMsg('');
+    try {
+      if (authMode === 'login') {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        $('authDialog').close(); await enterParent(data.session);
+      } else {
+        const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } });
+        if (error) throw error;
+        if (data.session) { $('authDialog').close(); await enterParent(data.session); }
+        else authMsg('Prawie gotowe! Wysłaliśmy e-mail – kliknij w nim link, a potem zaloguj się tutaj.', 'ok');
+      }
+    } catch (err) { authMsg(plAuthError(err.message || String(err))); }
+    finally { $('authSubmit').disabled = false; }
+  });
+  $('authForgot').addEventListener('click', async () => {
+    const email = $('authEmail').value.trim();
+    if (!email) { authMsg('Wpisz najpierw swój e-mail.'); return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    authMsg(error ? plAuthError(error.message) : 'Wysłaliśmy link do ustawienia nowego hasła.', error ? 'error' : 'ok');
+  });
+
+  if (sb) {
+    sb.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setTimeout(async () => {
+          const np = prompt('Wpisz nowe hasło (min. 8 znaków):');
+          if (!np) return;
+          const { error } = await sb.auth.updateUser({ password: np });
+          toast(error ? plAuthError(error.message) : 'Hasło zmienione!', error ? 'error' : 'info');
+        }, 0);
+      }
+    });
+  }
+
+  /* =====================================================================
+   *  13. START
    * ===================================================================== */
   function renderAll(resetCounter = false) {
     const total = totalAt(Date.now());
@@ -1301,12 +1759,37 @@
     renderTimeline();
   }
 
+  state.sim = loadSim();
+  $('simAmount').value = state.sim.amount;
   buildMine();
   buildTimelineStatic();
   syncFreqButtons();
   renderName();
   renderCounter(shownTotal);
   renderAll();
+  renderModeUI();
+
+  async function boot() {
+    const params = new URLSearchParams(location.search);
+    const t = params.get('dziecko');
+    if (t) {
+      lsSet('rb.kidToken', t);
+      params.delete('dziecko');
+      history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash);
+    }
+    if (!cloudReady) { enterLocal(); return; }
+    const token = t || lsGet('rb.kidToken');
+    if (token && /^[0-9a-f-]{36}$/i.test(token)) { await enterKid(token); return; }
+    const { data } = await sb.auth.getSession();
+    if (data && data.session) {
+      try { await enterParent(data.session); }
+      catch (e) { showWelcome('Nie udało się połączyć z bankiem: ' + e.message); }
+      return;
+    }
+    if (lsGet('rb.mode') === 'local') { enterLocal(); return; }
+    showWelcome();
+  }
+  boot();
 
   // co 10 sekund dopisujemy mikro-odsetki i wypuszczamy monetę
   setInterval(liveTick, 10000);
