@@ -24,7 +24,6 @@ else html = html.replace('<link rel="stylesheet" href="assets/tailwind.css', `${
 for (const css of ['assets/tailwind.css', 'assets/app.css']) {
   html = html.replace(new RegExp(`href="${css.replace('.', '\\.')}(\\?v=[0-9a-f]+)?"`), `href="${css}?v=${hash(css)}"`);
 }
-html = html.replace(/<script src="assets\/vendor\/gsap-3\.13\.0\.min\.js(\?v=[0-9a-f]+)?"><\/script>/, `<script src="assets/vendor/gsap-3.13.0.min.js?v=${hash('assets/vendor/gsap-3.13.0.min.js')}"></script>`);
 html = html.replace(/<script type="module" src="(?:\.\/)?src\/app\.js(\?v=[0-9a-f]+)?"><\/script>/, `<script type="module" src="./src/app.js?v=${hash('src/app.js')}"></script>`);
 writeFileSync(new URL('index.html', root), html);
 console.log('stamped', files.length, 'modules');

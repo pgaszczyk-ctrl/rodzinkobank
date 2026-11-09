@@ -1,316 +1,443 @@
-// "Kopalnia Marzeń" – the illustrated scene ("Cztery pory roku", assets/scene),
-// assembled from assets/scene/scena.json and animated with GSAP.
-//
-// * Above ground: the current season and the next two (500 units each). The
-//   timeline maps every date onto that panorama, so each chest sits right under
-//   its date (a season of ~91 days spans 500 units).
-// * Below ground: the mine. A Groszak digs at the rock with the illustrator's four
-//   pickaxe frames (timings from scena.json, sparks and dust on the impact frame),
-//   the lift brings gold up the shaft exactly when the balance digits change.
+// "Kopalnia Marzeń": one cross-section with the calendar landscape above ground
+// and the mine below. Every chest underground sits exactly under its date on
+// the axis. Seasons blend into each other along the axis.
 
-import { SCENE } from './scenedata.js';
-import { addMonths, wallParts, wallToInstant } from './calendar.js';
-import { chestMarkup } from './chests.js';
+import { addMonths, wallParts, wallToInstant, dayOfYear } from './calendar.js';
+import { chestSvg } from './art.js';
 import { t, fmtDate, money } from './i18n.js';
 
-const W = SCENE.scene.width;          // 1500
-const H = SCENE.scene.height;         // 720
-const SLOT = SCENE.scene.seasonSlotWidth;
-const AXIS_Y = 263;
-const CHEST_Y = 288;
-const LIFT_REST_Y = 580, LIFT_TOP_Y = 262;
-const START_MONTH = { wiosna: 3, lato: 6, jesien: 9, zima: 12 };
-const SPOT = {                        // where the illustrator placed the Groszaki
-  A: { x: 1001, y: 675, s: 0.42 },    // at the rock face
-  B: { x: 499, y: 675, s: 0.43 },
-  C: { x: 755, y: 675, s: 0.43 },
+const DAY = 86400_000;
+export const SCENE_H = 500;
+const SURFACE = 168;      // ground level
+const ROAD_H = 32;        // axis band (chest markers on top, month names below)
+const CHEST_BASE = 286;   // chest baseline (first row; a close neighbour goes one row lower)
+const ROW_DY = 31;        // a close neighbour's label goes one row lower
+const GALLERY_TOP = 360;   // top of the original tunnel
+const FLOOR = GALLERY_TOP + 32;   // where the shaft opens into the tunnel
+const SX = 122;           // shaft centre
+const MINER_S = 1.35;     // miner scale (Rodzinobank-style blocky miners)
+const TX = 160;           // "today" on the axis
+
+const SEASONS = ['winter', 'spring', 'summer', 'autumn'];
+const CENTERS = [14, 104, 195, 287]; // mid-January, -April, -July, -October (day of year)
+const PALETTE = {
+  winter: { skyT: [196, 222, 250], skyB: [240, 247, 255], ground: [246, 250, 255], hill: [226, 236, 248] },
+  spring: { skyT: [190, 232, 255], skyB: [238, 252, 240], ground: [134, 214, 120], hill: [176, 232, 168] },
+  summer: { skyT: [150, 212, 255], skyB: [255, 246, 214], ground: [86, 196, 88], hill: [150, 222, 140] },
+  autumn: { skyT: [255, 220, 178], skyB: [255, 245, 230], ground: [214, 160, 88], hill: [234, 196, 136] },
 };
-const rnd = (n) => { const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
-const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ---------------- calendar → panorama ---------------- */
-/** The current season, the next two, and where each one starts. */
-export function seasonFrame(now, tz) {
-  const p = wallParts(now, tz);
-  const s0 = SCENE.seasonByMonth[p.m - 1];
-  const sm = START_MONTH[s0];
-  const start = wallToInstant(sm > p.m ? p.y - 1 : p.y, sm, 1, 0, 0, 0, 0, tz);
-  const i = SCENE.seasonOrder.indexOf(s0);
-  return {
-    seasons: [0, 1, 2].map((k) => SCENE.seasonOrder[(i + k) % 4]),
-    starts: [0, 1, 2, 3].map((k) => addMonths(start, 3 * k, tz)),
-  };
-}
-export function xOfDate(ms, frame) {
-  const s = frame.starts;
-  if (ms <= s[0]) return 0;
-  for (let k = 0; k < 3; k++) if (ms < s[k + 1]) return SLOT * k + (SLOT * (ms - s[k])) / (s[k + 1] - s[k]);
-  return W;
-}
-
-/* ---------------- markup helpers ---------------- */
-function place(key, l, cls = '', extra = '') {
-  const a = SCENE.assets[key];
-  const [w, h] = a.size;
-  const [px, py] = a.pivot || [0, 0];
-  const tf = `translate(${l.x} ${l.y})${l.rotation ? ` rotate(${l.rotation})` : ''} scale(${l.scale ?? 1})`;
-  return `<g transform="${tf}" class="${cls}"${extra}><g class="a" data-px="${px}" data-py="${py}"><image href="${a.url}" x="${-px}" y="${-py}" width="${w}" height="${h}" preserveAspectRatio="none"/></g></g>`;
-}
-const pill = (x, y, text, { fill = '#fff8ea', stroke = '#7a4a2a', color = '#4a2c18', w = null } = {}) => {
-  const width = w || Math.max(46, text.length * 7.6 + 20);
-  return `<g transform="translate(${x} ${y})"><rect x="${-width / 2}" y="-12" width="${width}" height="24" rx="12" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>
-    <text x="0" y="5" text-anchor="middle" class="scene-pill" fill="${color}">${text}</text></g>`;
-};
-const FRAMES = SCENE.animationRigs.uderzenie.frames;
-
-/** A Groszak at a spot: the four pickaxe frames stacked (only one visible), or one resting pose. */
-function miner(spot, pose, idx) {
-  const l = { x: spot.x, y: spot.y, scale: spot.s };
-  if (pose === 'strike') {
-    const imgs = FRAMES.map((f, i) => {
-      const a = SCENE.assets[f.asset];
-      return `<image class="f${i}" href="${a.url}" x="${-a.pivot[0]}" y="${-a.pivot[1]}" width="${a.size[0]}" height="${a.size[1]}" opacity="${i ? 0 : 1}"/>`;
-    }).join('');
-    return `<g transform="translate(${l.x} ${l.y}) scale(${l.scale})" class="m-strike" data-i="${idx}"><g class="a">${imgs}</g></g>`;
+const smooth = (x) => x * x * (3 - 2 * x);
+/** Weights of the four seasons for a day of year (they blend between mid-season points). */
+export function seasonWeights(doy) {
+  const w = { winter: 0, spring: 0, summer: 0, autumn: 0 };
+  for (let i = 0; i < 4; i++) {
+    const a = CENTERS[i], b = i === 3 ? CENTERS[0] + 365 : CENTERS[i + 1];
+    let d = doy; if (i === 3 && d < a) d += 365;
+    if (d >= a && d < b) {
+      const f = smooth((d - a) / (b - a));
+      w[SEASONS[i]] = 1 - f; w[SEASONS[(i + 1) % 4]] = f;
+      return w;
+    }
   }
-  const key = pose === 'lie' ? 'gornicy/gornik-odpoczywa' : pose === 'sit' ? 'gornicy/gornik-ze-zlotem' : 'gornicy/kilof-01-gotowosc';
-  return place(key, l, `m-idle m-${pose}`, ` data-i="${idx}"`);
+  w.winter = 1; return w;
+}
+export const dominantSeason = (w) => SEASONS.reduce((best, s) => (w[s] > w[best] ? s : best), 'winter');
+
+function mixColor(w, key) {
+  const c = [0, 0, 0];
+  for (const s of SEASONS) for (let i = 0; i < 3; i++) c[i] += PALETTE[s][key][i] * w[s];
+  return `rgb(${c.map((v) => Math.round(v)).join(',')})`;
 }
 
-/* ---------------- scene markup ---------------- */
-function buildMarkup(o) {
-  const { now, tz, chests, unlocked, miningActive, restPoses, hasDeposits } = o;
-  const frame = seasonFrame(now, tz);
-  const todayX = xOfDate(now, frame);
+// deterministic pseudo-random from an integer
+const rnd = (n) => { let x = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
 
-  // which Groszak stands where, doing what
-  const roster = [];
-  if (!hasDeposits) roster.push({ spot: 'C', pose: 'lie' });
-  else if (miningActive) {
-    const work = [{ spot: 'A', pose: 'strike' }, { spot: 'B', pose: 'sit' }, { spot: 'C', pose: 'strike' }];
-    for (let i = 0; i < unlocked; i++) roster.push(work[i]);
-  } else {
-    const allowed = { A: ['stand', 'sit'], B: ['sit', 'lie', 'stand'], C: ['lie', 'stand', 'sit'] };
-    const want = { wave: 'stand', sit: 'sit', nap: 'lie' };
-    ['A', 'B', 'C'].slice(0, unlocked).forEach((spot, i) => {
-      const p = want[restPoses[i]] || 'stand';
-      roster.push({ spot, pose: allowed[spot].includes(p) ? p : allowed[spot][0] });
+/* ---------------- decorations ---------------- */
+function tree(x, y, s, season, seed) {
+  const k = 0.8 + rnd(seed) * 0.5;
+  const sc = s * k;
+  if (season === 'winter') {
+    return `<g transform="translate(${x} ${y}) scale(${sc})"><rect x="-3" y="-14" width="6" height="14" fill="#7a5230"/>
+      <path d="M0 -62 L20 -34 H-20Z M0 -46 L24 -14 H-24Z" fill="#3f9f73"/>
+      <path d="M0 -62 L8 -51 Q0 -48 -8 -51Z M-15 -34 Q0 -30 15 -34 L19 -29 Q0 -25 -19 -29Z M-19 -14 Q0 -10 19 -14 L23 -12 Q0 -8 -23 -12Z" fill="#fff"/></g>`;
+  }
+  const canopy = season === 'autumn' ? ['#f28c38', '#e85d3a', '#f6b445'][seed % 3]
+    : season === 'spring' ? '#7ed67a' : '#3fbf5f';
+  const extra = season === 'spring'
+    ? [[-10, -44], [6, -52], [12, -38], [-4, -34], [-14, -30], [2, -44]].map(([dx, dy], i) => `<circle cx="${dx}" cy="${dy}" r="${2.6 + (i % 2)}" fill="${i % 2 ? '#fbcfe8' : '#f9a8d4'}"/>`).join('')
+    : season === 'autumn'
+      ? [0, 1].map((i) => `<path class="leaf" style="animation-delay:${(seed % 5) * 0.7 + i * 2.1}s" d="M${-8 + i * 14} -30 q4 -5 8 0 q-4 5 -8 0z" fill="${['#e85d3a', '#f6b445'][i]}"/>`).join('')
+      : '';
+  return `<g transform="translate(${x} ${y}) scale(${sc})"><g class="sway" style="animation-delay:${(seed % 7) * 0.4}s">
+    <rect x="-3.5" y="-24" width="7" height="24" rx="2" fill="#8b5a2b"/>
+    <circle cx="0" cy="-40" r="18" fill="${canopy}"/><circle cx="-12" cy="-30" r="11" fill="${canopy}"/><circle cx="12" cy="-31" r="12" fill="${canopy}"/>
+    <circle cx="-6" cy="-46" r="6" fill="#fff" opacity=".22"/>${extra}</g></g>`;
+}
+
+function groundDetail(x, y, season, seed) {
+  if (season === 'spring') {
+    const c = ['#f472b6', '#fcd34d', '#a78bfa', '#60a5fa'][seed % 4];
+    return `<g transform="translate(${x} ${y})"><path d="M0 0 V-9" stroke="#3fa776" stroke-width="1.6"/><path d="M0 -4 q-4 -2 -5 -6 q4 1 5 4" fill="#5cbf6b"/>
+      <circle cx="0" cy="-11" r="3" fill="${c}"/><circle cx="0" cy="-11" r="1.3" fill="#fff7c2"/></g>`;
+  }
+  if (season === 'autumn') return `<ellipse cx="${x}" cy="${y - 1}" rx="9" ry="2.6" fill="#e2632f" opacity=".75"/><path d="M${x + 6} ${y - 5} q3 -3 6 0 q-3 3 -6 0z" fill="#f6b445"/>`;
+  if (season === 'summer') return `<path d="M${x - 5} ${y} q2 -9 4 0 q2 -11 4 0 q2 -8 4 0" stroke="#2f9e4a" stroke-width="1.6" fill="none"/>`;
+  return `<ellipse cx="${x}" cy="${y - 1}" rx="10" ry="3" fill="#fff"/>`;
+}
+
+function snowman(x, y) {
+  return `<g transform="translate(${x} ${y})" class="snowman">
+    <ellipse cx="0" cy="-1" rx="20" ry="4" fill="#dbe7f3"/>
+    <circle cx="0" cy="-16" r="16" fill="#fff" stroke="#cfe0f0" stroke-width="2"/>
+    <circle cx="0" cy="-42" r="11" fill="#fff" stroke="#cfe0f0" stroke-width="2"/>
+    <rect x="-9" y="-56" width="18" height="4" rx="1.5" fill="#2b3a55"/><rect x="-6" y="-66" width="12" height="11" rx="1.5" fill="#2b3a55"/><rect x="-6" y="-58" width="12" height="2.5" fill="#ef4444"/>
+    <circle cx="-4" cy="-44" r="1.6" fill="#2b3a55"/><circle cx="4" cy="-44" r="1.6" fill="#2b3a55"/><path d="M0 -40 l9 2 l-9 2z" fill="#fb923c"/>
+    <path d="M-11 -32 q11 6 22 0 l1 4 q-12 6 -24 0z" fill="#ef4444"/>
+    <circle cx="0" cy="-20" r="1.8" fill="#2b3a55"/><circle cx="0" cy="-12" r="1.8" fill="#2b3a55"/>
+    <path d="M-15 -24 L-30 -34 M15 -24 L29 -36" stroke="#7a5230" stroke-width="2.4" stroke-linecap="round"/></g>`;
+}
+
+function sun(x, y) {
+  return `<g transform="translate(${x} ${y})"><g class="sun-rays">${Array.from({ length: 12 }, (_, i) => `<rect x="-2.5" y="-36" width="5" height="12" rx="2.5" fill="#fcd34d" transform="rotate(${i * 30})"/>`).join('')}</g>
+    <circle r="21" fill="#fde047"/><circle cx="-7" cy="-3" r="2.2" fill="#b45309"/><circle cx="7" cy="-3" r="2.2" fill="#b45309"/>
+    <path d="M-8 6 Q0 13 8 6" stroke="#b45309" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>`;
+}
+
+function cloud(x, y, s = 1) {
+  return `<g transform="translate(${x} ${y}) scale(${s})" opacity=".92" fill="#fff"><ellipse cx="0" cy="0" rx="22" ry="9"/><ellipse cx="14" cy="-6" rx="14" ry="9"/><ellipse cx="-12" cy="-4" rx="10" ry="7"/></g>`;
+}
+
+/* ---------------- mine pieces: the original Rodzinobank artwork ---------------- */
+// The mine below is drawn in the coordinates of the first version (viewBox 640×200)
+// and placed under the chests with one translate, so it looks exactly like before.
+const MINE_Y = GALLERY_TOP - 72;   // original tunnel top (y = 72) lands on GALLERY_TOP
+
+function gearPath(cx, cy, teeth, rOut, rIn, rHole) {
+  const step = (Math.PI * 2) / teeth;
+  let d = '';
+  for (let i = 0; i < teeth; i++) {
+    const a = i * step;
+    [[a - step * 0.30, rIn], [a - step * 0.18, rOut], [a + step * 0.18, rOut], [a + step * 0.30, rIn], [a + step * 0.5, rIn]].forEach(([ang, r], j) => {
+      d += (i === 0 && j === 0 ? 'M' : 'L') + (cx + r * Math.cos(ang)).toFixed(2) + ' ' + (cy + r * Math.sin(ang)).toFixed(2) + ' ';
     });
   }
-
-  let s = '';
-  let minersDone = false, inCart = false;
-  for (const l of SCENE.layers) {
-    let key = l.asset, cls = '';
-    const role = l.role || '';
-    if (key.startsWith('gornicy/')) {
-      if (minersDone) continue;
-      minersDone = true;
-      roster.forEach((r, i) => {
-        if (r.spot === 'C' && r.pose === 'strike') {   // the second digger breaks a lump of gold ore
-          s += place('kopalnia/brylki-zlota', { x: SPOT.C.x + 92, y: 676, scale: 1.05 }, 'ore-lump');
-          s += place('efekty/iskra', { x: SPOT.C.x + 88, y: 646, scale: 0.7 }, 'p-hit', ` data-for="${i}"`);
-          s += place('efekty/pyl', { x: SPOT.C.x + 96, y: 652, scale: 0.9 }, 'p-dust', ` data-for="${i}"`);
-        }
-        s += miner(SPOT[r.spot], r.pose, i);
-      });
-      if (!hasDeposits) s += pill(SPOT.C.x + 10, 520, t('kid.wakeHint'), { fill: '#fff', stroke: '#db2777', color: '#be185d' });
-      continue;
-    }
-    if (role.startsWith('season:')) {
-      const [, slot, name] = role.split(':');
-      key = `pory-roku/${frame.seasons[slot]}/${name}`;
-      cls = { czastka: `p-part p-${frame.seasons[slot]}`, drzewo: 'p-tree', dekoracja: 'p-deco' }[name] || '';
-    } else if (role === 'sun') cls = 'p-sun';
-    else if (role === 'cloud') cls = 'p-cloud';
-    else if (role.startsWith('carrot:')) cls = role.endsWith(':nac') ? 'p-leaves' : '';
-    else if (role === 'glow') cls = 'p-glow';
-    else if (key === 'kopalnia/latarnia') cls = 'p-lamp';
-    else if (role === 'lift') { s += place(key, { ...l, y: LIFT_REST_Y }, 'p-lift'); continue; }
-    else if (role === 'spark') cls = l.x > 1030 ? 'p-hit' : 'p-twinkle';
-    else if (role === 'dust') cls = 'p-dust';
-    // the cart: gold, body and wheels move together
-    if (role === 'cart' || role === 'wheel') {
-      if (!inCart) { s += `<g class="p-cartgroup">`; inCart = true; }
-      if (role === 'cart' && key === 'kopalnia/brylki-zlota' && !hasDeposits) continue;
-      s += place(key, l, role === 'wheel' ? 'p-wheel' : '');
-      continue;
-    }
-    if (inCart) { s += '</g>'; inCart = false; }
-    const extra = (cls === 'p-hit' || cls === 'p-dust') ? ' data-for="0"' : '';
-    s += place(key, l, cls, extra);
-  }
-  if (inCart) s += '</g>';
-
-  // timeline along the surface: today, months, chest dates
-  s += `<path d="M${todayX} ${AXIS_Y} H${W - 10}" stroke="#fff4dc" stroke-width="4" stroke-linecap="round" opacity=".92"/>
-    <path d="M${todayX} ${AXIS_Y + 2.5} H${W - 10}" stroke="#7a4a2a" stroke-width="1.2" opacity=".5"/>`;
-  const p0 = wallParts(now, tz);
-  for (let k = 1; k <= 9; k++) {
-    const ms = addMonths(wallToInstant(p0.y, p0.m, 1, 0, 0, 0, 0, tz), k, tz);
-    const x = xOfDate(ms, frame);
-    if (x >= W - 30) break;
-    const label = wallParts(ms, tz).m === 1 ? fmtDate(ms, tz, 'monthYear') : fmtDate(ms, tz, 'month');
-    s += `<path d="M${x} ${AXIS_Y - 5} V${AXIS_Y + 5}" stroke="#fff4dc" stroke-width="3" stroke-linecap="round"/><text x="${x + 6}" y="${AXIS_Y + 18}" class="scene-month">${label}</text>`;
-  }
-  let prevX = -999, row = 0;
-  const datePills = [];
-  chests.forEach((c, i) => {
-    const x = Math.max(xOfDate(c.at, frame), todayX + 40);
-    row = x - prevX < 70 ? 1 - row : 0;
-    prevX = x;
-    const sc = row ? 0.52 : 0.62;
-    s += `<g class="chest-marker" data-chest="${i}">
-      <path d="M${x} ${AXIS_Y + 10} V${CHEST_Y + 4}" stroke="#fff4dc" stroke-width="2" stroke-dasharray="3 4" opacity=".85"/>
-      <g transform="translate(${x - 53 * sc} ${CHEST_Y + row * 6}) scale(${sc})">${chestMarkup(c.skin)}</g>
-      ${pill(x, CHEST_Y + 66 + row * 2, money(c.amount, { sign: true }), { fill: '#fff3cf', stroke: '#b45309', color: '#7c3a0a' })}
-    </g>`;
-    datePills.push(pill(x, AXIS_Y, fmtDate(c.at, tz, 'short'), { w: 64 }));
-  });
-  s += pill(todayX, AXIS_Y, t('scene.today'), { fill: '#fff', stroke: '#db2777', color: '#be185d', w: 58 });
-  s += datePills.join('');
-
-  return { markup: `<svg viewBox="0 0 ${W} ${H}" class="scene-svg" role="img" aria-labelledby="sceneTitle sceneDesc">${s}</svg>`, todayX };
+  return d + `Z M${cx + rHole} ${cy} A${rHole} ${rHole} 0 1 0 ${cx - rHole} ${cy} A${rHole} ${rHole} 0 1 0 ${cx + rHole} ${cy}Z`;
+}
+function gearSvg(cx, cy, teeth, r, fill, cls, delay = 0) {
+  return `<g class="${cls}" style="animation-delay:${delay}s">
+    <path d="${gearPath(cx, cy, teeth, r, r * 0.80, r * 0.28)}" fill="${fill}" fill-rule="evenodd" stroke="rgba(0,0,0,.12)" stroke-width="2"/>
+    <circle cx="${cx}" cy="${cy}" r="${r * 0.55}" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="3"/>
+    ${[0, 1, 2, 3].map((k) => { const a = k * Math.PI / 2 + Math.PI / 4; return `<circle cx="${(cx + Math.cos(a) * r * 0.48).toFixed(1)}" cy="${(cy + Math.sin(a) * r * 0.48).toFixed(1)}" r="${r * 0.09}" fill="rgba(0,0,0,.15)"/>`; }).join('')}
+  </g>`;
 }
 
-/* ---------------- animation (GSAP) ---------------- */
-function animate(root, o) {
-  const gsap = window.gsap;
-  const q = (sel) => [...root.querySelectorAll(sel)];
-  const origin = (el) => `${el.dataset.px || 0}px ${el.dataset.py || 0}px`;
-  const R = (a, b) => a + Math.random() * (b - a);
-
-  q('.p-cloud > .a').forEach((el, i) => gsap.to(el, { x: R(-36, 36), duration: R(16, 26), ease: 'sine.inOut', yoyo: true, repeat: -1, delay: -i * 3 }));
-  q('.p-sun > .a').forEach((el) => {
-    gsap.to(el, { rotation: 5, transformOrigin: origin(el), duration: 6, ease: 'sine.inOut', yoyo: true, repeat: -1 });
-    gsap.to(el, { scale: 1.035, transformOrigin: origin(el), duration: 2.6, ease: 'sine.inOut', yoyo: true, repeat: -1 });
-  });
-  q('.p-tree > .a, .p-deco > .a').forEach((el, i) => gsap.fromTo(el, { rotation: -1.2 }, { rotation: 1.2, transformOrigin: origin(el), duration: R(2.8, 4.2), ease: 'sine.inOut', yoyo: true, repeat: -1, delay: -i }));
-  q('.p-leaves > .a').forEach((el, i) => gsap.fromTo(el, { rotation: -6 }, { rotation: 6, transformOrigin: origin(el), duration: R(1.5, 2.3), ease: 'sine.inOut', yoyo: true, repeat: -1, delay: -i * 0.4 }));
-  q('.p-lamp > .a').forEach((el, i) => gsap.fromTo(el, { rotation: -1.8 }, { rotation: 1.8, transformOrigin: origin(el), duration: R(2.6, 3.4), ease: 'sine.inOut', yoyo: true, repeat: -1, delay: -i }));
-  q('.p-glow > .a').forEach((el) => gsap.to(el, { opacity: 'random(0.72, 1)', scale: 'random(0.95, 1.05)', transformOrigin: origin(el), duration: 'random(0.18, 0.45)', ease: 'sine.inOut', repeat: -1, repeatRefresh: true }));
-  q('.p-twinkle > .a').forEach((el) => {
-    gsap.set(el, { scale: 0, transformOrigin: origin(el) });
-    gsap.timeline({ repeat: -1, repeatDelay: R(1.2, 3.5), delay: R(0, 3) }).to(el, { scale: 1, rotation: 45, duration: 0.45, ease: 'back.out(2)' }).to(el, { scale: 0, rotation: 90, duration: 0.5, ease: 'power1.in' });
-  });
-  // season particles: leaves fall, snow drifts, petals float, summer sparkles twinkle
-  q('.p-part > .a').forEach((el) => {
-    const season = el.parentNode.getAttribute('class').match(/p-(\w+)$/)[1];
-    gsap.set(el, { transformOrigin: origin(el) });
-    if (season === 'lato') {
-      gsap.timeline({ repeat: -1, delay: R(0, 2) }).fromTo(el, { scale: 0.4, opacity: 0.2 }, { scale: 1.2, opacity: 1, duration: 1.2, ease: 'sine.inOut', yoyo: true, repeat: 1 });
-      return;
-    }
-    const fall = season === 'zima' ? 90 : season === 'jesien' ? 110 : 70;
-    gsap.fromTo(el, { y: -30, x: 0, opacity: 0, rotation: 0 }, {
-      keyframes: { opacity: [0, 1, 1, 0], ease: 'none' }, y: fall, x: season === 'zima' ? R(-14, 14) : R(18, 40),
-      rotation: season === 'zima' ? 0 : R(180, 420), duration: R(5, 8), ease: 'sine.inOut', repeat: -1, delay: -R(0, 6),
-    });
-  });
-
-  // Groszaki
-  q('.m-strike').forEach((m) => {
-    const imgs = [...m.querySelectorAll('image')];
-    const i = m.dataset.i;
-    const hits = q(`.p-hit[data-for="${i}"] > .a`), dust = q(`.p-dust[data-for="${i}"] > .a`);
-    hits.forEach((h) => gsap.set(h, { scale: 0, transformOrigin: origin(h) }));
-    dust.forEach((d) => gsap.set(d, { opacity: 0, transformOrigin: origin(d) }));
-    const tl = gsap.timeline({ repeat: -1 });
-    let at = 0;
-    FRAMES.forEach((f, k) => {
-      tl.set(imgs, { opacity: 0 }, at).set(imgs[k], { opacity: 1 }, at);
-      if (k === SCENE.animationRigs.uderzenie.impactFrameIndex) {
-        hits.forEach((h, j) => tl.fromTo(h, { scale: 0, rotation: 0 }, { scale: 1.25 - j * 0.15, rotation: 60, duration: 0.18, ease: 'back.out(3)', immediateRender: false }, at + j * 0.03)
-          .to(h, { scale: 0, duration: 0.3, ease: 'power1.in' }, at + 0.2 + j * 0.03));
-        dust.forEach((d) => tl.fromTo(d, { opacity: 0.9, scale: 0.6, x: 0, y: 0 }, { opacity: 0, scale: 1.35, x: -10, y: -14, duration: 0.7, ease: 'power2.out', immediateRender: false }, at));
-      }
-      at += f.durationMs / 1000;
-    });
-    tl.set({}, {}, at);
-    tl.progress(i * 0.37 % 1);
-  });
-  q('.m-idle > .a').forEach((el, i) => gsap.to(el, { scaleY: 1.014, transformOrigin: origin(el), duration: R(1.6, 2.2), ease: 'sine.inOut', yoyo: true, repeat: -1, delay: -i }));
-  // dozing Groszak: floating "z"
-  q('.m-lie').forEach((m) => {
-    const g = m.querySelector('.a');
-    const ns = 'http://www.w3.org/2000/svg';
-    for (let k = 0; k < 3; k++) {
-      const z = document.createElementNS(ns, 'text');
-      z.setAttribute('x', -120 + k * 14); z.setAttribute('y', -230); z.setAttribute('class', 'scene-z');
-      z.textContent = 'z';
-      g.appendChild(z);
-      gsap.fromTo(z, { y: 0, opacity: 0 }, { y: -90, x: 30, opacity: 1, duration: 2.6, ease: 'sine.out', repeat: -1, delay: k * 0.85, keyframes: { opacity: [0, 1, 0] } });
-    }
-  });
-  // the cart rocks gently while the Groszaki work
-  if (o.miningActive) {
-    const cart = q('.p-cartgroup')[0];
-    if (cart) {
-      gsap.to(cart, { x: 6, duration: 1.3, ease: 'sine.inOut', yoyo: true, repeat: -1 });
-      q('.p-wheel > .a').forEach((w) => gsap.to(w, { rotation: 26, transformOrigin: origin(w), duration: 1.3, ease: 'sine.inOut', yoyo: true, repeat: -1 }));
-    }
-  }
+/**
+ * The original block miner. States:
+ *   'sit'  – sits on a stone, the pickaxe lies on the ground (not working yet / resting),
+ *   'wake' – stands up, picks up the pickaxe, walks to the ore and starts digging (after a deposit),
+ *   'dig'  – digs (the original swinging pickaxe).
+ * The miner's digging spot is x; while sitting he is SIT_DX units to the left.
+ */
+const SIT_DX = -12;
+function minerSvg(x, y, scale, shirt, delay, { state = 'dig', chief = false } = {}) {
+  const helmet = chief ? '#facc15' : '#fbbf24';
+  const brim = chief ? '#b45309' : '#d97706';
+  const pick = `<rect x="26" y="34" width="3" height="24" fill="#8b5a2b"/>
+      <rect x="24" y="22" width="6" height="14" fill="${shirt}"/>
+      <rect x="24" y="34" width="6" height="5" fill="#f1c27d"/>
+      <rect x="17" y="54" width="21" height="4" fill="#94a3b8"/>
+      <rect x="14" y="56" width="4" height="4" fill="#94a3b8"/><rect x="37" y="56" width="4" height="4" fill="#94a3b8"/>
+      <rect x="12" y="59" width="3" height="3" fill="#64748b"/><rect x="40" y="59" width="3" height="3" fill="#64748b"/>
+      <rect x="19" y="54" width="17" height="1.6" fill="#5eead4"/>`;
+  // pickaxe lying on the ground in front of the sitting miner
+  const pickOnGround = `<rect x="27" y="54" width="24" height="3" rx="1" fill="#8b5a2b"/>
+      <rect x="49" y="45" width="4" height="13" fill="#94a3b8"/><rect x="47" y="43" width="4" height="4" fill="#94a3b8"/><rect x="47" y="56" width="4" height="2" fill="#64748b"/>
+      <rect x="50" y="46" width="1.4" height="10" fill="#5eead4"/>`;
+  return `<g class="miner m-${state}" style="--sx:${SIT_DX}px;--d:${delay}s">
+    <g transform="translate(${x} ${y}) scale(${scale})">
+      <g class="m-body"><g class="m-breathe">
+        <g class="legs-stand"><rect x="10" y="40" width="9" height="16" fill="#3b4a8c"/><rect x="19" y="40" width="9" height="16" fill="#2f3b73"/><rect x="10" y="54" width="9" height="4" fill="#4b3621"/><rect x="19" y="54" width="9" height="4" fill="#4b3621"/></g>
+        <g class="legs-sit"><rect x="10" y="40" width="18" height="7" fill="#3b4a8c"/><rect x="22" y="40" width="7" height="8" fill="#2f3b73"/><rect x="22" y="46" width="9" height="3" fill="#4b3621"/></g>
+        <rect x="5" y="22" width="6" height="16" fill="${shirt}" opacity=".8"/><rect x="5" y="36" width="6" height="4" fill="#e8b88a"/>
+        <rect x="10" y="22" width="18" height="18" fill="${shirt}"/>
+        <rect x="10" y="36" width="18" height="4" fill="#7c5a2d"/><rect x="17" y="36" width="4" height="4" fill="#fcd34d"/>
+        ${chief ? '<path d="M14 25 l1.6 3.2 3.4 .5 -2.5 2.3 .6 3.4 -3.1 -1.7 -3.1 1.7 .6 -3.4 -2.5 -2.3 3.4 -.5z" transform="translate(5 0)" fill="#fde047" stroke="#b45309" stroke-width=".6"/>' : ''}
+        <rect x="9" y="4" width="20" height="18" fill="#f1c27d"/>
+        <rect x="9" y="4" width="20" height="5" fill="#6b4423"/><rect x="9" y="4" width="3" height="9" fill="#6b4423"/>
+        <rect x="21" y="12" width="3" height="3" fill="#fff"/><rect x="22" y="13" width="2" height="2" fill="#2b3a55"/><rect x="14" y="12" width="3" height="3" fill="#fff"/><rect x="15" y="13" width="2" height="2" fill="#2b3a55"/>
+        <rect x="17" y="17" width="6" height="2" fill="#c9875a"/>
+        <rect x="7" y="0" width="24" height="6" rx="1" fill="${helmet}"/><rect x="7" y="5" width="25" height="2" fill="${brim}"/>
+        ${chief ? '<rect x="9" y="1.5" width="20" height="1.2" fill="#fff7c2" opacity=".85"/>' : ''}
+        <rect x="26" y="1" width="5" height="4" fill="#fff7c2"/>
+        <circle cx="34" cy="3" r="7" fill="#fff7c2" class="lamp-glow"/>
+      </g></g>
+      <g class="pick-ground">${pickOnGround}</g>
+      <g class="pick-arm">${pick}</g>
+    </g>
+  </g>`;
 }
 
-/** Lift run: gold goes up the shaft and arrives exactly at `landInMs`. */
-function liftRun(root, landInMs) {
-  const gsap = window.gsap;
-  const lift = root.querySelector('.p-lift > .a');
-  if (!lift) return;
-  const scale = SCENE.layers.find((l) => l.role === 'lift').scale || 1;
-  const top = (LIFT_TOP_Y - LIFT_REST_Y) / scale;
-  const upS = 2.2;
-  const tl = gsap.timeline({ delay: Math.max(0, landInMs / 1000 - upS) });
-  tl.to(lift, { y: top, duration: Math.min(upS, landInMs / 1000), ease: 'power2.inOut' })
-    .call(() => burst(root))
-    .to(lift, { y: 0, duration: 2.4, ease: 'power1.inOut' }, '+=0.35');
+function oreBlock(x, y, s, delay, active) {
+  return `<g transform="translate(${x} ${y})"><g class="${active ? 'ore-shake' : ''}" style="animation-delay:${delay}s">
+    <rect width="${s}" height="${s}" rx="4" fill="#a8b3c4"/>
+    <rect width="${s}" height="${s * 0.18}" rx="3" fill="#c3ccd8"/>
+    <rect x="${s * .15}" y="${s * .30}" width="${s * .2}" height="${s * .2}" fill="#fcd34d"/>
+    <rect x="${s * .55}" y="${s * .50}" width="${s * .22}" height="${s * .22}" fill="#fbbf24"/>
+    <rect x="${s * .35}" y="${s * .70}" width="${s * .15}" height="${s * .15}" fill="#fde68a"/>
+    <rect x="${s * .62}" y="${s * .2}"  width="${s * .12}" height="${s * .12}" fill="#fde68a"/>
+  </g></g>
+  ${active ? `<g class="spark" style="animation-delay:${delay}s"><path d="M${x + 4} ${y + 8} l5 -10 l3 9 l9 -4 l-6 8 l8 5 l-10 0 l-2 9 l-3 -9 l-9 1z" fill="#fff7c2" stroke="#fbbf24" stroke-width="1.5"/></g>` : ''}`;
 }
-function burst(root) {
-  const gsap = window.gsap;
+
+/** The whole original mine tunnel (coordinates of the first version). */
+function originalMine({ unlocked, miningActive, hasDeposits, prevDigging }) {
+  const still = miningActive ? '' : ' gear-still';
+  let s = `<rect x="16" y="72" width="608" height="120" rx="22" fill="url(#caveGrad)"/>
+    <rect x="16" y="168" width="608" height="24" rx="10" fill="#e8b46a"/>
+    <rect x="16" y="176" width="608" height="4" fill="#8b5a2b"/>
+    ${Array.from({ length: 30 }, (_, i) => `<rect x="${24 + i * 20}" y="172" width="8" height="12" fill="#a0703f"/>`).join('')}
+    ${[120, 330, 540].map((x) => `<rect x="${x}" y="72" width="10" height="100" fill="#a0703f"/><rect x="${x - 20}" y="72" width="50" height="10" rx="3" fill="#8b5a2b"/>`).join('')}
+    ${[125, 335, 545].map((x) => `<circle cx="${x + 5}" cy="92" r="16" fill="#fff3b0" class="lamp-glow"/><rect x="${x}" y="84" width="10" height="12" rx="3" fill="#fcd34d"/>`).join('')}`;
+  s += gearSvg(70, 120, 12, 34, '#fbbf24', 'gear-cw' + still);
+  s += gearSvg(116, 150, 8, 22, '#34d399', 'gear-ccw' + still);
+  s += gearSvg(590, 118, 12, 32, '#7dd3fc', 'gear-ccw' + still);
+  s += gearSvg(612, 40, 10, 18, '#c4b5fd', 'gear-cw-slow' + still);
+
+  const miners = [{ x: 148, shirt: '#38bdf8', d: 0 }, { x: 262, shirt: '#f472b6', d: 0.35 }, { x: 376, shirt: '#34d399', d: 0.7 }];
+  miners.forEach((m, i) => {
+    // a Groszak digs once a deposit has woken him (1st, 2nd, 3rd deposit) and the mine is earning
+    const digging = hasDeposits && miningActive && i < unlocked;
+    const state = digging ? (prevDigging && !prevDigging[i] ? 'wake' : 'dig') : 'sit';
+    s += oreBlock(m.x + 78, 130, 38, m.d, digging);
+    s += `<g transform="translate(${m.x + SIT_DX + 4} 158)"><rect width="34" height="14" rx="6" fill="#a8b3c4"/><rect width="34" height="4" rx="2" fill="#c3ccd8"/></g>`;
+    s += minerSvg(m.x, 88, 1.4, m.shirt, m.d, { state, chief: i === 2 });
+  });
+
+  // cart with gold
+  s += `<g class="${miningActive ? 'cart-bounce' : ''}"><g transform="translate(502 136)">
+    <rect x="0" y="6" width="56" height="26" rx="4" fill="#64748b"/><rect x="0" y="6" width="56" height="6" fill="#94a3b8"/>
+    <circle cx="14" cy="34" r="6" fill="#2b3a55"/><circle cx="42" cy="34" r="6" fill="#2b3a55"/>
+    ${hasDeposits ? '<circle cx="12" cy="4" r="7" fill="#fcd34d"/><circle cx="26" cy="0" r="8" fill="#fbbf24"/><circle cx="40" cy="4" r="7" fill="#fde68a"/><circle cx="26" cy="0" r="3" fill="#fff7c2"/>' : ''}
+  </g></g>`;
+  return s;
+}
+
+/** Small vault on the surface where the delivered coins go (flat style). */
+function vaultSvg(x, winter) {
+  return `<g class="vault" transform="translate(${x - 6} ${SURFACE}) scale(.72)"><g class="vault-pulse">
+    <rect x="-44" y="-62" width="88" height="62" rx="6" fill="#94a3b8"/>
+    ${[0, 1, 2, 3].map((r) => `<path d="M-44 ${-50 + r * 13} H44" stroke="#7b8494" stroke-width="2"/>`).join('')}
+    ${[0, 1, 2, 3].map((r) => [0, 1, 2, 3].map((c) => `<path d="M${-44 + c * 26 + (r % 2 ? 13 : 0)} ${-62 + r * 13} v13" stroke="#7b8494" stroke-width="2"/>`).join('')).join('')}
+    <rect x="-50" y="-70" width="100" height="10" rx="4" fill="#cbd5e1"/>
+    ${winter ? '<path d="M-52 -70 q50 -14 104 0 v4 q-10 4 -16 0 q-12 6 -20 0 q-14 6 -24 0 q-12 6 -22 0 q-10 5 -22 0z" fill="#fff"/>' : ''}
+    <circle cx="0" cy="-26" r="25" fill="#d97706"/><circle cx="0" cy="-26" r="21" fill="#fbbf24"/><circle cx="-3" cy="-29" r="15" fill="#fcd34d"/>
+    <g class="vault-wheel" style="transform-origin:0px -26px">${[0, 1, 2, 3, 4, 5].map((i) => `<rect x="-2" y="-40" width="4" height="13" rx="2" fill="#b45309" transform="rotate(${i * 60} 0 -26)"/>`).join('')}<circle cx="0" cy="-26" r="5" fill="#b45309"/><circle cx="0" cy="-26" r="2" fill="#fff7c2"/></g>
+  </g></g>`;
+}
+
+/* ---------------- gold thrown up into the vault ---------------- */
+let lastDigging = null;
+const MINE_X = SX - 30;
+const MINER_X = [148, 262, 376];
+const VAULT_DOOR = { x: SX - 6, y: SURFACE - 19 };
+
+/**
+ * Every digging Groszak tosses gold from his ore block; it flies to the shaft and up
+ * into the vault, landing exactly `landInMs` from now (when the balance digits change).
+ */
+export function throwGold(svg, landInMs) {
+  if (!svg || !svg.animate) return;
+  const diggers = [...svg.querySelectorAll('.orig-mine .miner')].map((m, i) => (m.classList.contains('m-sit') ? -1 : i)).filter((i) => i >= 0);
+  if (!diggers.length) return;
+  const FLY = 1150;
   const ns = 'http://www.w3.org/2000/svg';
-  const svg = root.querySelector('svg');
-  const spark = SCENE.assets['efekty/iskra'];
-  for (let k = 0; k < 6; k++) {
-    const img = document.createElementNS(ns, 'image');
-    img.setAttribute('href', spark.url); img.setAttribute('width', 30); img.setAttribute('height', 30);
-    img.setAttribute('x', 136 - 15); img.setAttribute('y', 236 - 15);
-    svg.appendChild(img);
-    const a = (k / 6) * Math.PI * 2;
-    gsap.fromTo(img, { scale: 0.3, opacity: 1, transformOrigin: '15px 15px' }, {
-      x: Math.cos(a) * 46, y: Math.sin(a) * 30 - 20, scale: 0.9, opacity: 0, rotation: 90, duration: 0.8, ease: 'power2.out', onComplete: () => img.remove(),
-    });
-  }
+  diggers.forEach((i, n) => {
+    const sx = MINE_X + MINER_X[i] + 97, sy = MINE_Y + 128;      // top of the ore block
+    const bx = SX, by = MINE_Y + 96;                              // bottom of the shaft
+    for (let k = 0; k < 3; k++) {
+      const coin = document.createElementNS(ns, 'g');
+      coin.innerHTML = '<circle r="6.5" fill="#fbbf24" stroke="#b45309" stroke-width="1.6"/><circle cx="-2" cy="-2" r="2.2" fill="#fff7c2"/>';
+      coin.setAttribute('class', 'gold-toss');
+      svg.appendChild(coin);
+      const frames = [];
+      const steps = 16;
+      for (let j = 0; j <= steps; j++) {
+        const u = j / steps;
+        let x, y;
+        if (u < 0.55) {                                             // arc from the ore to the shaft
+          const v = u / 0.55;
+          x = sx + (bx - sx) * v;
+          y = sy + (by - sy) * v - Math.sin(Math.PI * v) * (60 + k * 12);
+        } else {                                                    // straight up the shaft into the vault
+          const v = (u - 0.55) / 0.45;
+          x = bx + (VAULT_DOOR.x - bx) * v;
+          y = by + (VAULT_DOOR.y - by) * (v * v * 0.4 + v * 0.6);
+        }
+        const sc = u > 0.9 ? 1 - (u - 0.9) * 6 : 1;
+        frames.push({ transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${sc.toFixed(2)})`, opacity: u > 0.97 ? 0 : 1, offset: u });
+      }
+      const delay = Math.max(0, landInMs - FLY - (2 - k) * 70 - n * 40);
+      const anim = coin.animate(frames, { duration: FLY, delay, easing: 'cubic-bezier(.4,.1,.5,1)', fill: 'both' });
+      anim.onfinish = () => coin.remove();
+    }
+  });
+  // the vault door glows when the gold arrives
+  const vault = svg.querySelector('.vault-pulse');
+  if (vault) setTimeout(() => { vault.classList.remove('vault-hit'); void vault.getBoundingClientRect(); vault.classList.add('vault-hit'); }, Math.max(0, landInMs - 60));
 }
 
-/* ---------------- controller ---------------- */
-export function createScene(container, scroller) {
-  let sig = '';
-  let gctx = null;
-  let visible = true;
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver((es) => {
-      visible = es[0].isIntersecting;
-      if (window.gsap) (visible ? window.gsap.globalTimeline.resume() : window.gsap.globalTimeline.pause());
-    }).observe(container);
+/* ---------------- the scene ---------------- */
+/**
+ * @returns {{svg:string, width:number}}
+ */
+export function buildScene(o) {
+  const { now, tz, chests, unlocked, miningActive, hasDeposits, viewportWidth } = o;
+  // who was already digging in the previous picture: only newly woken Groszaki play the wake-up
+  const digging = [0, 1, 2].map((i) => hasDeposits && miningActive && i < unlocked);
+  const prevDigging = lastDigging;
+  lastDigging = digging;
+  const lastDays = chests.length ? (chests[chests.length - 1].at - now) / DAY : 0;
+  const horizon = Math.max(200, Math.ceil(lastDays) + 26);
+  const ppd = Math.max(4.6, (viewportWidth - TX - 40) / horizon);
+  const W = Math.ceil(TX + horizon * ppd + 30);
+  const xOf = (ms) => TX + ((ms - now) / DAY) * ppd;
+  const dateAt = (x) => now + ((x - TX) / ppd) * DAY;
+  const wAt = (x) => seasonWeights(dayOfYear(dateAt(x), tz));
+
+  // ---- sky & ground gradients (horizontal blend of seasons) ----
+  const stops = { skyT: [], skyB: [], ground: [], hill: [] };
+  for (let x = 0; x <= W; x += Math.max(24, ppd * 6)) {
+    const w = wAt(x);
+    for (const k of Object.keys(stops)) stops[k].push(`<stop offset="${(x / W).toFixed(4)}" stop-color="${mixColor(w, k)}"/>`);
   }
-  return {
-    update(o) {
-      const key = JSON.stringify([o.chests.map((c) => [c.at, c.amount, c.skin]), o.unlocked, o.miningActive, o.hasDeposits, o.restPoses, Math.floor(o.now / 3600_000), o.lang]);
-      const width = Math.max(scroller.clientWidth || 360, 980);
-      container.style.width = width + 'px';
-      container.style.height = Math.round((width * H) / W) + 'px';
-      if (key === sig) return;
-      sig = key;
-      if (gctx) gctx.revert();
-      const { markup, todayX } = buildMarkup(o);
-      container.innerHTML = markup;
-      if (window.gsap && !reduceMotion()) gctx = window.gsap.context(() => animate(container, o), container);
-      else gctx = null;
-      if (scroller.scrollWidth > scroller.clientWidth) scroller.scrollLeft = Math.max(0, (todayX / W) * width - 80);
-    },
-    deliver(landAt, now) {
-      if (!gctx || reduceMotion() || !visible) return;
-      gctx.add(() => liftRun(container, landAt - now));
-    },
-  };
+  const grad = (id, k) => `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="${W}" y2="0">${stops[k].join('')}</linearGradient>`;
+
+  let s = `<defs>${grad('gSkyT', 'skyT')}${grad('gSkyB', 'skyB')}${grad('gGround', 'ground')}${grad('gHill', 'hill')}
+    <linearGradient id="fadeV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <mask id="skyMask"><rect width="${W}" height="${SURFACE}" fill="url(#fadeV)"/></mask>
+    <linearGradient id="caveGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9c2"/><stop offset="1" stop-color="#ffd89a"/></linearGradient>
+    <pattern id="dirt" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#b98457"/><rect width="11" height="11" fill="#ad794c"/><rect x="11" y="11" width="11" height="11" fill="#c28e60"/></pattern>
+    <pattern id="stone" width="26" height="26" patternUnits="userSpaceOnUse"><rect width="26" height="26" fill="#b4bfcd"/><rect width="13" height="13" fill="#aab5c4"/><rect x="13" y="13" width="13" height="13" fill="#c0c9d6"/></pattern>
+  </defs>
+  <rect width="${W}" height="${SURFACE}" fill="url(#gSkyB)"/>
+  <rect width="${W}" height="${SURFACE}" fill="url(#gSkyT)" mask="url(#skyMask)"/>`;
+
+  // clouds
+  for (let x = 60; x < W; x += 210) s += cloud(x + rnd(x) * 80, 34 + rnd(x + 1) * 30, 0.8 + rnd(x + 2) * 0.5);
+
+  // special: sun (summer peak) and snowmen (winter peak) within the horizon
+  const specials = [];
+  let prevDom = null, spanStart = 0;
+  const spans = [];
+  for (let x = TX - 30; x <= W; x += 4) {
+    const dom = dominantSeason(wAt(x));
+    if (dom !== prevDom) { if (prevDom) spans.push({ season: prevDom, x0: spanStart, x1: x }); prevDom = dom; spanStart = x; }
+  }
+  spans.push({ season: prevDom, x0: spanStart, x1: W });
+  for (const sp of spans) {
+    const mid = (sp.x0 + sp.x1) / 2;
+    if (sp.season === 'summer' && sp.x1 - sp.x0 > 60) specials.push(sun(Math.min(Math.max(mid, sp.x0 + 40), W - 50), 48));
+    if (sp.season === 'winter' && sp.x1 - sp.x0 > 70) specials.push(snowman(Math.min(Math.max(mid, sp.x0 + 40), W - 40), SURFACE - 4));
+  }
+
+  // snowfall over winter stretches
+  let flakes = '';
+  for (let x = TX - 20, i = 0; x < W; x += 26, i++) {
+    if (wAt(x).winter < 0.45) continue;
+    flakes += `<circle class="flake" style="animation-delay:${(rnd(i) * 7).toFixed(2)}s;animation-duration:${6 + (i % 4)}s" cx="${x + rnd(i + 9) * 18}" cy="${-6 - rnd(i + 3) * 30}" r="${1.6 + (i % 3)}" fill="#fff"/>`;
+  }
+
+  // hills + ground
+  let hill = `M0 ${SURFACE - 18}`;
+  for (let x = 0; x <= W + 120; x += 120) hill += ` Q${x + 60} ${SURFACE - 40 - rnd(x) * 22} ${x + 120} ${SURFACE - 18}`;
+  hill += ` V${SURFACE} H0Z`;
+  s += `<path d="${hill}" fill="url(#gHill)"/>`;
+  s += specials.filter((x) => x.includes('sun-rays')).join('');
+  s += `<g class="snowfall">${flakes}</g>`;
+
+  // trees and ground details
+  let deco = '';
+  const step = Math.max(46, ppd * 9);
+  for (let x = TX + 22, i = 0; x < W - 10; x += step, i++) {
+    const jx = x + (rnd(i * 3) - 0.5) * step * 0.5;
+    const w = wAt(jx);
+    // pick a season by weight so the transition is gradual
+    let r = rnd(i * 7 + 1), season = 'winter';
+    for (const sn of SEASONS) { if (r < w[sn]) { season = sn; break; } r -= w[sn]; }
+    if (rnd(i * 5 + 2) < 0.72) deco += tree(jx, SURFACE - 6, 0.82, season, i);
+    deco += groundDetail(jx + 18, SURFACE - 2, season, i);
+  }
+  s += `<rect x="0" y="${SURFACE - 12}" width="${W}" height="14" fill="url(#gGround)"/>`;
+  s += deco;
+  s += specials.filter((x) => x.includes('snowman')).join('');
+
+  // season names
+  s += spans.filter((sp) => sp.x1 - sp.x0 > 40).map((sp) => {
+    const x = Math.max(sp.x0, TX - 10) + 8;
+    if (x > W - 70) return '';
+    return `<g transform="translate(${x} 12)"><rect width="${t('season.' + sp.season).length * 8 + 18}" height="22" rx="11" fill="#fff" opacity=".85"/>
+      <text x="9" y="15.5" class="scene-season">${t('season.' + sp.season)}</text></g>`;
+  }).join('');
+
+  // ---- axis (road) ----
+  s += `<rect x="0" y="${SURFACE}" width="${W}" height="${ROAD_H}" fill="#f3e6cf"/><rect x="0" y="${SURFACE}" width="${W}" height="3" fill="#e2cfae"/>`;
+  // month ticks: first day of each month
+  const p0 = wallParts(now, tz);
+  for (let k = 1; k <= 16; k++) {
+    const m0 = wallToInstant(p0.y, p0.m, 1, 0, 0, 0, 0, tz);
+    const ms = addMonths(m0, k, tz);
+    const x = xOf(ms);
+    if (x > W - 20) break;
+    const p = wallParts(ms, tz);
+    const label = p.m === 1 ? fmtDate(ms, tz, 'monthYear') : fmtDate(ms, tz, 'month');
+    s += `<path d="M${x} ${SURFACE + 3} V${SURFACE + ROAD_H}" stroke="#cdb48b" stroke-width="2"/>
+      <text x="${x + 5}" y="${SURFACE + 27}" class="scene-month">${label}</text>`;
+  }
+
+  // ---- underground ----
+  s += `<rect x="0" y="${SURFACE + ROAD_H}" width="${W}" height="40" fill="url(#dirt)"/>
+    <rect x="0" y="${SURFACE + ROAD_H + 40}" width="${W}" height="${SCENE_H - SURFACE - ROAD_H - 40}" fill="url(#stone)"/>`;
+
+  // shaft
+  s += `<rect x="${SX - 15}" y="${SURFACE + 2}" width="30" height="${FLOOR - SURFACE + 8}" fill="#5b4632"/>
+    <rect x="${SX - 15}" y="${SURFACE + 2}" width="4" height="${FLOOR - SURFACE + 8}" fill="#8b5a2b"/><rect x="${SX + 11}" y="${SURFACE + 2}" width="4" height="${FLOOR - SURFACE + 8}" fill="#8b5a2b"/>`;
+
+  // the original mine, placed so that the shaft from the vault enters its left end
+  s += `<g class="orig-mine" transform="translate(${MINE_X} ${MINE_Y})">${originalMine({ unlocked, miningActive, hasDeposits, prevDigging })}</g>`;
+  s += vaultSvg(SX, wAt(SX).winter > 0.4);
+
+  // ---- chests, aligned with their dates ----
+  const lastInRow = [-999, -999];
+  chests.forEach((c, i) => {
+    const x = xOf(c.at);
+    const row = x - lastInRow[0] >= 100 ? 0 : x - lastInRow[1] >= 100 ? 1 : (lastInRow[0] <= lastInRow[1] ? 0 : 1);
+    lastInRow[row] = x;
+    const base = CHEST_BASE;
+    const stroke = c.skin === 'gold' ? '#d97706' : c.skin === 'silver' ? '#64748b' : '#8a5527';
+    const fill = c.skin === 'gold' ? '#fbbf24' : c.skin === 'silver' ? '#94a3b8' : '#b7793f';
+    s += `<g class="chest-marker" data-chest="${i}">
+      <path d="M${x} ${SURFACE + 15} V${base - 52}" stroke="#7c5a2d" stroke-width="1.6" stroke-dasharray="4 4" opacity=".7"/>
+      <g transform="translate(${x} ${SURFACE + 9})"><circle r="6.5" fill="#fff" stroke="${stroke}" stroke-width="3"/><circle r="2.4" fill="${fill}"/></g>
+      <g transform="translate(${x} ${base}) scale(${row ? 0.85 : i === 0 ? 1.05 : 0.92})">${chestSvg(c.skin)}</g>
+      <g transform="translate(${x} ${base + 6 + row * ROW_DY})"><rect x="-46" y="0" width="92" height="27" rx="9" fill="#fff" opacity=".93"/>
+        <text x="0" y="12" text-anchor="middle" class="scene-chest-amt">${money(c.amount, { sign: true })}</text>
+        <text x="0" y="23" text-anchor="middle" class="scene-chest-date">${fmtDate(c.at, tz, 'long')}</text></g>
+    </g>`;
+  });
+
+  // ---- today marker ----
+  s += `<g class="today"><path d="M${TX} ${SURFACE - 70} V${SURFACE + ROAD_H}" stroke="#db2777" stroke-width="3"/>
+    <path d="M${TX} ${SURFACE - 70} h46 l-8 9 l8 9 h-46z" fill="#ec4899"/>
+    <text x="${TX + 6}" y="${SURFACE - 57}" class="scene-today">${t('scene.today')}</text>
+    <circle cx="${TX}" cy="${SURFACE + 9}" r="6" fill="#fff" stroke="#db2777" stroke-width="3"/></g>`;
+
+  // speech bubble before the first deposit
+  if (!hasDeposits) {
+    const bx = SX - 30 + 175;
+    s += `<g transform="translate(${bx - 100} ${GALLERY_TOP - 40})"><rect width="200" height="30" rx="12" fill="#fff" stroke="#f9a8d4" stroke-width="2"/>
+      <text x="100" y="20" text-anchor="middle" class="scene-bubble">${t('kid.wakeHint')}</text></g>`;
+  }
+
+  return { svg: `<svg viewBox="0 0 ${W} ${SCENE_H}" width="${W}" height="${SCENE_H}" class="scene-svg" role="img" aria-labelledby="sceneTitle sceneDesc">${s}</svg>`, width: W, ppd };
 }

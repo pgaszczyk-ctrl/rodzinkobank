@@ -51,7 +51,7 @@ body {
 /* ---------- Scene ---------- */
 .scene-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; border-radius: 24px; scrollbar-width: thin; }
 .scene-svg { display: block; max-width: none; }
-.scene-month { font: 800 11px Nunito, system-ui, sans-serif; fill: #FFF3DA; text-transform: uppercase; letter-spacing: .04em; }
+.scene-month { font: 800 11px Nunito, system-ui, sans-serif; fill: #8a6a3d; text-transform: uppercase; letter-spacing: .04em; }
 .scene-season { font: 800 12px "Baloo 2", system-ui, sans-serif; fill: #2b3a55; }
 .scene-today { font: 800 12px "Baloo 2", system-ui, sans-serif; fill: #fff; }
 .scene-chest-amt { font: 800 12px "Baloo 2", system-ui, sans-serif; fill: #2b3a55; }
@@ -160,50 +160,39 @@ input[type=range] { accent-color: #ec4899; }
 .cart-bounce { animation: cartBounce 1.1s ease-in-out infinite; }
 .delivering .vault-wheel { animation: spin 1.2s ease-in-out 2.2s; }
 
-/* ---------- Illustrated mine (Groszaki SVG v2, src/scene.js) ---------- */
-.scene-pill { font: 800 12.5px "Baloo 2", system-ui, sans-serif; }
-/* Pivots follow assets/art/README.md: each moving group rotates around its own (0,0). */
-.pose-dig .gk-pickaxe-arm, .pose-load .gk-pickaxe-arm, .gk-wave-arm, .gk-gear-wheel, .gk-vault-door, .gk-chest-lid {
-  transform-box: view-box; transform-origin: 0 0;
-}
-@keyframes gkDig { 0%,100% { transform: rotate(-78deg) } 42% { transform: rotate(-78deg) } 58%,66% { transform: rotate(22deg) } }
-.pose-dig .gk-pickaxe-arm { animation: gkDig 1.15s cubic-bezier(.55,0,.35,1) infinite; animation-delay: var(--d, 0s); }
-@keyframes gkBob { 0%,100% { transform: translateY(0) } 60% { transform: translateY(2px) } }
-.pose-dig .gk-body { animation: gkBob 1.15s ease-in-out infinite; animation-delay: var(--d, 0s); }
-@keyframes gkLoad { 0%,100% { transform: rotate(40deg) } 50% { transform: rotate(-60deg) } }
-.pose-load .gk-pickaxe-arm { animation: gkLoad 1.8s ease-in-out infinite; animation-delay: var(--d, 0s); }
-@keyframes gkNugget { 0%,45% { opacity: 1 } 55%,90% { opacity: 0 } 100% { opacity: 1 } }
-.pose-load .gk-nugget { animation: gkNugget 1.8s linear infinite; animation-delay: var(--d, 0s); }
-@keyframes gkWave { 0%,100% { transform: translate(32px, 57px) rotate(0) } 50% { transform: translate(32px, 57px) rotate(-30deg) } }
-.gk-wave-arm { animation: gkWave .95s ease-in-out infinite; animation-delay: var(--d, 0s); }
-@keyframes gkGear { from { transform: translate(17px, 17px) rotate(0) } to { transform: translate(17px, 17px) rotate(360deg) } }
-.gk-gear-wheel { animation: gkGear 6s linear infinite; }
-.mine-still .gk-gear-wheel { animation-play-state: paused; }
-.art-rest-nap text { animation: zzz 2.8s ease-out infinite; animation-delay: var(--d, 0s); }
-.art-rest-nap text + text { animation-delay: calc(var(--d, 0s) + .6s); }
-@keyframes gkBreathe { 0%,100% { transform: translateY(0) } 50% { transform: translateY(1.5px) } }
-.art-rest-sit, .art-rest-nap { }
-.art-lamp circle:first-of-type { animation: glow 2.4s ease-in-out infinite; }
-@keyframes drift { from { transform: translateX(-60px) } to { transform: translateX(60px) } }
-.cloud-drift { animation: drift 60s ease-in-out infinite alternate; }
-.wagon-bob { animation: cartBounce 1.1s ease-in-out infinite; }
-/* delivery: the bucket rises to the vault, the coin pops into the door, the door wheel turns */
-@keyframes coinIn { 0%,60% { opacity: 0; transform: translateY(0) scale(1) } 66% { opacity: 1 } 100% { opacity: 0; transform: translateY(-32px) scale(.35) } }
-.fly-coin { opacity: 0; transform-box: fill-box; transform-origin: center; }
-.delivering .fly-coin { animation: coinIn 3s ease-out; }
-@keyframes doorTurn { from { transform: rotate(0) } to { transform: rotate(180deg) } }
-.delivering .gk-vault-door { animation: doorTurn 1.1s ease-in-out 1.9s; }
-/* chest opening in the celebration */
-@keyframes gkLid { 0% { transform: rotate(0) } 40% { transform: rotate(5deg) } 100% { transform: rotate(-40deg) } }
-.celebrate-open .gk-chest-lid { animation: gkLid 1s .5s cubic-bezier(.3,1.5,.5,1) both; }
-.celebrate-chest { transform-box: fill-box; transform-origin: center bottom; }
-.portrait { overflow: visible; }
-
-/* ---------- Illustrated scene "Cztery pory roku" (src/scene.js, animated with GSAP) ---------- */
-#scene { position: relative; }
-#scene .scene-svg { display: block; width: 100%; height: 100%; }
-#scene .scene-pill { font: 800 15px "Baloo 2", system-ui, sans-serif; }
-#scene .scene-month { font: 800 12px Nunito, system-ui, sans-serif; fill: #fff4dc; text-transform: uppercase; letter-spacing: .05em; paint-order: stroke; stroke: rgba(74,44,24,.45); stroke-width: 3px; }
-#scene .scene-z { font: 800 46px "Baloo 2", system-ui, sans-serif; fill: #fff4dc; stroke: #7a4a2a; stroke-width: 3px; paint-order: stroke; }
-.chest-shine { animation: sparkle 1.8s ease-in-out infinite; }
-.celebrate-open .chest-lid { animation: gkLid 1s .5s cubic-bezier(.3,1.5,.5,1) both; transform-box: view-box; transform-origin: 0 0; }
+/* ---------- Groszaki: sit → stand up, pick up the pickaxe, walk to the ore → dig ---------- */
+.miner .m-body, .miner .m-breathe { transform-box: view-box; transform-origin: 19px 58px; }
+.miner .pick-arm { transform-box: view-box; transform-origin: 27px 25px; }
+/* sitting: lowered body, bent legs, pickaxe on the ground, a bit left of the ore */
+.m-sit { transform: translateX(var(--sx)); }
+.m-sit .m-body { transform: translateY(10px); }
+.m-sit .legs-stand, .m-dig .legs-sit, .m-wake .legs-sit { opacity: 0; }
+.m-dig .legs-stand { opacity: 1; }
+.m-sit .pick-arm, .m-dig .pick-ground { opacity: 0; }
+.m-sit .pick-arm { animation: none; }
+.m-sit .m-breathe { animation: sitBreathe 3s ease-in-out infinite; animation-delay: calc(var(--d) * -3); }
+@keyframes sitBreathe { 0%,100% { transform: translateY(0) } 50% { transform: translateY(1px) } }
+/* digging: the original swing */
+.m-dig .pick-arm { animation: swing 1.1s cubic-bezier(.55,0,.4,1) infinite; animation-delay: var(--d); }
+.m-dig .m-body { animation: bob 1.1s ease-in-out infinite; animation-delay: var(--d); }
+/* waking up after a deposit */
+@keyframes standUp { from { transform: translateY(10px) } to { transform: translateY(0) } }
+@keyframes bendDown { 0%,100% { transform: rotate(0) } 50% { transform: rotate(9deg) translateY(2px) } }
+@keyframes walkBob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-2.5px) } }
+@keyframes showAt { from { opacity: 0 } to { opacity: 1 } }
+@keyframes hideAt { from { opacity: 1 } to { opacity: 0 } }
+@keyframes grabPick { from { opacity: 1; transform: rotate(-72deg) } to { opacity: 1; transform: rotate(-200deg) } }
+@keyframes walkIn { from { transform: translateX(var(--sx)) } to { transform: translateX(0) } }
+.m-wake { animation: walkIn 1.4s 1.4s ease-in-out both; }
+.m-wake .m-body { animation: standUp .6s ease-out both, bendDown .8s .6s ease-in-out, walkBob .35s 1.4s ease-in-out 4, bob 1.1s 2.8s ease-in-out infinite; }
+.m-wake .legs-stand { animation: showAt .01s .3s both; }
+.m-wake .legs-sit { animation: hideAt .01s .3s both; opacity: 1; }
+.m-wake .pick-ground { animation: hideAt .01s 1s both; }
+.m-wake .pick-arm { opacity: 0; animation: grabPick .4s 1s ease-out forwards, swing 1.1s 2.8s cubic-bezier(.55,0,.4,1) infinite; }
+/* gold tossed into the vault */
+.gold-toss { pointer-events: none; }
+@keyframes vaultHit { 0%,100% { transform: scale(1) } 35% { transform: scale(1.08) } }
+.vault-pulse { transform-box: fill-box; transform-origin: 50% 100%; }
+.vault-pulse.vault-hit { animation: vaultHit .55s ease-out; }
+.vault-pulse.vault-hit .vault-wheel { animation: spin .8s ease-out; }
+@media (prefers-reduced-motion: reduce) { .m-wake { transform: none; } .m-wake .legs-sit, .m-wake .pick-ground { opacity: 0; } .m-wake .pick-arm { opacity: 1; } }

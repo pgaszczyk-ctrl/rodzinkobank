@@ -4,9 +4,8 @@ import { derive, upcomingChests, chestsBetween, allocateWithdrawal, forecastReac
 import { DEFAULT_TZ, dayKey } from './calendar.js';
 import { parseZl, floorToGrosz, MICRO_PER_GROSZ } from './money.js';
 import { t, setLang, getLang, detectLang, LOCALES, hasKey, money, moneyParts, moneyMicro, fmtDate, duration } from './i18n.js';
-import { minerPortrait, chestIcon, logoMark, dreamImage } from './art.js';
-import { createScene } from './scene.js';
-import { chestMarkup } from './chests.js';
+import { minerPortrait, chestSvg, chestIcon, logoMark, dreamImage } from './art.js';
+import { buildScene, throwGold } from './scene.js';
 import { LocalBackend, CloudBackend, AppError, normalizeOp, newId, DEFAULT_DREAMS } from './backend.js';
 import { initParentZone } from './parent.js';
 import { kaching, kachingGrosz, chestFanfare, soundOn, setSound } from './sound.js';
@@ -28,7 +27,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private
 const lsDel = (k) => { try { localStorage.removeItem(k); } catch { /* private mode */ } };
 const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DAY = 86400_000;
-const DELIVERY_MS = 3000;
+const DELIVERY_MS = 1300; // gold is tossed up into the vault just before the digits change
 
 /* ------------------------------------------------------------------ */
 /*  Shared context (also used by the parent zone)                       */
@@ -289,13 +288,18 @@ function renderRequestBox(st) {
   const b = $('reqOpen'); if (b) b.addEventListener('click', () => openWithdraw());
 }
 
-let scene = null;
-function renderScene(st) {
-  if (!scene) scene = createScene($('scene'), $('sceneScroll'));
-  scene.update({
+function renderScene(st, force = false) {
+  const vw = $('sceneScroll').clientWidth || 360;
+  const sig = JSON.stringify([live.up.map((c) => [c.at, c.amount, c.skin]), st.unlocked, st.miningActive, hasDeposits(), Math.round(vw / 40), dayKey(ctx.nowMs(), ctx.tz), getLang()]);
+  if (!force && sig === live.sceneSig) return;
+  live.sceneSig = sig;
+  const scroll = $('sceneScroll').scrollLeft;
+  const { svg } = buildScene({
     now: ctx.nowMs(), tz: ctx.tz, chests: live.up, unlocked: st.unlocked, miningActive: st.miningActive,
-    restPoses: ctx.restPoses, hasDeposits: hasDeposits(), lang: getLang(),
+    restPoses: ctx.restPoses, hasDeposits: hasDeposits(), viewportWidth: vw,
   });
+  $('scene').innerHTML = svg;
+  $('sceneScroll').scrollLeft = scroll;
   const crewState = !hasDeposits() ? 'first' : st.miningActive ? 'working' : 'resting';
   $('crew').textContent = t('kid.crew', { n: st.unlocked, max: MAX_GROSZAKI }) + ' · ' + t('kid.crew.' + crewState);
   $('mineSub').textContent = t('kid.mineSub');
@@ -377,7 +381,7 @@ function renderAll(force = false) {
   renderNow(st);
   renderVaultNote(st);
   renderRequestBox(st);
-  renderScene(st);
+  renderScene(st, force);
   renderDreams(st);
 }
 
@@ -393,7 +397,7 @@ function loop() {
   // start the delivery animation so the coin lands on the heap when the digits change
   if (live.nextAt && !live.delivering && now >= live.nextAt - DELIVERY_MS && now < live.nextAt && !reduceMotion() && document.visibilityState === 'visible') {
     live.delivering = true;
-    if (scene) scene.deliver(live.nextAt, now);
+    throwGold($('scene').firstElementChild, live.nextAt - now);
   }
   const chestDue = live.up[0] && now >= live.up[0].at;
   if ((live.nextAt && now >= live.nextAt) || chestDue) {
@@ -450,8 +454,8 @@ function showCelebration(c, away) {
     const a = (i / 12) * Math.PI * 2;
     return `<span class="burst-coin" style="--bx:${Math.round(Math.cos(a) * 110)}px;--by:${Math.round(Math.sin(a) * 80 - 30)}px;animation-delay:${1 + i * 0.03}s"></span>`;
   }).join('');
-  $('celArt').innerHTML = `<svg viewBox="-27 -40 160 140" class="w-full h-full celebrate-open" style="overflow:visible"><g class="celebrate-rays">${Array.from({ length: 10 }, (_, i) => `<path d="M53 40 L${53 + Math.cos(i * 0.628) * 100} ${40 + Math.sin(i * 0.628) * 100} L${53 + Math.cos(i * 0.628 + 0.2) * 100} ${40 + Math.sin(i * 0.628 + 0.2) * 100}Z" fill="#fde68a" opacity=".5"/>`).join('')}</g>
-    <g class="celebrate-chest">${chestMarkup(skin)}</g></svg>${coins}`;
+  $('celArt').innerHTML = `<svg viewBox="-80 -90 160 110" class="w-full h-full celebrate-open"><g class="celebrate-rays">${Array.from({ length: 10 }, (_, i) => `<path d="M0 -30 L${Math.cos(i * 0.628) * 90} ${-30 + Math.sin(i * 0.628) * 90} L${Math.cos(i * 0.628 + 0.2) * 90} ${-30 + Math.sin(i * 0.628 + 0.2) * 90}Z" fill="#fde68a" opacity=".5"/>`).join('')}</g>
+    <g class="celebrate-chest" transform="scale(1.5)">${chestSvg(skin)}</g></svg>${coins}`;
   $('celTitle').textContent = t(away ? 'cel.awayTitle' : 'cel.title');
   $('celText').textContent = away && c.count > 1 ? t('cel.awayMany', { n: c.count, amount: money(c.amount) }) : t('cel.text', { amount: money(c.amount) });
   $('celebrateDialog').showModal();

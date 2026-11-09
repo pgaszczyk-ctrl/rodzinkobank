@@ -9,7 +9,7 @@ Aplikacja **prowadzi ewidencję** – prawdziwe pieniądze przechowuje rodzic.
 2. **Kopalnia Marzeń** – jeden ilustrowany przekrój: nad ziemią oś czasu od znacznika **Dziś** z płynnie zmieniającymi się porami roku, pod ziemią maksymalnie trzy najbliższe skrzynie (drewniana / srebrna / złota), każda dokładnie pod swoją datą. Na telefonie przewija się poziomo tylko ta scena.
 3. **Moje marzenia** – trzy karty (Proste, Średnie, Niesamowite) liczone od tego samego salda Skarbca, z opcjonalną prognozą przy regularnych wpłatach.
 
-Scena to ilustracja „Cztery pory roku” od grafika: bieżąca pora roku i dwie kolejne, a pod ziemią kopalnia. Oś czasu przelicza każdą datę na tę panoramę, więc skrzynia leży dokładnie pod swoją datą. Animacje (GSAP): górnik kopie według czterech klatek i czasów ze `scena.json`, przy uderzeniu lecą iskry i pył; winda wwozi złoto na górę dokładnie w chwili zmiany cyfr – z cichym „ka-ching”; latarnie migoczą, drzewa i nać się kołyszą, chmury płyną, liście, śnieg i płatki spadają według pory roku. Groszacy: pierwsza, druga i trzecia wpłata do Skarbca odblokowują kolejnego górnika (kopie przy skale, sortuje bryłkę złota, rozbija stos rudy). Gdy kopalnia nie nalicza premii – odpoczywają (stoją, siedzą albo drzemią). Tryb ograniczonego ruchu wyłącza animacje, a liczby dalej się aktualizują.
+Kopalnia to oryginalna ilustracja z pierwszej wersji (zębatki, górnicy z kilofami, bloki rudy, wagonik), połączona z osią czasu w jeden przekrój. Dopóki Groszak nie zostanie obudzony wpłatą, siedzi na kamieniu, a kilof leży obok. Pierwsza, druga i trzecia wpłata do Skarbca budzą kolejnego górnika: wstaje, podnosi kilof, podchodzi do rudy i kopie (trzeci to sztygar w złotym kasku). W rytmie naliczania (co 10 s przy 10 zł) kopiący Groszacy wyrzucają złoto w górę szybem do skarbca – ląduje dokładnie wtedy, gdy na liczniku przybywa wyliczona liczba mikrogroszy, z cichym „ka-ching” (przycisk głośnika przy saldzie wycisza dźwięk). Gdy kopalnia nie nalicza premii, Groszacy znów siadają. Tryb ograniczonego ruchu wyłącza animacje, a liczby dalej się aktualizują.
 
 ## Zasady naliczania (`src/engine.js`)
 - Kwoty są w całkowitych mikrogroszach (1 zł = 1 000 000 µg).
@@ -28,11 +28,7 @@ Chroniona PIN-em (w trybie z kontami sprawdzanym po stronie serwera: 5 błędów
 | `index.html` | szkielet strony |
 | `src/engine.js` | księgowanie: kopalnia, skrzynie, limity, wypłaty, prognozy |
 | `src/app.js`, `src/parent.js` | widok dziecka i Strefa rodzica |
-| `src/scene.js` | scena „Cztery pory roku” złożona według `assets/scene/scena.json` i animowana przez GSAP |
-| `assets/scene/` | ilustracje od grafika (opis w `assets/scene/README.md`); poprawione: słońce, proporcje włazu i latarni, marchewki |
-| `src/scenedata.js` | `scena.json` jako moduł JS z wersjami plików (generowany: `npm run build:scene`) |
-| `src/chests.js` | skrzynie drewniana / srebrna / złota w stylu sceny (scena, ikony, świętowanie) |
-| `assets/vendor/gsap-3.13.0.min.js` | biblioteka animacji GSAP (licencja „Standard no charge”, https://gsap.com/standard-license) |
+| `src/scene.js` | scena SVG: krajobraz z porami roku, oś czasu, skarbiec z windą, skrzynie pod datami i oryginalna kopalnia z Rodzinobanku |
 | `src/art.js` | ilustracje SVG (sztygar przy saldzie, skrzynie, obrazki marzeń) |
 | `src/sound.js` | delikatne „ka-ching” (Web Audio, bez plików dźwiękowych) |
 | `src/backend.js` | tryb próbny (localStorage) i Supabase – to samo API |
@@ -43,7 +39,7 @@ Chroniona PIN-em (w trybie z kontami sprawdzanym po stronie serwera: 5 błędów
 ## Uruchomienie
 Statyczna strona bez kroku budowania – wystarczy hosting plików (np. GitHub Pages, gałąź i folder `/`). Lokalnie: `npm run serve` i `http://localhost:8080` (`?local=1` wymusza tryb próbny, `?lang=en` – angielski).
 
-Po każdej zmianie plików: `npm run build` (`scena.json` → `src/scenedata.js`, Tailwind → `assets/tailwind.css`, znaczniki wersji w `index.html`, żeby przeglądarki i GitHub Pages nie podawały starych plików).
+Po każdej zmianie plików: `npm run build` (Tailwind → `assets/tailwind.css` i znaczniki wersji w `index.html`, żeby przeglądarki i GitHub Pages nie podawały starych plików).
 
 ### Wspólna baza (Supabase)
 1. **SQL Editor** → wklej `supabase/schema.sql` → **Run**. Skrypt można uruchamiać wielokrotnie. Zachowuje rodziny, dzieci, linki i marzenia z Rodzinobanku, a stare wpłaty przenosi do nowej księgi (bieżąca kwota z oryginalną datą i domyślnym planem).

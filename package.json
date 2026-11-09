@@ -10,8 +10,6 @@
     "build:css": "npx --yes tailwindcss@3.4.16 -c tailwind.config.cjs -i assets/tailwind.src.css -o assets/tailwind.css --minify",
     "test:sql": "tests/sql/run.sh",
     "stamp": "node tools/stamp.mjs",
-    "build": "npm run build:scene && npm run build:css && npm run stamp",
-    "build:scene": "node tools/build-scene.mjs",
-    "optimize:scene": "python3 tools/optimize-scene.py"
+    "build": "npm run build:css && npm run stamp"
   }
 }
