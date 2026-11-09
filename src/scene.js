@@ -3,16 +3,13 @@
 // the axis. Seasons blend into each other along the axis.
 
 import { addMonths, wallParts, wallToInstant, dayOfYear } from './calendar.js';
-import { chestSvg } from './art.js';
 import { t, fmtDate, money } from './i18n.js';
 
 const DAY = 86400_000;
-export const SCENE_H = 500;
+export const SCENE_H = 402;
 const SURFACE = 168;      // ground level
 const ROAD_H = 32;        // axis band (chest markers on top, month names below)
-const CHEST_BASE = 286;   // chest baseline (first row; a close neighbour goes one row lower)
-const ROW_DY = 31;        // a close neighbour's label goes one row lower
-const GALLERY_TOP = 360;   // top of the original tunnel
+const GALLERY_TOP = 262;   // top of the original tunnel
 const FLOOR = GALLERY_TOP + 32;   // where the shaft opens into the tunnel
 const SX = 122;           // shaft centre
 const MINER_S = 1.35;     // miner scale (Rodzinobank-style blocky miners)
@@ -146,10 +143,9 @@ function minerSvg(x, y, scale, shirt, delay, { state = 'dig', chief = false } = 
   const pick = `<rect x="26" y="34" width="3" height="24" fill="#8b5a2b"/>
       <rect x="24" y="22" width="6" height="14" fill="${shirt}"/>
       <rect x="24" y="34" width="6" height="5" fill="#f1c27d"/>
-      <rect x="17" y="54" width="21" height="4" fill="#94a3b8"/>
-      <rect x="14" y="56" width="4" height="4" fill="#94a3b8"/><rect x="37" y="56" width="4" height="4" fill="#94a3b8"/>
-      <rect x="12" y="59" width="3" height="3" fill="#64748b"/><rect x="40" y="59" width="3" height="3" fill="#64748b"/>
-      <rect x="19" y="54" width="17" height="1.6" fill="#5eead4"/>`;
+      <path d="M10 49 Q14 53 18 55 H38 Q42 53 46 49 L47 52 Q43 57 38 59 H18 Q13 57 9 52Z" fill="#94a3b8" stroke="#64748b" stroke-width="1"/>
+      <rect x="25" y="54" width="5" height="6" rx="1" fill="#64748b"/>
+      <path d="M13 52.5 Q17 56 20 56.5 H36" stroke="#5eead4" stroke-width="1.4" fill="none" stroke-linecap="round"/>`;
   // pickaxe lying on the ground in front of the sitting miner
   const pickOnGround = `<rect x="27" y="54" width="24" height="3" rx="1" fill="#8b5a2b"/>
       <rect x="49" y="45" width="4" height="13" fill="#94a3b8"/><rect x="47" y="43" width="4" height="4" fill="#94a3b8"/><rect x="47" y="56" width="4" height="2" fill="#64748b"/>
@@ -406,25 +402,6 @@ export function buildScene(o) {
   // the original mine, placed so that the shaft from the vault enters its left end
   s += `<g class="orig-mine" transform="translate(${MINE_X} ${MINE_Y})">${originalMine({ unlocked, miningActive, hasDeposits, prevDigging })}</g>`;
   s += vaultSvg(SX, wAt(SX).winter > 0.4);
-
-  // ---- chests, aligned with their dates ----
-  const lastInRow = [-999, -999];
-  chests.forEach((c, i) => {
-    const x = xOf(c.at);
-    const row = x - lastInRow[0] >= 100 ? 0 : x - lastInRow[1] >= 100 ? 1 : (lastInRow[0] <= lastInRow[1] ? 0 : 1);
-    lastInRow[row] = x;
-    const base = CHEST_BASE;
-    const stroke = c.skin === 'gold' ? '#d97706' : c.skin === 'silver' ? '#64748b' : '#8a5527';
-    const fill = c.skin === 'gold' ? '#fbbf24' : c.skin === 'silver' ? '#94a3b8' : '#b7793f';
-    s += `<g class="chest-marker" data-chest="${i}">
-      <path d="M${x} ${SURFACE + 15} V${base - 52}" stroke="#7c5a2d" stroke-width="1.6" stroke-dasharray="4 4" opacity=".7"/>
-      <g transform="translate(${x} ${SURFACE + 9})"><circle r="6.5" fill="#fff" stroke="${stroke}" stroke-width="3"/><circle r="2.4" fill="${fill}"/></g>
-      <g transform="translate(${x} ${base}) scale(${row ? 0.85 : i === 0 ? 1.05 : 0.92})">${chestSvg(c.skin)}</g>
-      <g transform="translate(${x} ${base + 6 + row * ROW_DY})"><rect x="-46" y="0" width="92" height="27" rx="9" fill="#fff" opacity=".93"/>
-        <text x="0" y="12" text-anchor="middle" class="scene-chest-amt">${money(c.amount, { sign: true })}</text>
-        <text x="0" y="23" text-anchor="middle" class="scene-chest-date">${fmtDate(c.at, tz, 'long')}</text></g>
-    </g>`;
-  });
 
   // ---- today marker ----
   s += `<g class="today"><path d="M${TX} ${SURFACE - 70} V${SURFACE + ROAD_H}" stroke="#db2777" stroke-width="3"/>

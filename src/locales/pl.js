@@ -46,7 +46,7 @@ export default {
   'kid.req.approved': 'Rodzic wypłacił {amount}. Udanych zakupów!',
   'kid.req.rejected': 'Wniosek o {amount} nie został zatwierdzony.',
   'kid.mineTitle': 'Kopalnia Marzeń',
-  'kid.mineSub': 'Nad ziemią płynie czas, pod ziemią czekają skrzynie. Każda skrzynia leży dokładnie pod swoją datą.',
+  'kid.mineSub': 'Nad ziemią płynie czas, a pod ziemią Groszacy kopią złoto do Twojego Skarbca.',
   'kid.crew': 'Groszacy: {n}/{max}',
   'kid.crew.first': 'czekają na pierwszą wpłatę',
   'kid.crew.working': 'pracują',

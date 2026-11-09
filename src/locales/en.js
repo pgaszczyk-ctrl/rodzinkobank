@@ -45,7 +45,7 @@ export default {
   'kid.req.approved': 'Your parent paid out {amount}. Happy shopping!',
   'kid.req.rejected': 'The request for {amount} was not approved.',
   'kid.mineTitle': 'Dream Mine',
-  'kid.mineSub': 'Time flows above ground, chests wait below. Each chest sits right under its date.',
+  'kid.mineSub': 'Time flows above ground, and below it the Coinlings dig gold for your vault.',
   'kid.crew': 'Coinlings: {n}/{max}',
   'kid.crew.first': 'waiting for the first deposit',
   'kid.crew.working': 'working',

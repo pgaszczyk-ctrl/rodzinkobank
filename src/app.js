@@ -216,24 +216,6 @@ function vaultStatus(st) {
   return 'mining';
 }
 
-function renderTick(st) {
-  const now = ctx.nowMs();
-  const status = vaultStatus(st);
-  const row = $('tickRow');
-  if (st.nextIncrementAt) {
-    row.hidden = false;
-    const left = Math.max(0, st.nextIncrementAt - now);
-    $('tickText').textContent = t('kid.nextMicro', { time: duration(left) });
-    const span = Math.max(STEP_MS, st.nextIncrementAt - (live.prevAt ?? st.nextIncrementAt - estimateInterval(st)));
-    const pct = Math.min(100, Math.max(0, 100 - (left / span) * 100));
-    $('tickFill').style.width = pct.toFixed(1) + '%';
-  } else {
-    row.hidden = false;
-    $('tickText').textContent = t('kid.tick.' + status);
-    $('tickFill').style.width = '0%';
-  }
-}
-const estimateInterval = (st) => STEP_MS * Math.max(1, Math.ceil(1 / Math.max(1e-9, st.microPerStep)));
 
 function renderNextChest() {
   const c = live.up[0];
@@ -303,9 +285,7 @@ function renderScene(st, force = false) {
   const crewState = !hasDeposits() ? 'first' : st.miningActive ? 'working' : 'resting';
   $('crew').textContent = t('kid.crew', { n: st.unlocked, max: MAX_GROSZAKI }) + ' · ' + t('kid.crew.' + crewState);
   $('mineSub').textContent = t('kid.mineSub');
-  $('sceneDesc').textContent = live.up.length
-    ? t('scene.desc', { list: live.up.map((c) => `${money(c.amount, { sign: true })} – ${fmtDate(c.at, ctx.tz, 'long')}`).join('; ') })
-    : t('kid.noChest');
+  $('sceneDesc').textContent = t('kid.mineSub');
 }
 
 const forecastCache = new Map();
@@ -376,7 +356,6 @@ function renderAll(force = false) {
   $('mascot').innerHTML = minerPortrait({ sleeping: !hasDeposits(), title: t('kid.mascotAlt') });
   renderHeader();
   renderBalance(st);
-  renderTick(st);
   renderNextChest();
   renderNow(st);
   renderVaultNote(st);
@@ -418,7 +397,6 @@ function loop() {
   }
   if (Math.floor(now / 1000) !== lastSecond) {
     lastSecond = Math.floor(now / 1000);
-    renderTick(live.st);
     if (lastSecond % 30 === 0) { renderNextChest(); renderScene(live.st); renderRequestBox(live.st); }
   }
 }
