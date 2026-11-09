@@ -12,7 +12,7 @@ const RIG = {
   arm: { w: 0.12, len: 0.36, rest: { x: 0.43, y: 0.08 }, raised: { x: 0.40, y: -0.20 }, raisedLen: 0.46 },
   leg: { w: 0.13, len: 0.36, hip: { x: 0.16, y: 0.36 } },
   crumb: { size: 0.4, y: -0.64 },
-  pack: { size: 0.62, x: -0.36, y: 0.02 },
+  pack: { size: 0.74, x: -0.5, y: 0.04 },
   bubbles: { size: 0.42, x: 0.42, y: -0.72 },
 };
 
@@ -65,6 +65,7 @@ export async function loadMaterial(base, manifest, id) {
   if (!m) throw new Error('Brak materiału ' + id);
   const parts = {};
   const faces = {};
+  const packs = {};
   await Promise.all([
     ...Object.entries(m.czesci).map(async ([k, v]) => {
       parts[k] = { sprite: new Sprite(await loadImage(base + v.plik)), w: v.w, h: v.h, pivot: v.pivot };
@@ -72,8 +73,12 @@ export async function loadMaterial(base, manifest, id) {
     ...Object.entries(m.buzie).map(async ([k, v]) => {
       faces[k] = { sprite: new Sprite(await loadImage(base + v.plik)), w: v.w, h: v.h };
     }),
+    ...Object.entries(m.plecaki || {}).map(async ([k, v]) => {
+      const img = await loadImage(base + v.plik);
+      packs[k] = { sprite: new Sprite(img), w: img.naturalWidth, h: img.naturalHeight, strap: v.szelka };
+    }),
   ]);
-  return { id, name: m.nazwa, parts, faces, faceOn: m.buziaNaKorpusie };
+  return { id, name: m.nazwa, parts, faces, packs, faceOn: m.buziaNaKorpusie };
 }
 
 // ---------------------------------------------------------------------------
@@ -89,9 +94,12 @@ export async function loadMaterial(base, manifest, id) {
  *   carry    – niesie okruszek nad głową
  *   pack     – ma plecak (wyrusza po marzenie)
  *   speed    – tempo kroku (1 = normalne)
+ *   packColor – kolor plecaka (klucz z material.packs), domyślnie losowy
  */
 export function createGroszak(material, opts = {}) {
+  const colors = Object.keys(material.packs || {});
   return {
+    packColor: colors.length ? colors[Math.floor(Math.random() * colors.length)] : null,
     material,
     x: 0, y: 0, size: 24, dir: 1,
     action: 'idle', carry: false, pack: false, speed: 1,
@@ -240,11 +248,12 @@ export function drawGroszak(ctx, g, now, scale = 1, still = false) {
 
   // plecak za korpusem, wystaje z boku przeciwnego do kierunku marszu
   if (p.pack) {
+    const pack = (m.packs && m.packs[g.packColor]) || P.plecak;
     const ps = RIG.pack.size;
-    const ph = ps * P.plecak.h / P.plecak.w;
+    const ph = ps * pack.h / pack.w;
     ctx.save();
     ctx.scale(g.dir, 1);
-    drawPart(ctx, P.plecak, RIG.pack.x - ps / 2, RIG.pack.y - ph / 2, ps, ph, s);
+    drawPart(ctx, pack, RIG.pack.x - ps / 2, RIG.pack.y - ph / 2, ps, ph, s);
     ctx.restore();
   }
 
@@ -273,6 +282,24 @@ export function drawGroszak(ctx, g, now, scale = 1, still = false) {
   const fw = m.faceOn.szerokosc;
   const fh = fw * f.h / f.w;
   drawPart(ctx, f, (m.faceOn.x - 0.5) + p.faceShift - fw / 2, (m.faceOn.y - 0.5) - fh / 2, fw, fh, s);
+
+  // szelka plecaka na przodzie korpusu (od ramienia do boku)
+  if (p.pack) {
+    const pack = (m.packs && m.packs[g.packColor]) || P.plecak;
+    ctx.save();
+    ctx.scale(g.dir, 1);
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#5a3424';
+    ctx.lineWidth = 0.085;
+    ctx.beginPath();
+    ctx.moveTo(-0.36, -0.36);
+    ctx.quadraticCurveTo(-0.18, 0.0, -0.4, 0.3);
+    ctx.stroke();
+    ctx.strokeStyle = pack.strap || '#8a5cc0';
+    ctx.lineWidth = 0.055;
+    ctx.stroke();
+    ctx.restore();
+  }
 
   // okruszek nad głową
   if (p.crumb) {

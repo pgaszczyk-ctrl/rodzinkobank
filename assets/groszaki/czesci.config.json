@@ -1,19 +1,140 @@
 {
   "_opis": "Układ części na arkuszu 2000x1116 i lista materiałów monet. Nowy materiał: wrzuć arkusz do zrodla/ i dopisz jedną pozycję w 'materialy'. Jeśli arkusz ma inny układ, dodaj w pozycji własne 'uklad' (te same klucze co niżej).",
   "uklad": {
-    "korpus":  { "box": [90, 95, 535, 535] },
-    "buzie": {
-      "pas_y": [250, 410],
-      "box_x": [[590, 800], [820, 1030], [1050, 1260], [1280, 1475], [1490, 1680], [1700, 1910]],
-      "nazwy": ["usmiech", "radosna", "zachwyt", "spiaca", "zdziwiona", "szczesliwa"]
+    "korpus": {
+      "box": [
+        90,
+        95,
+        535,
+        535
+      ]
     },
-    "raczka":  { "box": [415, 720, 510, 945], "pivot": "gora" },
-    "nozka":   { "box": [565, 710, 670, 955], "pivot": "gora" },
-    "okruszek":{ "box": [800, 585, 940, 745], "miekki": true },
-    "plecak":  { "box": [1030, 690, 1310, 965], "dziury": 40 },
-    "babelki": { "box": [1515, 650, 1650, 825], "miekki": true }
+    "buzie": {
+      "pas_y": [
+        250,
+        410
+      ],
+      "box_x": [
+        [
+          590,
+          800
+        ],
+        [
+          820,
+          1030
+        ],
+        [
+          1050,
+          1260
+        ],
+        [
+          1280,
+          1475
+        ],
+        [
+          1490,
+          1680
+        ],
+        [
+          1700,
+          1910
+        ]
+      ],
+      "nazwy": [
+        "usmiech",
+        "radosna",
+        "zachwyt",
+        "spiaca",
+        "zdziwiona",
+        "szczesliwa"
+      ]
+    },
+    "raczka": {
+      "box": [
+        415,
+        720,
+        510,
+        945
+      ],
+      "pivot": "gora"
+    },
+    "nozka": {
+      "box": [
+        565,
+        710,
+        670,
+        955
+      ],
+      "pivot": "gora"
+    },
+    "okruszek": {
+      "box": [
+        800,
+        585,
+        940,
+        745
+      ],
+      "miekki": true
+    },
+    "plecak": {
+      "box": [
+        1030,
+        690,
+        1310,
+        965
+      ],
+      "dziury": 40
+    },
+    "babelki": {
+      "box": [
+        1515,
+        650,
+        1650,
+        825
+      ],
+      "miekki": true
+    }
   },
   "materialy": [
-    { "id": "miedziany", "arkusz": "czesci-miedziany.jpg", "nazwa": "Miedziany" }
-  ]
+    {
+      "id": "miedziany",
+      "arkusz": "czesci-miedziany.jpg",
+      "nazwa": "Miedziany"
+    }
+  ],
+  "plecaki_kolory": {
+    "_opis": "Warianty plecaka tworzone z tęczowego: barwa (0–360°) i nasycenie. Nowy kolor = nowa pozycja.",
+    "czerwony": {
+      "barwa": 4,
+      "nasycenie": 0.75
+    },
+    "pomaranczowy": {
+      "barwa": 28,
+      "nasycenie": 0.8
+    },
+    "zolty": {
+      "barwa": 48,
+      "nasycenie": 0.8
+    },
+    "zielony": {
+      "barwa": 115,
+      "nasycenie": 0.55
+    },
+    "turkusowy": {
+      "barwa": 178,
+      "nasycenie": 0.55
+    },
+    "niebieski": {
+      "barwa": 215,
+      "nasycenie": 0.65
+    },
+    "fioletowy": {
+      "barwa": 275,
+      "nasycenie": 0.5
+    },
+    "rozowy": {
+      "barwa": 330,
+      "nasycenie": 0.55
+    }
+  }
 }

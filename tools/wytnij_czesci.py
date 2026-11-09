@@ -122,7 +122,29 @@ def save(img: Image.Image, path: Path):
     img.save(path, 'WEBP', lossless=True, method=6)
 
 
-def process_material(mat, layout):
+def recolor(img: Image.Image, hue_deg: float, sat: float) -> Image.Image:
+    """Przemalowuje kolorowe pola na jedną barwę, zachowując jasność (cieniowanie i paski)
+    oraz ciemny kontur."""
+    rgba = np.asarray(img).astype(np.float32) / 255.0
+    rgb, a = rgba[..., :3], rgba[..., 3:]
+    mx, mn = rgb.max(axis=2), rgb.min(axis=2)
+    light = (mx + mn) / 2
+    chroma = mx - mn
+    colored = ((chroma > 0.18) & (light > 0.34))[..., None]   # ciemny kontur zostaje
+    # jasność wyrównana do zakresu, żeby paski różniły się odcieniem tej samej barwy
+    l = np.clip(0.30 + (light - 0.35) * 0.9, 0.22, 0.85)
+    h = hue_deg / 360.0
+    def hue2rgb(p, q, t):
+        t = t % 1.0
+        return np.where(t < 1/6, p + (q - p) * 6 * t, np.where(t < 1/2, q, np.where(t < 2/3, p + (q - p) * (2/3 - t) * 6, p)))
+    q = np.where(l < 0.5, l * (1 + sat), l + sat - l * sat)
+    pp = 2 * l - q
+    new = np.dstack([hue2rgb(pp, q, h + 1/3), hue2rgb(pp, q, h), hue2rgb(pp, q, h - 1/3)])
+    out = np.where(colored, new, rgb)
+    return Image.fromarray((np.dstack([out, a]) * 255).round().astype(np.uint8), 'RGBA')
+
+
+def process_material(mat, layout, pack_colors):
     sheet = Image.open(SRC / mat['arkusz']).convert('RGB')
     lay = {**layout, **mat.get('uklad', {})}
     out_dir = GROSZ / mat['id']
@@ -149,6 +171,22 @@ def process_material(mat, layout):
     for name in ('korpus', 'raczka', 'nozka', 'okruszek', 'plecak', 'babelki'):
         simple(name, lay[name])
 
+    # Plecaki w kolorach (tęczowy zostaje jako 'teczowy')
+    base_pack = Image.open(out_dir / 'plecak.webp').convert('RGBA')
+    meta['plecaki'] = {'teczowy': {'plik': meta['czesci']['plecak']['plik'], 'szelka': '#8a5cc0'}}
+    for name, spec in pack_colors.items():
+        if name.startswith('_'):
+            continue
+        img = recolor(base_pack, spec['barwa'], spec['nasycenie'])
+        save(img, out_dir / f'plecak-{name}.webp')
+        # kolor szelki: średni kolor kolorowych pól plecaka, trochę ciemniejszy
+        arr = np.asarray(img).astype(np.float32)
+        rgb, a = arr[..., :3], arr[..., 3]
+        sel = (a > 200) & (rgb.max(axis=2) - rgb.min(axis=2) > 40)
+        c = rgb[sel].mean(axis=0) * 0.85
+        meta['plecaki'][name] = {'plik': f'{mat["id"]}/plecak-{name}.webp',
+                                 'szelka': '#%02x%02x%02x' % tuple(int(v) for v in c)}
+
     # Buzie: wspólny pas w pionie, żeby wszystkie leżały na korpusie w tym samym miejscu.
     fy0, fy1 = lay['buzie']['pas_y']
     for name, (x0, x1) in zip(lay['buzie']['nazwy'], lay['buzie']['box_x']):
@@ -172,7 +210,7 @@ def main():
     for mat in cfg['materialy']:
         if only and mat['id'] not in only:
             continue
-        manifest['materialy'][mat['id']] = process_material(mat, cfg['uklad'])
+        manifest['materialy'][mat['id']] = process_material(mat, cfg['uklad'], cfg.get('plecaki_kolory', {}))
         print('wycięto:', mat['id'])
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
 

@@ -22,8 +22,8 @@
   .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -6px;
     border: 6px solid transparent; border-top-color: var(--ink); }
   .bubble.on { opacity: 1; }
-  #studio { height: 230px; }
-  @media (max-width: 600px) { #studio { height: 400px; } }
+  #studio { height: 380px; }
+  @media (max-width: 600px) { #studio { height: 520px; } }
   .studio { background: var(--card); border: 2px solid var(--line); border-radius: 16px; }
   .note { font-size: 13px; opacity: .75; }
   .controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
@@ -170,14 +170,43 @@ wrap.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 // ---------------------------------------------------------------- scenariusz jednego Groszaka
-// Trasa (piksele mapy): piekarnia → przed sklepikiem → za niebieskim straganem → schody → drzwi Skarbca.
-const BAKERY = [{ x: 728, y: 606 }];
+// Trasa (piksele mapy), sprawdzona na mapie z marginesem szerokości Groszaka:
+// lada piekarni → szerokim przejściem w dół → przed niebieskim straganem →
+// piaszczystym pasem po prawej → środkiem schodów → drzwi Skarbca.
+const BAKERY = [{ x: 866, y: 672 }];
 const TO_VAULT = [
-  { x: 728, y: 606 }, { x: 772, y: 618 }, { x: 800, y: 638 }, { x: 850, y: 648 }, { x: 878, y: 655 },
-  { x: 910, y: 647 }, { x: 955, y: 643 }, { x: 990, y: 638 }, { x: 1000, y: 632 },
-  { x: 1012, y: 600, stairs: true }, { x: 1048, y: 556, stairs: true }, { x: 1084, y: 508, stairs: true },
-  { x: 1100, y: 462, stairs: true }, { x: 1088, y: 418, stairs: true }, { x: 1060, y: 384, stairs: true },
-  { x: 1036, y: 346, stairs: true }, { x: 1022, y: 310, stairs: true }, { x: 1020, y: 298 },
+  { x: 866, y: 672 },
+  { x: 870, y: 700 },
+  { x: 877, y: 745 },
+  { x: 900, y: 754 },
+  { x: 945, y: 756 },
+  { x: 980, y: 757 },
+  { x: 1001, y: 748 },
+  { x: 1001, y: 716 },
+  { x: 997, y: 682 },
+  { x: 991, y: 658 },
+  { x: 986, y: 645 },
+  { x: 988, y: 628, stairs: true },
+  { x: 995, y: 612, stairs: true },
+  { x: 1011, y: 590, stairs: true },
+  { x: 1036, y: 565, stairs: true },
+  { x: 1062, y: 540, stairs: true },
+  { x: 1086, y: 515, stairs: true },
+  { x: 1097, y: 490, stairs: true },
+  { x: 1099, y: 468, stairs: true },
+  { x: 1092, y: 455, stairs: true },
+  { x: 1080, y: 445, stairs: true },
+  { x: 1065, y: 432, stairs: true },
+  { x: 1048, y: 420, stairs: true },
+  { x: 1031, y: 407, stairs: true },
+  { x: 1016, y: 395, stairs: true },
+  { x: 1006, y: 382, stairs: true },
+  { x: 1002, y: 370, stairs: true },
+  { x: 1001, y: 357, stairs: true },
+  { x: 1006, y: 345, stairs: true },
+  { x: 1012, y: 332, stairs: true },
+  { x: 1020, y: 318, stairs: true },
+  { x: 1020, y: 308 },
 ];
 const BACK = [...TO_VAULT].reverse();
 
@@ -186,7 +215,7 @@ Object.assign(g, BAKERY[0]);
 const say = { text: '', until: 0 };
 
 const script = [
-  { do: 'idle', ms: 900, carry: false, line: 'Idę do piekarni po okruszek' },
+  { do: 'idle', ms: 900, carry: false, line: 'Pracuję w piekarni' },
   { do: 'pick', ms: 700 },
   { do: 'walk', path: TO_VAULT, carry: true, line: 'Niosę okruszek do Skarbca!' },
   { do: 'idle', ms: 600, carry: true },
@@ -223,7 +252,7 @@ function updateWalker(now, dt) {
   if (dist <= stepLen) { g.x = target.x; g.y = target.y; seg++; }
   else { g.x += dx / dist * stepLen; g.y += dy / dist * stepLen; }
   // dalej od widza = trochę mniejszy (perspektywa mapy)
-  g.size = 22 * (0.82 + 0.18 * (g.y - 290) / (660 - 290));
+  g.size = 22 * (0.82 + 0.18 * (g.y - 300) / (760 - 300));
 }
 
 const bubble = document.getElementById('bubble');
@@ -294,8 +323,10 @@ const poses = [
   ['niesie okruszek', createGroszak(copper, { action: 'walk', carry: true })],
   ['macha', createGroszak(copper, { action: 'wave' })],
   ['śpi', createGroszak(copper, { action: 'sleep' })],
-  ['z plecakiem', createGroszak(copper, { action: 'walk', pack: true, dir: 1 })],
 ];
+// Groszaki wyruszające po marzenie – każdy z innym plecakiem
+const packers = Object.keys(copper.packs).map((c, i) =>
+  createGroszak(copper, { action: 'walk', pack: true, dir: i % 2 ? -1 : 1, packColor: c }));
 function drawStudio(now) {
   const r = studio.getBoundingClientRect();
   const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
@@ -303,7 +334,7 @@ function drawStudio(now) {
   sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   sctx.clearRect(0, 0, r.width, r.height);
   const cols = r.width < 600 ? 3 : poses.length;
-  const rows = Math.ceil(poses.length / cols);
+  const rows = Math.ceil(poses.length / cols) + 1;   // ostatni rząd: plecaki
   const cell = r.width / cols, rowH = r.height / rows;
   const D = Math.min(cell * 0.6, rowH * 0.5, 105);
   sctx.fillStyle = '#4a2c1a'; sctx.font = '600 13px system-ui'; sctx.textAlign = 'center';
@@ -313,6 +344,13 @@ function drawStudio(now) {
     drawGroszak(sctx, pg, now, dpr, still);
     sctx.fillText(label, pg.x, rowH * (row + 1) - 8);
   });
+  const pc = r.width / packers.length;
+  const Dp = Math.min(pc * 0.55, rowH * 0.42, 70);
+  packers.forEach((pg, i) => {
+    pg.size = Dp; pg.x = pc * (i + 0.5); pg.y = r.height - 30;
+    drawGroszak(sctx, pg, now, dpr, still);
+  });
+  sctx.fillText('wyruszają po marzenie – plecaki w różnych kolorach', r.width / 2, r.height - 8);
 }
 
 // wstrzymanie, gdy karta jest w tle

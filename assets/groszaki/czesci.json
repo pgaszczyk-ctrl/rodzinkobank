@@ -74,6 +74,44 @@
           "h": 160
         }
       },
+      "plecaki": {
+        "teczowy": {
+          "plik": "miedziany/plecak.webp",
+          "szelka": "#8a5cc0"
+        },
+        "czerwony": {
+          "plik": "miedziany/plecak-czerwony.webp",
+          "szelka": "#9f3229"
+        },
+        "pomaranczowy": {
+          "plik": "miedziany/plecak-pomaranczowy.webp",
+          "szelka": "#a35c26"
+        },
+        "zolty": {
+          "plik": "miedziany/plecak-zolty.webp",
+          "szelka": "#a38226"
+        },
+        "zielony": {
+          "plik": "miedziany/plecak-zielony.webp",
+          "szelka": "#4a8637"
+        },
+        "turkusowy": {
+          "plik": "miedziany/plecak-turkusowy.webp",
+          "szelka": "#448682"
+        },
+        "niebieski": {
+          "plik": "miedziany/plecak-niebieski.webp",
+          "szelka": "#3d588c"
+        },
+        "fioletowy": {
+          "plik": "miedziany/plecak-fioletowy.webp",
+          "szelka": "#703d81"
+        },
+        "rozowy": {
+          "plik": "miedziany/plecak-rozowy.webp",
+          "szelka": "#91395e"
+        }
+      },
       "buziaNaKorpusie": {
         "x": 0.5,
         "y": 0.54,
