@@ -5,7 +5,7 @@ import { DEFAULT_TZ, dayKey } from './calendar.js';
 import { parseZl, floorToGrosz, MICRO_PER_GROSZ } from './money.js';
 import { t, setLang, getLang, detectLang, LOCALES, hasKey, money, moneyParts, moneyMicro, fmtDate, duration } from './i18n.js';
 import { minerPortrait, chestSvg, chestIcon, logoMark, dreamImage } from './art.js';
-import { createMine } from './mine.js';
+import { buildScene } from './scene.js';
 import { LocalBackend, CloudBackend, AppError, normalizeOp, newId, DEFAULT_DREAMS } from './backend.js';
 import { initParentZone } from './parent.js';
 import { kaching, kachingGrosz, chestFanfare, soundOn, setSound } from './sound.js';
@@ -27,7 +27,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private
 const lsDel = (k) => { try { localStorage.removeItem(k); } catch { /* private mode */ } };
 const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DAY = 86400_000;
-const DELIVERY_MS = 2900; // lift travel time in the mine scene
+const DELIVERY_MS = 3000;
 
 /* ------------------------------------------------------------------ */
 /*  Shared context (also used by the parent zone)                       */
@@ -288,14 +288,18 @@ function renderRequestBox(st) {
   const b = $('reqOpen'); if (b) b.addEventListener('click', () => openWithdraw());
 }
 
-let mine = null;
-function renderScene(st) {
+function renderScene(st, force = false) {
   const vw = $('sceneScroll').clientWidth || 360;
-  if (!mine) mine = createMine($('scene'));
-  mine.update({
+  const sig = JSON.stringify([live.up.map((c) => [c.at, c.amount, c.skin]), st.unlocked, st.miningActive, hasDeposits(), Math.round(vw / 40), dayKey(ctx.nowMs(), ctx.tz), getLang()]);
+  if (!force && sig === live.sceneSig) return;
+  live.sceneSig = sig;
+  const scroll = $('sceneScroll').scrollLeft;
+  const { svg } = buildScene({
     now: ctx.nowMs(), tz: ctx.tz, chests: live.up, unlocked: st.unlocked, miningActive: st.miningActive,
-    restPoses: ctx.restPoses, hasDeposits: hasDeposits(), viewportWidth: vw, lang: getLang(),
+    restPoses: ctx.restPoses, hasDeposits: hasDeposits(), viewportWidth: vw,
   });
+  $('scene').innerHTML = svg;
+  $('sceneScroll').scrollLeft = scroll;
   const crewState = !hasDeposits() ? 'first' : st.miningActive ? 'working' : 'resting';
   $('crew').textContent = t('kid.crew', { n: st.unlocked, max: MAX_GROSZAKI }) + ' · ' + t('kid.crew.' + crewState);
   $('mineSub').textContent = t('kid.mineSub');
@@ -377,7 +381,7 @@ function renderAll(force = false) {
   renderNow(st);
   renderVaultNote(st);
   renderRequestBox(st);
-  renderScene(st);
+  renderScene(st, force);
   renderDreams(st);
 }
 
@@ -393,7 +397,8 @@ function loop() {
   // start the delivery animation so the coin lands on the heap when the digits change
   if (live.nextAt && !live.delivering && now >= live.nextAt - DELIVERY_MS && now < live.nextAt && !reduceMotion() && document.visibilityState === 'visible') {
     live.delivering = true;
-    if (mine) mine.deliver(live.nextAt, now);
+    const root = $('scene').firstElementChild;
+    if (root) { root.classList.remove('delivering'); void root.getBoundingClientRect(); root.classList.add('delivering'); }
   }
   const chestDue = live.up[0] && now >= live.up[0].at;
   if ((live.nextAt && now >= live.nextAt) || chestDue) {
@@ -403,6 +408,8 @@ function loop() {
     live.prevAt = prevNext;
     live.nextAt = nst.nextIncrementAt;
     live.delivering = false;
+    const root = $('scene').firstElementChild;
+    if (root) setTimeout(() => root.classList.remove('delivering'), 400);
     renderBalance(nst, { flash: true });
     if (chestDue) {
       live.up = upcomingChests(ctx.ops, { from: now, tz: ctx.tz, limit: 3 });
