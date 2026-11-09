@@ -227,6 +227,7 @@ export function drawGroszak(ctx, g, now, scale = 1, still = false) {
   const s = D * scale;
 
   ctx.save();
+  if (g.alpha !== undefined && g.alpha < 1) ctx.globalAlpha = Math.max(0, g.alpha);
   ctx.translate(g.x, g.y);
   ctx.scale(D, D);
 
@@ -315,7 +316,7 @@ export function drawGroszak(ctx, g, now, scale = 1, still = false) {
     ctx.globalAlpha = still ? 0.9 : Math.min(1, rise * 5) * (1 - rise * 0.6);
     drawPart(ctx, P.babelki, RIG.bubbles.x - bz / 2, RIG.bubbles.y - bz / 2 - rise * 0.3,
       bz, bz * P.babelki.h / P.babelki.w, s);
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = g.alpha ?? 1;
   }
   ctx.restore();
 }

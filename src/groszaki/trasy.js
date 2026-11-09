@@ -80,10 +80,11 @@ export function reachable(graph, from) {
 
 /**
  * Zamienia listę id w trasę do przejścia: punkty z normalnymi w wierzchołkach
- * (dwusieczne), skumulowaną długością i szerokością.
+ * (dwusieczne), skumulowaną długością i szerokością. Element listy może też być
+ * punktem { x, y, s } (np. bieżąca pozycja Groszaka przy zmianie planu).
  */
 export function makeRoute(graph, ids) {
-  const pts = ids.map((id) => graph.nodes.get(id));
+  const pts = ids.map((id) => (typeof id === 'string' ? graph.nodes.get(id) : id));
   const n = pts.length;
   const segN = [];
   for (let i = 0; i < n - 1; i++) {
@@ -101,11 +102,16 @@ export function makeRoute(graph, ids) {
     else if (i === n - 1) ({ x: nx, y: ny } = segN[n - 2]);
     else {
       nx = segN[i - 1].x + segN[i].x; ny = segN[i - 1].y + segN[i].y;
-      const l = Math.hypot(nx, ny) || 1;
-      // na ostrym zakręcie wydłuż, żeby pas zachował szerokość (z ograniczeniem)
-      const cos = (segN[i - 1].x * segN[i].x + segN[i - 1].y * segN[i].y);
-      const k = 1 / Math.max(0.5, Math.sqrt((1 + cos) / 2));
-      nx = nx / l * k; ny = ny / l * k;
+      const l = Math.hypot(nx, ny);
+      if (l < 1e-6) {
+        // zawrócenie w miejscu – zostaw normalną następnego odcinka
+        nx = segN[i].x; ny = segN[i].y;
+      } else {
+        // na ostrym zakręcie wydłuż, żeby pas zachował szerokość (z ograniczeniem)
+        const cos = (segN[i - 1].x * segN[i].x + segN[i - 1].y * segN[i].y);
+        const k = 1 / Math.max(0.5, Math.sqrt(Math.max(0, (1 + cos) / 2)));
+        nx = nx / l * k; ny = ny / l * k;
+      }
     }
     out.push({ id: pts[i].id, x: pts[i].x, y: pts[i].y, s: pts[i].s, t: pts[i].t, nx, ny, at: acc });
     if (i < n - 1) acc += segN[i].len;
@@ -138,4 +144,14 @@ function pointAt(P, i, k, lane, done) {
   const stairs = A.t === 'schody' && B.t === 'schody';
   const bridge = A.t === 'most' || B.t === 'most';
   return { x: x + nx * off, y: y + ny * off, dirX: B.x - A.x, onStairs: stairs, onBridge: bridge, done };
+}
+
+/** Najbliższy punkt sieci do (x, y). */
+export function nearestNode(graph, x, y) {
+  let best = null, bd = Infinity;
+  for (const n of graph.nodes.values()) {
+    const d = (n.x - x) ** 2 + (n.y - y) ** 2;
+    if (d < bd) { bd = d; best = n.id; }
+  }
+  return best;
 }

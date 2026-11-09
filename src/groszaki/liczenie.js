@@ -1,6 +1,6 @@
 // Ile Groszaków pokazać w miasteczku i gdzie pracują. Czyste funkcje.
 
-import { zl } from './finanse.js';
+import { zl, MICRO_PER_GROSZ } from './finanse.js';
 
 export const MICRO_PER_GROSZAK = zl(10);
 export const MAX_GROSZAKI = 80;
@@ -9,9 +9,10 @@ export const MAX_GROSZAKI = 80;
  * 1 Groszak na każde 10 zł (co najmniej 1 przy saldzie > 0), najwyżej 80.
  * Powyżej tej liczby jeden Groszak oznacza większą kwotę.
  * Groszaki z części salda do progu pracują blisko, z części ponad próg – na farmie.
+ * Same mikrogrosze (mniej niż 1 grosz) to pusty Skarbiec – nie da się ich wypłacić.
  */
 export function groszakiCrew(balance, threshold) {
-  if (!(balance > 0)) return { count: 0, near: 0, far: 0, perGroszak: 0 };
+  if (!(balance >= MICRO_PER_GROSZ)) return { count: 0, near: 0, far: 0, perGroszak: 0 };
   const count = Math.min(MAX_GROSZAKI, Math.max(1, Math.floor(balance / MICRO_PER_GROSZAK)));
   const farPart = Math.max(0, balance - threshold);
   let far = farPart > 0 ? Math.round(count * farPart / balance) : 0;

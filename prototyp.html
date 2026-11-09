@@ -3,362 +3,198 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Groszaki – prototyp animacji</title>
+<title>Groszaki – miasteczko</title>
 <style>
   :root { --bg: #fdf6e7; --ink: #4a2c1a; --card: #fffaf0; --line: #ecd9b8; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--ink);
     font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   main { max-width: 1100px; margin: 0 auto; padding: 12px 16px 40px; }
-  h1 { font-size: 20px; margin: 4px 0 10px; }
   h2 { font-size: 16px; margin: 18px 0 8px; }
+  .saldo { text-align: center; margin: 6px 0 10px; font-variant-numeric: tabular-nums; }
+  .saldo .big { font-size: clamp(34px, 11vw, 56px); font-weight: 800; letter-spacing: -0.5px; transition: color .4s, text-shadow .4s; }
+  .saldo .big.flash { color: #c27a00; text-shadow: 0 0 14px rgba(255, 200, 60, .7); }
+  .saldo .micro { font-size: .45em; font-weight: 700; opacity: .7; vertical-align: -0.1em; margin-left: 1px; }
+  .saldo .cur { font-size: .55em; font-weight: 700; margin-left: 6px; }
+  .saldo .sub { font-size: 13px; opacity: .7; }
   .map-wrap { position: relative; width: 100%; aspect-ratio: 2000 / 1116; border-radius: 16px;
-    overflow: hidden; border: 2px solid var(--line); background: #f1e3c6; touch-action: none; }
+    overflow: hidden; border: 2px solid var(--line); background: #f1e3c6; touch-action: none; user-select: none; }
   @media (max-width: 600px) { .map-wrap { aspect-ratio: 4 / 5; } }
-  canvas { display: block; width: 100%; height: 100%; }
-  .bubble { position: absolute; transform: translate(-50%, -100%); background: #fff; border: 2px solid var(--ink);
-    border-radius: 12px; padding: 4px 10px; font-size: 13px; font-weight: 600; white-space: nowrap;
-    pointer-events: none; opacity: 0; transition: opacity .2s; }
-  .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -6px;
-    border: 6px solid transparent; border-top-color: var(--ink); }
-  .bubble.on { opacity: 1; }
-  #studio { height: 380px; }
-  @media (max-width: 600px) { #studio { height: 520px; } }
-  .studio { background: var(--card); border: 2px solid var(--line); border-radius: 16px; }
-  .note { font-size: 13px; opacity: .75; }
-  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
-  .controls button { font: inherit; border: 2px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 12px; color: var(--ink); }
+  .map-wrap canvas { display: block; width: 100%; height: 100%; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .controls button { font: inherit; border: 2px solid var(--line); background: #fff; border-radius: 999px; padding: 5px 12px; color: var(--ink); cursor: pointer; }
   .controls button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .controls .in { border-color: #8fc98f; }
+  .controls .out { border-color: #e7b07a; }
+  .note { font-size: 13px; opacity: .75; }
+  .studio { background: var(--card); border: 2px solid var(--line); border-radius: 16px; }
+  #studio { display: block; width: 100%; height: 380px; }
+  @media (max-width: 600px) { #studio { height: 520px; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Groszaki – prototyp animowanego Groszaka</h1>
-  <div class="map-wrap" id="mapWrap">
-    <canvas id="map"></canvas>
-    <div class="bubble" id="bubble"></div>
+  <div class="saldo">
+    <div class="big" id="big"><span id="zl">0</span>,<span id="gr">00</span><span class="micro" id="mic">0000</span><span class="cur">zł</span></div>
+    <div class="sub" id="crew"></div>
+  </div>
+
+  <div class="map-wrap" id="mapWrap"><canvas></canvas></div>
+
+  <div class="controls">
+    <button class="in" data-dep="10">Wpłać 10 zł</button>
+    <button class="in" data-dep="50">Wpłać 50 zł</button>
+    <button class="in" data-dep="300">Wpłać 300 zł</button>
+    <button class="in" data-dep="1000">Wpłać 1000 zł</button>
+    <button class="out" data-wd="30">Wypłać 30 zł</button>
+    <button class="out" data-wd="all">Wypłać wszystko</button>
   </div>
   <div class="controls" id="seasonBtns"></div>
-  <p class="note">Przeciągnij, żeby przesunąć mapę; kółko myszy lub dwa palce przybliżają. Dotknij Groszaka.</p>
+  <p class="note">Przeciągnij, żeby przesunąć mapę; kółko myszy lub dwa palce przybliżają. Dotknij Groszaka.
+    Prototyp: dane tylko w tej karcie. <a href="?edytor=1">Edytor tras</a></p>
 
   <h2>Studio póz</h2>
   <div class="studio"><canvas id="studio"></canvas></div>
 </main>
 
 <script type="module">
-import { loadMaterial, createGroszak, drawGroszak, hitTest, wave } from './src/groszaki/kukielka.js';
-import { prepareOccluders, drawGroszakiWithDepth } from './src/groszaki/przeslony.js';
-import { seasonOfMonth } from './src/groszaki/kalendarz.js';
+import { Miasteczko, MIASTECZKO_CSS } from './src/groszaki/miasteczko.js';
+import { createGroszak, drawGroszak } from './src/groszaki/kukielka.js';
+import { zl, balanceAt, tickTime, splitAmount, crossedFullGrosz, maxWithdrawal, DEFAULT_RATES, TICK_MS } from './src/groszaki/finanse.js';
 
-const BASE = './assets/groszaki/';
-const MAP_W = 2000, MAP_H = 1116;
-const SEASON_FILE = { winter: 'mapa-zima.jpg', spring: 'mapa-wiosna.jpg', summer: 'mapa-lato.jpg', autumn: 'mapa-jesien.jpg' };
-const SEASON_NAME = { winter: 'Zima', spring: 'Wiosna', summer: 'Lato', autumn: 'Jesień' };
 const params = new URLSearchParams(location.search);
-const follow = params.has('sledz');
-const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const style = document.createElement('style');
+style.textContent = MIASTECZKO_CSS;
+document.head.appendChild(style);
 
-const manifest = await (await fetch(BASE + 'czesci.json')).json();
-const occluders = prepareOccluders((await (await fetch(BASE + 'przeslony.json')).json()).przeslony);
-const copper = await loadMaterial(BASE, manifest, 'miedziany');
+const fmt = new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 });
+const formatMoney = (micro) => fmt.format(Math.round(micro / 1e6));
 
-const maps = {};
-function loadMap(season) {
-  if (!maps[season]) {
-    maps[season] = new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.src = BASE + 'zrodla/' + SEASON_FILE[season]; });
-  }
-  return maps[season];
+const town = new Miasteczko(document.getElementById('mapWrap'), {
+  formatMoney,
+  season: params.get('pora') || undefined,
+});
+await town.load();
+
+// ---------------------------------------------------------------- dziennik (prototyp: w pamięci)
+const start = Number(params.get('saldo') ?? 120);
+const events = start > 0 ? [{ id: 'start', type: 'deposit', ts: Date.now() - 3 * 86400000, amount: zl(start) }] : [];
+const threshold = DEFAULT_RATES.threshold;
+let shown = balanceAt(events, tickTime(Date.now()));
+
+function render(b) {
+  const s = splitAmount(b);
+  document.getElementById('zl').textContent = new Intl.NumberFormat('pl-PL').format(s.zl);
+  document.getElementById('gr').textContent = s.gr;
+  document.getElementById('mic').textContent = s.micro;
+  const c = town.sim.crew;
+  document.getElementById('crew').textContent = c.count
+    ? `Groszaki w miasteczku: ${c.count}${c.far ? ` (na farmie ${c.far})` : ''}${c.count >= 80 ? ` · każdy ≈ ${formatMoney(c.perGroszak)}` : ''}`
+    : 'Skarbiec jest pusty';
 }
-let season = new URLSearchParams(location.search).get('pora') || seasonOfMonth(new Date().getMonth() + 1);
-let mapImg = await loadMap(season);
-let prevMap = null, fadeStart = 0;
+town.setBalance(shown, threshold, 'init');
+render(shown);
 
-const btns = document.getElementById('seasonBtns');
-for (const s of ['spring', 'summer', 'autumn', 'winter']) {
-  const b = document.createElement('button');
-  b.textContent = SEASON_NAME[s];
-  b.setAttribute('aria-pressed', s === season);
-  b.onclick = async () => {
-    if (s === season) return;
-    const img = await loadMap(s);
-    prevMap = mapImg; mapImg = img; fadeStart = performance.now(); season = s;
-    for (const x of btns.children) x.setAttribute('aria-pressed', x === b);
-  };
-  btns.appendChild(b);
-}
-
-// ---------------------------------------------------------------- kamera
-const wrap = document.getElementById('mapWrap');
-const canvas = document.getElementById('map');
-const ctx = canvas.getContext('2d');
-const cam = { x: 0, y: 0, z: 1 };           // z – piksele CSS na piksel mapy
-let cssW = 0, cssH = 0, dpr = 1;
-
-function minZoom() { return Math.max(cssW / MAP_W, cssH / MAP_H); }
-function clampCam() {
-  cam.z = Math.min(Math.max(cam.z, minZoom()), 3);
-  const vw = cssW / cam.z, vh = cssH / cam.z;
-  cam.x = Math.min(Math.max(cam.x, vw / 2), MAP_W - vw / 2);
-  cam.y = Math.min(Math.max(cam.y, vh / 2), MAP_H - vh / 2);
-}
-function resize(initial) {
-  const r = wrap.getBoundingClientRect();
-  cssW = r.width; cssH = r.height; dpr = Math.min(devicePixelRatio || 1, 2);
-  canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
-  if (initial) {
-    // na telefonie przybliżamy rynek i schody do Skarbca, na komputerze cała mapa
-    if (cssW < 600 || new URLSearchParams(location.search).has('rynek')) {
-      cam.z = cssW / (cssW < 600 ? 400 : 560); cam.x = cssW < 600 ? 930 : 900; cam.y = cssW < 600 ? 500 : 500;
+// tyknięcie co 10 s, równo z zegarem: nowe saldo + okruszki do Skarbca jednocześnie
+function scheduleTick() {
+  const now = Date.now();
+  setTimeout(() => {
+    const b = balanceAt(events, tickTime(Date.now()));
+    if (crossedFullGrosz(shown, b)) {
+      const el = document.getElementById('big');
+      el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 900);
     }
-    else { cam.z = minZoom(); cam.x = MAP_W / 2; cam.y = MAP_H / 2; }
-  }
-  clampCam();
+    shown = b;
+    town.tick();
+    town.setBalance(b, threshold, 'tick');
+    render(b);
+    scheduleTick();
+  }, TICK_MS - (now % TICK_MS) + 5);
 }
-new ResizeObserver(() => resize(false)).observe(wrap);
-resize(true);
+scheduleTick();
 
-const toMap = (cx, cy) => ({ x: cam.x + (cx - cssW / 2) / cam.z, y: cam.y + (cy - cssH / 2) / cam.z });
-
-// przesuwanie i przybliżanie (mysz, palce)
-const pointers = new Map();
-let pinch = null, moved = 0;
-wrap.addEventListener('pointerdown', (e) => {
-  wrap.setPointerCapture(e.pointerId);
-  pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
-  moved = 0;
-  if (pointers.size === 2) {
-    const [a, b] = [...pointers.values()];
-    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: cam.z };
-  }
-});
-wrap.addEventListener('pointermove', (e) => {
-  const p = pointers.get(e.pointerId);
-  if (!p) return;
-  const nx = e.offsetX, ny = e.offsetY;
-  if (pointers.size === 1) {
-    cam.x -= (nx - p.x) / cam.z; cam.y -= (ny - p.y) / cam.z;
-    moved += Math.abs(nx - p.x) + Math.abs(ny - p.y);
-  }
-  p.x = nx; p.y = ny;
-  if (pointers.size === 2 && pinch) {
-    const [a, b] = [...pointers.values()];
-    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    const before = toMap(mid.x, mid.y);
-    cam.z = pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d;
-    clampCam();
-    const after = toMap(mid.x, mid.y);
-    cam.x += before.x - after.x; cam.y += before.y - after.y;
-    moved = 99;
-  }
-  clampCam();
-});
-const up = (e) => {
-  if (pointers.size === 1 && moved < 6) tap(e.offsetX, e.offsetY);
-  pointers.delete(e.pointerId);
-  if (pointers.size < 2) pinch = null;
-};
-wrap.addEventListener('pointerup', up);
-wrap.addEventListener('pointercancel', (e) => { pointers.delete(e.pointerId); pinch = null; });
-wrap.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  const before = toMap(e.offsetX, e.offsetY);
-  cam.z *= Math.exp(-e.deltaY * 0.0015);
-  clampCam();
-  const after = toMap(e.offsetX, e.offsetY);
-  cam.x += before.x - after.x; cam.y += before.y - after.y;
-  clampCam();
-}, { passive: false });
-
-// ---------------------------------------------------------------- scenariusz jednego Groszaka
-// Trasa (piksele mapy), sprawdzona na mapie z marginesem szerokości Groszaka:
-// lada piekarni → szerokim przejściem w dół → przed niebieskim straganem →
-// piaszczystym pasem po prawej → środkiem schodów → drzwi Skarbca.
-const BAKERY = [{ x: 866, y: 672 }];
-const TO_VAULT = [
-  { x: 866, y: 672 },
-  { x: 870, y: 700 },
-  { x: 877, y: 745 },
-  { x: 900, y: 754 },
-  { x: 945, y: 756 },
-  { x: 980, y: 757 },
-  { x: 1001, y: 748 },
-  { x: 1001, y: 716 },
-  { x: 997, y: 682 },
-  { x: 991, y: 658 },
-  { x: 986, y: 645 },
-  { x: 988, y: 628, stairs: true },
-  { x: 995, y: 612, stairs: true },
-  { x: 1011, y: 590, stairs: true },
-  { x: 1036, y: 565, stairs: true },
-  { x: 1062, y: 540, stairs: true },
-  { x: 1086, y: 515, stairs: true },
-  { x: 1097, y: 490, stairs: true },
-  { x: 1099, y: 468, stairs: true },
-  { x: 1092, y: 455, stairs: true },
-  { x: 1080, y: 445, stairs: true },
-  { x: 1065, y: 432, stairs: true },
-  { x: 1048, y: 420, stairs: true },
-  { x: 1031, y: 407, stairs: true },
-  { x: 1016, y: 395, stairs: true },
-  { x: 1006, y: 382, stairs: true },
-  { x: 1002, y: 370, stairs: true },
-  { x: 1001, y: 357, stairs: true },
-  { x: 1006, y: 345, stairs: true },
-  { x: 1012, y: 332, stairs: true },
-  { x: 1020, y: 318, stairs: true },
-  { x: 1020, y: 308 },
-];
-const BACK = [...TO_VAULT].reverse();
-
-const g = createGroszak(copper, { size: 22 });
-Object.assign(g, BAKERY[0]);
-const say = { text: '', until: 0 };
-
-const script = [
-  { do: 'idle', ms: 900, carry: false, line: 'Pracuję w piekarni' },
-  { do: 'pick', ms: 700 },
-  { do: 'walk', path: TO_VAULT, carry: true, line: 'Niosę okruszek do Skarbca!' },
-  { do: 'idle', ms: 600, carry: true },
-  { do: 'drop', ms: 300 },
-  { do: 'wave', ms: 1600, line: 'Okruszek w Skarbcu!' },
-  { do: 'walk', path: BACK, carry: false, line: 'Wracam do pracy' },
-];
-let step = -1, stepStart = 0, seg = 0;
-
-function nextStep(now) {
-  step = (step + 1) % script.length;
-  stepStart = now; seg = 0;
-  const s = script[step];
-  if (s.carry !== undefined) g.carry = s.carry;
-  if (s.do === 'pick') g.carry = true;
-  if (s.do === 'drop') g.carry = false;
-  g.action = s.do === 'walk' ? 'walk' : s.do === 'wave' ? 'wave' : 'idle';
-  if (s.line) { say.text = s.line; say.until = now + 2200; }
+let seq = 0;
+for (const b of document.querySelectorAll('[data-dep]')) {
+  b.onclick = () => {
+    events.push({ id: 'd' + (++seq), type: 'deposit', ts: Date.now(), amount: zl(Number(b.dataset.dep)) });
+    shown = balanceAt(events, Date.now());
+    town.setBalance(shown, threshold, 'deposit');
+    render(shown);
+  };
+}
+for (const b of document.querySelectorAll('[data-wd]')) {
+  b.onclick = () => {
+    const max = maxWithdrawal(events, Date.now());
+    const amt = b.dataset.wd === 'all' ? max : Math.min(max, zl(Number(b.dataset.wd)));
+    if (amt <= 0) return;
+    events.push({ id: 'w' + (++seq), type: 'withdrawal', ts: Date.now(), amount: amt });
+    shown = balanceAt(events, Date.now());
+    town.setBalance(shown, threshold, 'withdrawal');
+    render(shown);
+  };
 }
 
-function updateWalker(now, dt) {
-  const s = script[step];
-  if (!s) return nextStep(now);
-  if (s.do !== 'walk') { if (now - stepStart > s.ms) nextStep(now); return; }
-  const target = s.path[seg + 1];
-  if (!target) return nextStep(now);
-  const onStairs = target.stairs || s.path[seg].stairs;
-  const speed = (onStairs ? 26 : 38) * (g.size / 22);   // px mapy na sekundę
-  g.speed = onStairs ? 0.8 : 1;
-  const dx = target.x - g.x, dy = target.y - g.y;
-  const dist = Math.hypot(dx, dy);
-  const stepLen = speed * dt;
-  if (Math.abs(dx) > 0.5) g.dir = dx > 0 ? 1 : -1;
-  if (dist <= stepLen) { g.x = target.x; g.y = target.y; seg++; }
-  else { g.x += dx / dist * stepLen; g.y += dy / dist * stepLen; }
-  // dalej od widza = trochę mniejszy (perspektywa mapy)
-  g.size = 22 * (0.82 + 0.18 * (g.y - 300) / (760 - 300));
+// pory roku
+const NAMES = { spring: 'Wiosna', summer: 'Lato', autumn: 'Jesień', winter: 'Zima' };
+const sb = document.getElementById('seasonBtns');
+for (const s of Object.keys(NAMES)) {
+  const b = document.createElement('button');
+  b.textContent = NAMES[s];
+  b.setAttribute('aria-pressed', s === town.season);
+  b.onclick = async () => {
+    await town.setSeason(s);
+    for (const x of sb.children) x.setAttribute('aria-pressed', x === b);
+  };
+  sb.appendChild(b);
 }
 
-const bubble = document.getElementById('bubble');
-function tap(cx, cy) {
-  const p = toMap(cx, cy);
-  const now = performance.now();
-  if (hitTest(g, p.x, p.y)) {
-    wave(g, now);
-    say.text = g.carry ? 'Niosę okruszek do Skarbca!' : 'Cześć! Pracuję na rynku';
-    say.until = now + 2200;
-  }
+if (params.has('sledz')) town.follow = true;
+if (params.has('edytor')) {
+  const { Edytor } = await import('./src/groszaki/edytor.js');
+  new Edytor(town);
 }
-
-// ---------------------------------------------------------------- pętla
-let last = performance.now(), raf = 0;
-function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
-  if (!still) updateWalker(now, dt);
-  else if (step < 0) { Object.assign(g, BAKERY[0]); step = 0; }
-  if (follow && !pointers.size) {
-    // kamera podąża za Groszakiem (do nagrań i podglądu z bliska)
-    cam.z = Math.max(cam.z, cssW / 300);
-    cam.x += (g.x - cam.x) * Math.min(1, dt * 3);
-    cam.y += (g.y - 20 - cam.y) * Math.min(1, dt * 3);
-    clampCam();
-  }
-
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.translate(cssW / 2, cssH / 2);
-  ctx.scale(cam.z, cam.z);
-  ctx.translate(-cam.x, -cam.y);
-  ctx.imageSmoothingEnabled = true;
-  const layers = [{ img: mapImg, alpha: 1 }];
-  if (prevMap) {
-    const k = (now - fadeStart) / 1500;
-    if (k >= 1) prevMap = null;
-    else layers.push({ img: prevMap, alpha: 1 - k });
-  }
-  for (const l of layers) { ctx.globalAlpha = l.alpha; ctx.drawImage(l.img, 0, 0, MAP_W, MAP_H); }
-  ctx.globalAlpha = 1;
-  const zs = cam.z * dpr;
-  drawGroszakiWithDepth(ctx, layers, [g], occluders, now, zs, still);
-  if (params.has('przeslony')) {
-    // podgląd obrysów przesłon
-    ctx.lineWidth = 1.5 / cam.z; ctx.strokeStyle = 'rgba(0,90,255,.9)';
-    for (const o of occluders) { ctx.stroke(o.path); }
-  }
-
-  const who = g;
-  if (now < say.until) {
-    bubble.textContent = say.text;
-    bubble.style.left = ((who.x - cam.x) * cam.z + cssW / 2) + 'px';
-    bubble.style.top = ((who.y - who.size * 1.7 - cam.y) * cam.z + cssH / 2) + 'px';
-    bubble.classList.add('on');
-  } else bubble.classList.remove('on');
-
-  drawStudio(now);
-  raf = requestAnimationFrame(frame);
-}
+town.start();
 
 // ---------------------------------------------------------------- studio póz
 const studio = document.getElementById('studio');
 const sctx = studio.getContext('2d');
+const m = town.material;
 const poses = [
-  ['stoi', createGroszak(copper, { action: 'idle' })],
-  ['drepcze', createGroszak(copper, { action: 'walk' })],
-  ['niesie okruszek', createGroszak(copper, { action: 'walk', carry: true })],
-  ['macha', createGroszak(copper, { action: 'wave' })],
-  ['śpi', createGroszak(copper, { action: 'sleep' })],
+  ['stoi', createGroszak(m, { action: 'idle' })],
+  ['drepcze', createGroszak(m, { action: 'walk' })],
+  ['niesie okruszek', createGroszak(m, { action: 'walk', carry: true })],
+  ['macha', createGroszak(m, { action: 'wave' })],
+  ['śpi', createGroszak(m, { action: 'sleep' })],
 ];
-// Groszaki wyruszające po marzenie – każdy z innym plecakiem
-const packers = Object.keys(copper.packs).map((c, i) =>
-  createGroszak(copper, { action: 'walk', pack: true, dir: i % 2 ? -1 : 1, packColor: c }));
-function drawStudio(now) {
+const packers = Object.keys(m.packs).map((c, i) => createGroszak(m, { action: 'walk', pack: true, dir: i % 2 ? -1 : 1, packColor: c }));
+town.on('frame', (now) => {
   const r = studio.getBoundingClientRect();
+  if (!r.width || r.bottom < 0 || r.top > innerHeight) return;   // poza ekranem – nie rysuj
+  const dpr = Math.min(devicePixelRatio || 1, 2);
   const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
   if (studio.width !== w || studio.height !== h) { studio.width = w; studio.height = h; }
   sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   sctx.clearRect(0, 0, r.width, r.height);
   const cols = r.width < 600 ? 3 : poses.length;
-  const rows = Math.ceil(poses.length / cols) + 1;   // ostatni rząd: plecaki
+  const rows = Math.ceil(poses.length / cols) + 1;
   const cell = r.width / cols, rowH = r.height / rows;
   const D = Math.min(cell * 0.6, rowH * 0.5, 105);
   sctx.fillStyle = '#4a2c1a'; sctx.font = '600 13px system-ui'; sctx.textAlign = 'center';
   poses.forEach(([label, pg], i) => {
     const row = Math.floor(i / cols);
     pg.size = D; pg.x = cell * (i % cols + 0.5); pg.y = rowH * (row + 1) - 30;
-    drawGroszak(sctx, pg, now, dpr, still);
+    drawGroszak(sctx, pg, now, dpr, town.still);
     sctx.fillText(label, pg.x, rowH * (row + 1) - 8);
   });
   const pc = r.width / packers.length;
   const Dp = Math.min(pc * 0.55, rowH * 0.42, 70);
   packers.forEach((pg, i) => {
     pg.size = Dp; pg.x = pc * (i + 0.5); pg.y = r.height - 30;
-    drawGroszak(sctx, pg, now, dpr, still);
+    drawGroszak(sctx, pg, now, dpr, town.still);
   });
   sctx.fillText('wyruszają po marzenie – plecaki w różnych kolorach', r.width / 2, r.height - 8);
-}
-
-// wstrzymanie, gdy karta jest w tle
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) cancelAnimationFrame(raf);
-  else { last = performance.now(); raf = requestAnimationFrame(frame); }
 });
-raf = requestAnimationFrame(frame);
+window.town = town;
 </script>
 </body>
 </html>

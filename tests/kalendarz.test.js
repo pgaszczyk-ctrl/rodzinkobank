@@ -57,7 +57,8 @@ test('noce do wydarzenia', () => {
 test('liczba Groszaków: 1 na 10 zł, co najmniej 1, najwyżej 80', () => {
   const T = zl(1000);
   assert.equal(groszakiCrew(0, T).count, 0);
-  assert.equal(groszakiCrew(1, T).count, 1);
+  assert.equal(groszakiCrew(1, T).count, 0);          // same mikrogrosze – pusty Skarbiec
+  assert.equal(groszakiCrew(zl(0.01), T).count, 1);
   assert.equal(groszakiCrew(zl(9.99), T).count, 1);
   assert.equal(groszakiCrew(zl(25), T).count, 2);
   assert.equal(groszakiCrew(zl(512), T).count, 51);
