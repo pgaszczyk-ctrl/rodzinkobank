@@ -23,13 +23,35 @@ Dekoracje postawione wprost na trawie wyglądają jak naklejki. Potrzebne:
    Na przedniej ściance **pusta biała naklejka** – aplikacja nakleja na nią obrazek tego, co jest w środku
    (hulajnoga, klocki…). Zaznacz prostokątem na osobnej warstwie, gdzie jest naklejka.
    Warianty: zamknięte, **otwarte z wystającym przedmiotem / konfetti** („cel osiągnięty”).
-   Zamiast pudełka może być stragan z pkt 3 – wtedy na ladzie stoi takie pudełko.
+   Zamiast pudełka może być stragan (pkt 3 w „Liście elementów” niżej) – wtedy na ladzie stoi takie pudełko.
+
+3. **Urodziny: bramka zamiast samego tortu na stoliku.** Mała scenka stojąca przy drodze:
+   - łukowa **bramka „Happy Birthday”** (dwa słupki i napis na łuku albo na zawieszonej tabliczce),
+   - **baloniki** przywiązane do słupków (kolory jak w obecnym pęku balonów),
+   - **girlandy** – chorągiewki albo łańcuch z bibuły rozwieszone między słupkami,
+   - **w rogu, u stóp bramki, kilka małych prezentów** (2–3 paczki z kokardami),
+   - tort może stać na niskim stoliku pod bramką albo obok niej – na pewno **nie na ziemi**.
+
+   Bramka stoi obok drogi, nie nad nią: droga przebiega z boku. Widok jak w panoramie (lekko z góry),
+   ten sam kontur i paleta, cień pod spodem, białe tło, bez innych postaci. Napis „Happy Birthday”
+   jako osobna warstwa albo drugi wariant **bez napisu** (pusta tabliczka), żeby aplikacja mogła
+   wpisać np. „Sto lat!” albo imię dziecka. Wielkość obrazka ok. 600 × 600 px; na drodze będzie mały
+   (ok. 1/5 szerokości panoramy), więc wyraźne, proste kształty i grube kontury.
+
+   Prompt do generatora:
+
+   > Small birthday arch decoration for a top-down children's game map, cozy hand-drawn children's book
+   > style, clean brown outlines, soft flat colors. A wooden arch gate with a "Happy Birthday" sign,
+   > pastel balloons tied to both posts, bunting garlands hanging between the posts, a few small wrapped
+   > presents with bows at the foot of one post, a birthday cake on a small low table under the arch.
+   > Slight top-down view, soft shadow underneath, plain white background, no characters, no road.
 
 Do czasu dostarczenia aplikacja rysuje tymczasowe szare pudełko z naklejką (za nim pulsująca poświata
 z iskierkami) i prosty stolik pod tortem, workiem, koszykiem i tornistrem. Tort nie może stać na ziemi.
 
-**Nadal brakuje:** obiektów na koniec roku szkolnego i wakacje, stolika i pudełka celu (patrz wyżej) albo
-straganu (pkt 3), obrazków celów (pkt 4), Groszaka z boku (pkt 5) i drobnych elementów (pkt 6).
+**Nadal brakuje:** stolika, pudełka celu i bramki urodzinowej (patrz wyżej), obiektów na koniec roku
+szkolnego i wakacje, a z „Listy elementów”: straganu (pkt 3), obrazków celów (pkt 4), Groszaka z boku (pkt 5)
+i drobnych elementów (pkt 6).
 
 ## ⚠️ Korekta po pierwszych kaflach (lato, jesień) – przeczytaj najpierw
 
