@@ -19,3 +19,4 @@ run supabase/migracje/20261110_groszaki.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/test/testy.sql
 PSQL_ARGS="-d $DB" node tests/baza_vs_js.mjs
 PSQL_ARGS="-d $DB" node tests/dane_baza.mjs
+supabase/test/wyscig.sh "$DB"

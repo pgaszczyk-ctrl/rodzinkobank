@@ -55,10 +55,5 @@ PGHOST=… PGPORT=… PGUSER=postgres tools/test_bazy.sh
 
 ## Wdrożenie
 
-1. **Najpierw baza.** Supabase → SQL Editor → wklej `supabase/migracje/20261110_groszaki.sql` → Run.
-   Migracja tylko dodaje tabele i funkcje; stare dane zostają. Każde dziecko dostaje jedną wpłatę
-   otwierającą równą temu, co pokazywał Rodzinobank (z Premią za cierpliwość), a marzenia stają się celami.
-2. **Potem strona** (GitHub Pages z tej gałęzi albo po scaleniu). Nowa strona bez migracji pokaże
-   komunikat, że baza nie jest gotowa.
-3. Jednorazowo, jak dotychczas: w **Authentication → URL Configuration** adres strony w *Site URL*
-   i *Redirect URLs*. Klucz publiczny jest w `index.html` (`GROSZAKI_CONFIG`).
+Krok po kroku (baza, strona, poczta, ochrona): **[docs/PRODUKCJA.md](docs/PRODUKCJA.md)**.
+Najpierw baza, potem strona – nowa strona bez migracji pokaże komunikat, że baza nie jest gotowa.

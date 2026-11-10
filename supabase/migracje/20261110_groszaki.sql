@@ -236,7 +236,9 @@ language sql stable security definer set search_path = '' as $$
                  'rates', case when e.type = 'rate' then jsonb_build_object('low', e.rate_low, 'high', e.rate_high, 'threshold', e.threshold) end,
                  'note', e.note) order by e.ts)
                from public.kid_events e where e.kid_id = k.id and e.deleted_at is null), '[]'::jsonb),
-    'goals', coalesce((select jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name, 'amount', g.amount, 'icon', g.icon, 'img', g.img)
+    -- Bez kolumny img: zdjęcia starych marzeń (do 600 KB każde) zostają w bazie jako archiwum,
+    -- ale aplikacja ich nie pokazuje, więc nie wysyłamy ich przy każdym odświeżeniu.
+    'goals', coalesce((select jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name, 'amount', g.amount, 'icon', g.icon)
                order by g.sort, g.created_at) from public.kid_goals g where g.kid_id = k.id), '[]'::jsonb),
     'plans', coalesce((select jsonb_agg(jsonb_build_object('id', p.id, 'amount', p.amount, 'every', p.every, 'start', p.start_date)
                order by p.created_at) from public.kid_plans p where p.kid_id = k.id), '[]'::jsonb),
@@ -259,6 +261,14 @@ language sql security definer set search_path = '' as $$
   select gen_random_uuid(), p_kid, x.name, x.amount, x.icon, x.sort
   from (values ('Klocki', 89000000::bigint, '🧩', 0), ('Hulajnoga', 349000000, '🛴', 1)) as x(name, amount, icon, sort)
   where not exists (select 1 from public.kid_goals g where g.kid_id = p_kid);
+$$;
+
+-- Blokada skarbca dziecka na czas operacji pieniężnej. Bez niej dwie wypłaty
+-- w tej samej chwili (np. dwoje rodziców) mogłyby obie przejść kontrolę salda
+-- i razem zrobić debet. Druga operacja czeka, aż pierwsza się zapisze.
+create or replace function private.lock_kid(p_kid uuid) returns void
+language sql security definer set search_path = '' as $$
+  select 1 from public.kids where id = p_kid for update;
 $$;
 
 -- ---------------------------------------------------------------------
@@ -291,6 +301,7 @@ declare
   v_existing public.kid_events;
 begin
   perform private.assert_kid_access(p_kid);
+  perform private.lock_kid(p_kid);
   select * into v_existing from public.kid_events where id = p_id;
   if found then
     if v_existing.kid_id <> p_kid or v_existing.type <> p_type or v_existing.amount <> p_amount then
@@ -341,6 +352,7 @@ language plpgsql security definer set search_path = '' as $$
 declare v public.kid_events; v_sim record;
 begin
   perform private.assert_kid_access(p_kid);
+  perform private.lock_kid(p_kid);
   select * into v from public.kid_events where id = p_id and kid_id = p_kid and deleted_at is null for update;
   if not found then return; end if;
   if v.type = 'rate' and v.ts <= now() then raise exception 'Ta zmiana stawek już obowiązuje – ustaw nową od jutra' using errcode = '22023'; end if;
@@ -496,7 +508,7 @@ begin
     -- marzenia → cele (z własnym zdjęciem, jeśli było)
     insert into public.kid_goals (id, kid_id, name, amount, img, icon, sort)
     select gen_random_uuid(), r.kid_id, r.name, round(r.price * 100)::bigint * 10000, r.img,
-           case when r.img is null then '⭐' end, r.slot
+           '⭐', r.slot
     from public.dreams r where r.kid_id = k.id;
   end loop;
   insert into private.migrations (name) values ('20261110_groszaki');

@@ -1,5 +1,53 @@
 # Groszaki: brief dla grafika – Droga przez rok
 
+## ⚠️ Korekta po pierwszych kaflach (lato, jesień) – przeczytaj najpierw
+
+Kafle są ładne, ale **nie da się ich połączyć w jedną drogę**. Co trzeba poprawić:
+
+| Problem w obecnych kaflach | Jak ma być |
+|---|---|
+| Droga wchodzi i wychodzi w różnych miejscach (lato: u góry ok. 60% szerokości, na dole ok. 67%; jesień: u góry ok. 45%) | **Zawsze środek kafla**: oś drogi x = 600 px, droga od x = 520 do x = 680 px – i u góry, i na dole, w każdym kaflu |
+| Jesień ma horyzont, niebo i perspektywę: droga u góry wąska, na dole dwa razy szersza | **Widok prosto z góry**, jak na mapie. Bez nieba i horyzontu. Droga ma **wszędzie tę samą szerokość: 160 px** |
+| Przy krawędzi kafla droga skręca, a drzewa i krzaki są ucięte | **Pas łączenia**: górne 150 px i dolne 150 px kafla to prosty, pionowy odcinek drogi na samej trawie/ziemi. Żadne drzewo, krzak ani kamień nie przecina górnej ani dolnej krawędzi |
+| Różny rozmiar (1342 × 2000) | **1200 × 1800 px** (albo dokładnie 2× więcej: 2400 × 3600) |
+| Inny kolor i kontur drogi w każdej porze | Droga w pasach łączenia **w tym samym kolorze i z tym samym konturem** we wszystkich kaflach (śnieg na drodze zimą tylko w środku kafla, nie w pasach) |
+
+**Pomiędzy pasami łączenia – pełna swoboda**: 2–4 zakręty, serpentyny, odcinki w bok, zakola na stragany.
+Jedyny zakaz: droga **nie wraca pod górę** i nie zmienia szerokości.
+
+Sprawdzian, zanim oddasz kafel: połóż go **pod samym sobą** (dół kafla przy górze tego samego kafla)
+i pod każdym innym kaflem. Szwu nie może być widać.
+
+Do pobrania z repozytorium:
+- `docs/szablon-kafla-drogi.png` – szablon z wymiarami (pasy łączenia, oś drogi, przykładowa serpentyna),
+- `docs/szablon-kafla-drogi-maska.png` – sam kształt drogi (czarna droga na białym tle). Można go użyć
+  jako podkładu w generatorze obrazów (np. img2img / ControlNet / „structure reference”) albo jako
+  warstwę w programie graficznym i malować wokół niej. Przebieg w środku wolno zmienić, pasy łączenia nie.
+
+Zimowy kafel i 4 kafle przejściowe (jesień → zima itd.) robimy według tych samych zasad: w kaflu
+przejściowym górna połowa ma kolory jednej pory roku, dolna – następnej, a pasy łączenia pasują do obu sąsiadów.
+
+### Gotowy prompt do generatora (po angielsku generatory działają lepiej)
+
+> Seamless vertical game map tile, 1200×1800 px, strict top-down orthographic view (no perspective,
+> no horizon, no sky). A dirt path of constant width (160 px) winds through a {SEASON} meadow with
+> 2–4 smooth bends and wide pockets of open grass beside the path. The path never turns back upward.
+> IMPORTANT: in the top 150 px and the bottom 150 px of the image the path is perfectly straight and
+> vertical, centered horizontally (from x=520 to x=680), with only plain grass around it — no trees,
+> bushes or rocks touching the top or bottom edge, so the tile can be stacked above and below itself
+> seamlessly. Cozy hand-drawn children's book style, clean brown outlines, soft flat colors, matching
+> the attached town map. No characters, no text, no holiday objects.
+
+Zamień `{SEASON}` na: `autumn (orange and red trees, falling leaves, pumpkins)`, `winter (snow, bare and
+snowy pine trees)`, `spring (fresh green, blossoms, tulips)`, `summer (lush green, flowers)`.
+Do promptu dołącz `szablon-kafla-drogi-maska.png` jako obraz sterujący i mapę miasteczka jako wzór stylu.
+
+Jeśli generator nie trafi idealnie w piksele, wystarczy, że pasy łączenia będą **mniej więcej** proste
+i na środku – resztę (dosunięcie o kilkanaście pikseli, wyrównanie szwu) zrobi skrypt po naszej stronie.
+Perspektywy i drogi wchodzącej z boku nie da się naprawić skryptem.
+
+---
+
 ## Jak to ma działać
 
 Pod miasteczkiem jest „Droga przez rok”: kręta droga biegnąca **z góry na dół** przez pory roku,

@@ -150,6 +150,15 @@ begin
   select (x->>'id')::uuid into kid from jsonb_array_elements(j->'kids') x where x->>'name' = 'Ola';
   if jsonb_array_length(public.gr_kid_state(kid)->'goals') <> 2 then raise exception 'cele nowego dziecka'; end if;
 end $$;
+
+-- zdjęcia starych marzeń zostają w bazie, ale nie trafiają do aplikacji
+do $$
+declare j jsonb;
+begin
+  j := public.gr_kid_state('20000000-0000-0000-0000-000000000001');
+  if exists (select 1 from jsonb_array_elements(j->'goals') g where g ? 'img') then raise exception 'img w odpowiedzi'; end if;
+  if exists (select 1 from jsonb_array_elements(j->'goals') g where coalesce(g->>'icon', '') = '') then raise exception 'cel bez ikony'; end if;
+end $$;
 reset role;
 \o
 \echo 'OK: wszystkie testy bazy przeszły'
