@@ -90,7 +90,8 @@ export async function loadMaterial(base, manifest, id) {
  *   x, y     – położenie stóp na mapie
  *   size     – średnica korpusu w pikselach mapy
  *   dir      – kierunek marszu: -1 w lewo, 1 w prawo
- *   action   – 'idle' | 'walk' | 'wave' | 'sleep'
+ *   action   – 'idle' | 'walk' | 'wave' | 'sleep' | 'hammer' | 'sack' | 'knead'
+ *   load     – niesie worek do miejsca pracy
  *   carry    – niesie okruszek nad głową
  *   pack     – ma plecak (wyrusza po marzenie)
  *   speed    – tempo kroku (1 = normalne)
@@ -174,6 +175,18 @@ export function poseAt(g, now, still = false) {
     p.armL = 0.3 + Math.sin(t * 2.1) * 0.03;
     p.armR = 0.3 + Math.sin(t * 2.1 + 0.4) * 0.03;
   }
+
+  if (['hammer', 'sack', 'knead'].includes(g.action)) {
+    const beat = still ? 0.4 : (Math.sin(t * TAU * 0.85) + 1) / 2;
+    p.tilt = 0.08 + beat * 0.07;
+    p.armL = 0.9;
+    p.raiseR = 0.6;
+    p.armR = g.action === 'hammer' ? 0.7 + beat * 2.0 : 1.3 + beat * 0.35;
+    p.bob = beat * 0.025;
+    if (g.action === 'sack') { p.raiseL = 0.8; p.armL = 2.5; p.armR = 2.5; }
+  }
+
+  if (g.load && !g.carry) { p.raiseL = p.raiseR = 0.8; p.armL = p.armR = 2.5; }
 
   if (g.carry) {
     // obie rączki w górze, okruszek nad głową, buzia szczęśliwa
@@ -300,6 +313,23 @@ export function drawGroszak(ctx, g, now, scale = 1, still = false) {
     ctx.lineWidth = 0.055;
     ctx.stroke();
     ctx.restore();
+  }
+
+  // Narzędzie jest przyczepione do tej samej osi co pracująca ręka.
+  if (g.action === 'hammer' && !g.carry) {
+    ctx.save();
+    ctx.translate(lerp(A.rest.x, A.raised.x, p.raiseR), lerp(A.rest.y, A.raised.y, p.raiseR));
+    ctx.rotate(-p.armR);
+    ctx.strokeStyle = '#6e422c'; ctx.lineWidth = 0.09; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(0, 0.28); ctx.lineTo(0, 0.72); ctx.stroke();
+    ctx.fillStyle = '#87949a'; ctx.strokeStyle = '#4e4237'; ctx.lineWidth = 0.035;
+    ctx.fillRect(-0.19, 0.62, 0.38, 0.18); ctx.strokeRect(-0.19, 0.62, 0.38, 0.18);
+    ctx.restore();
+  }
+  if ((g.action === 'sack' || g.load) && !g.carry) {
+    ctx.fillStyle = '#d2ad70'; ctx.strokeStyle = '#795334'; ctx.lineWidth = 0.035;
+    ctx.beginPath(); ctx.ellipse(0, -0.79, 0.3, 0.36, -0.12, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-0.15, -1.05); ctx.lineTo(0.15, -1.05); ctx.stroke();
   }
 
   // okruszek nad głową

@@ -112,3 +112,41 @@ test('Groszaki chodzą tylko po trasach', () => {
     }
   }
 });
+
+test('praca ma narzędzia, a powrót do Skarbca kończy animację pracy', () => {
+  const sim = makeSim();
+  sim.setBalance(zl(1500), T, 0, 'init');
+  for (const e of sim.entities) {
+    sim.startWork(e, 100);
+    sim.step(e, 200, 0.1);
+    assert.ok(['hammer', 'sack', 'knead'].includes(e.g.action));
+    assert.ok(sim.describe(e.g).length > 0);
+    sim.step(e, e.until + 1, 0.1);
+    assert.equal(e.state, 'toVault');
+    assert.equal(e.g.action, 'walk');
+    assert.equal(e.g.carry, true);
+  }
+});
+
+test('ograniczony ruch: obudzony Groszak bez trasy trafia bezpiecznie do pracy', () => {
+  const sim = makeSim();
+  sim.setBalance(0, T, 0, 'init');
+  sim.setBalance(zl(10), T, 100, 'deposit');
+  sim.update(200, 0.1, true);
+  assert.equal(sim.entities[0].state, 'working');
+  assert.equal(sim.entities[0].until, Infinity);
+});
+
+test('worki są niesione do pracy, a nie podczas odejścia po marzenie', () => {
+  const sim = makeSim();
+  sim.setBalance(zl(100), T, 0, 'init');
+  const e = sim.entities[0];
+  e.workPlace = sim.places.praca.find(p => p.punkt === 'mlyn');
+  sim.goTo(e, sim.places.drzwi, e.workPlace.punkt, 'toWork');
+  sim.step(e, 100, 0.01);
+  assert.equal(e.g.load, true);
+  sim.sendAway(e, 100, true);
+  sim.step(e, 200, 0.01);
+  assert.equal(e.g.load, false);
+  assert.equal(e.g.pack, true);
+});

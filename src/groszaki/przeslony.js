@@ -27,14 +27,14 @@ function overlaps(g, box) {
  * Rysuje Groszaki z planami. layers – [{ img, alpha }] warstwy mapy
  * (przy przenikaniu pór roku dwie), scale – piksele ekranu na piksel mapy.
  */
-export function drawGroszakiWithDepth(ctx, layers, groszaki, occluders, now, scale, still) {
+export function drawGroszakiWithDepth(ctx, layers, groszaki, occluders, now, scale, still, extras = []) {
   const items = [];
-  for (const g of groszaki) items.push({ y: g.y, g });
+  for (const g of [...groszaki, ...extras]) items.push({ y: g.y, g });
   for (const o of occluders) items.push({ y: o.base, o });
   items.sort((a, b) => a.y - b.y);
   const drawn = [];
   for (const it of items) {
-    if (it.g) { drawGroszak(ctx, it.g, now, scale, still); drawn.push(it.g); continue; }
+    if (it.g) { if (it.g.draw) it.g.draw(ctx); else drawGroszak(ctx, it.g, now, scale, still); drawn.push(it.g); continue; }
     const o = it.o;
     if (!drawn.some((g) => overlaps(g, o.box))) continue;
     const [bx, by, bw, bh] = o.box;

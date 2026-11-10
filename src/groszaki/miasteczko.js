@@ -8,6 +8,8 @@ import { buildGraph } from './trasy.js';
 import { TownSim } from './symulacja.js';
 import { seasonOfMonth } from './kalendarz.js';
 import { t } from './teksty.js';
+import { TownLife } from './zycie.js';
+import { drawLandscape, windAt } from './wiatr.js';
 
 export const MAP_W = 2000;
 export const MAP_H = 1116;
@@ -71,6 +73,8 @@ export class Miasteczko {
       makePuppet: (o) => createGroszak(this.material, o),
       formatMoney: this.formatMoney,
     });
+    this.life = new TownLife(this.sim.graph);
+    this.windAngle = 0;
     this.buildDom();
     this.bindInput();
     new ResizeObserver(() => this.resize(false)).observe(this.wrap);
@@ -210,7 +214,14 @@ export class Miasteczko {
     if (this.editor?.tap?.(p)) return;
     // najbliższy widzowi (największe y) Groszak pod palcem
     const hit = this.sim.puppets.filter((g) => hitTest(g, p.x, p.y)).sort((a, b) => b.y - a.y)[0];
-    if (!hit) return;
+    if (!hit) {
+      const resident = this.life.residents.filter(r => hitTest(r, p.x, p.y)).sort((a, b) => b.y - a.y)[0];
+      if (resident) this.say = { text: resident.helping
+        ? `Dziękuję! Groszaki pomagają mi w pracy. — ${resident.job.role}`
+        : `Tu pracuję. Razem z Groszakami dbamy o miasteczko. — ${resident.job.role}`,
+        until: performance.now() + 3000, g: resident };
+      return;
+    }
     const now = performance.now();
     if (hit.action !== 'sleep') wave(hit, now);
     this.say = { text: this.sim.describe(hit), until: now + 2600, g: hit };
@@ -243,7 +254,7 @@ export class Miasteczko {
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
       p.ph += dt * 1.6;
-      p.x += (p.vx + Math.sin(p.ph) * 6) * dt;
+      p.x += (p.vx + windAt(this.last) * 13 + Math.sin(p.ph) * 6) * dt;
       p.y += p.vy * dt;
       p.rot += p.vr * dt;
       if (p.y > bottom + 10 || p.y < top - 30 || p.x < left - 30 || p.x > right + 30) {
@@ -262,7 +273,7 @@ export class Miasteczko {
       const k = s.t / s.life;
       ctx.fillStyle = `rgba(235, 235, 240, ${0.45 * (1 - k)})`;
       ctx.beginPath();
-      ctx.arc(s.x + s.dx * s.t * 2, s.y - s.t * 14, 3 + k * 9, 0, 6.283);
+      ctx.arc(s.x + (s.dx + windAt(this.last) * 8) * s.t, s.y - s.t * 14, 3 + k * 9, 0, 6.283);
       ctx.fill();
     }
     for (const p of this.particles) {
@@ -339,8 +350,11 @@ export class Miasteczko {
     }
     for (const l of layers) { ctx.globalAlpha = l.alpha; ctx.drawImage(l.img, 0, 0, MAP_W, MAP_H); }
     ctx.globalAlpha = 1;
+    if (!this.still) this.windAngle += dt * (0.11 + windAt(now) * 0.025);
+    drawLandscape(ctx, now, this.windAngle, this.season, this.still);
+    if (this.life.graph !== this.sim.graph) this.life.setGraph(this.sim.graph);
     const zs = this.cam.z * this.dpr;
-    drawGroszakiWithDepth(ctx, layers, this.sim.puppets, this.occluders, now, zs, this.still);
+    drawGroszakiWithDepth(ctx, layers, this.sim.puppets, this.occluders, now, zs, this.still, this.life.items(now, this.sim.entities, this.still));
     this.drawEffects(ctx, now);
     if (!this.still) this.drawParticles(ctx);
     this.editor?.draw?.(ctx, now);

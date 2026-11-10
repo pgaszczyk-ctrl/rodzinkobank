@@ -8,6 +8,7 @@
 import { findPath, makeRoute, routePosition, nearestNode } from './trasy.js';
 import { groszakiCrew } from './liczenie.js';
 import { t } from './teksty.js';
+import { jobFor } from './zycie.js';
 
 const WALK = 34;          // px mapy na sekundę przy rozmiarze 22
 const QUEUE_GAP = 9;      // odstęp między rzędami kolejki przy drzwiach
@@ -184,6 +185,7 @@ export class TownSim {
     e.state = 'leaving';
     e.leaveAt = when;
     e.g.carry = false;
+    e.g.load = false;
     e.g.pack = true;
     const exits = this.places.wyjscia;
     e.target = exits[Math.floor(this.rand() * exits.length)];
@@ -196,6 +198,9 @@ export class TownSim {
   startWork(e, now) {
     e.state = 'working';
     e.g.carry = false;
+    e.g.job = jobFor(e.workPlace?.punkt);
+    e.g.action = e.g.job.action;
+    e.g.dir = 1;
     e.running = false;
     const far = e.zone === 'daleko';
     e.until = now + (far ? 5000 + this.rand() * 6000 : 2500 + this.rand() * 4500);
@@ -242,7 +247,11 @@ export class TownSim {
       // bez animacji: odchodzący znikają od razu, nowi stoją już przy pracy
       for (const e of this.entities) {
         if (e.state === 'leaving') e.gone = true;
-        else if (e.state !== 'working') { e.d = e.route.length; this.place(e); this.startWork(e, now); e.g.action = 'idle'; }
+        else if (e.state !== 'working') {
+          e.workPlace ||= this.work(e.zone);
+          e.route = this.route(this.places.drzwi, e.workPlace.punkt);
+          e.d = e.route.length; this.place(e); this.startWork(e, now); e.until = Infinity;
+        }
         else e.until = Infinity;
       }
     }
@@ -253,6 +262,7 @@ export class TownSim {
 
   step(e, now, dt) {
     const g = e.g;
+    g.load = e.state === 'toWork' && jobFor(e.workPlace?.punkt).action === 'sack';
     switch (e.state) {
       case 'toWork':
       case 'toVault':
@@ -280,9 +290,10 @@ export class TownSim {
         break;
       }
       case 'working':
-        g.action = 'idle';
-        if (now > e.nextTurn) { g.dir = -g.dir; e.nextTurn = now + 1200 + this.rand() * 2000; }
+        g.action = g.job?.action || 'idle';
+        g.dir = 1;
         if (now > e.until) {
+          g.action = 'walk';
           g.carry = true;
           e.route = this.route(e.workPlace.punkt, this.places.drzwi);
           e.d = 0;
@@ -353,7 +364,7 @@ export class TownSim {
     let line;
     switch (e.state) {
       case 'toWork': line = e.running ? t('dymek.biegne') : t('dymek.doPracy', { miejsce: e.workPlace?.nazwa ?? '' }); break;
-      case 'working': line = texts[Math.floor(this.rand() * texts.length)] || t('dymek.doPracy', { miejsce: e.workPlace?.nazwa ?? '' }); break;
+      case 'working': line = e.g.job?.text || texts[Math.floor(this.rand() * texts.length)] || t('dymek.doPracy', { miejsce: e.workPlace?.nazwa ?? '' }); break;
       case 'toVault': line = e.d < e.route.length / 2 ? t('dymek.wracam') : t('dymek.niose'); break;
       case 'queue': line = t('dymek.kolejka'); break;
       case 'deliver': line = t('dymek.oddaje'); break;
