@@ -210,10 +210,17 @@ def process_material(mat, layout, pack_colors):
 
 def process_character(cid, spec):
     """Wycina całe obiekty z arkusza (postacie, dekoracje drogi) do assets/groszaki/<cid>/."""
-    sheet = Image.open(SRC / spec['arkusz']).convert('RGB')
+    sheets = {}
     out = {}
     for pose, box in spec['pozy'].items():
-        part = cut(sheet.crop(tuple(box)), holes=spec.get('dziury', 0), seeds=[(x - box[0], y - box[1]) for x, y in spec.get('punkty_tla', {}).get(pose, [])])
+        # pozycja: [x0, y0, x1, y1] z arkusza grupy albo {"arkusz", "box", "dziury"} – obiekt z osobnego pliku
+        own = box if isinstance(box, dict) else {}
+        box = own.get('box', box)
+        name = own.get('arkusz', spec.get('arkusz'))
+        if name not in sheets:
+            sheets[name] = Image.open(SRC / name).convert('RGB')
+        part = cut(sheets[name].crop(tuple(box)), holes=own.get('dziury', spec.get('dziury', 0)),
+                   seeds=[(x - box[0], y - box[1]) for x, y in spec.get('punkty_tla', {}).get(pose, [])])
         part = part.crop(tight_box(part))
         save(part, GROSZ / cid / f'{pose}.webp')
         out[pose] = {'plik': f'{cid}/{pose}.webp', 'w': part.width, 'h': part.height}

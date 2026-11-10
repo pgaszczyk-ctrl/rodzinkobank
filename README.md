@@ -11,7 +11,8 @@ Dziecko ogląda miasteczko, w którym jego pieniądze (Groszaki) pracują i co 1
   Wpłata: nowe Groszaki wybiegają ze Skarbca. Wypłata: kilka rusza z plecakami po marzenie.
 - **Droga przez rok** pod miasteczkiem: pionowa panorama pór roku przewijana razem ze stroną, u góry „dziś”.
   Przy datach stoją dekoracje (worek Mikołaja, choinka, bałwan na ferie, koszyk wielkanocny, balony,
-  tornister, tort na urodziny, drogowskaz na inne wydarzenia), przy dniu prognozy – znaczniki celów.
+  tornister, bramka „Happy Birthday” na urodziny, drogowskaz na inne wydarzenia), przy dniu prognozy – szare
+  pudełka z naklejką celu.
   Groszak idzie drogą w środku ekranu; dotknięcie celu przewija do niego i włącza Księgowego.
 - **Cele** z paskiem postępu i Groszakiem Księgowym, który mówi, kiedy cel będzie w zasięgu (prognoza).
 - **Strefa rodzica**: wpłaty, wypłaty i korekty (także z datą wsteczną), historia z rozbiciem na kapitał

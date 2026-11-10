@@ -6,7 +6,7 @@
 // po dotknięciu. Groszak idzie drogą: trzyma się środka ekranu, a droga przesuwa się pod nim.
 // Układ (gdzie co stoi) liczy layoutRoad() w droga.js; tu tylko DOM i animacja.
 
-import { layoutRoad, roadXAt, TABLE } from './droga.js';
+import { layoutRoad, roadXAt } from './droga.js';
 import { createGroszak, drawGroszak } from './kukielka.js';
 import { t, plural } from './teksty.js';
 
@@ -22,15 +22,6 @@ const BOX_SVG = `<svg class="gr-road-box" viewBox="0 0 100 100" aria-hidden="tru
   <path d="M29 28 L71 40" stroke="#5a3424" stroke-width="1.6" opacity=".55"/>
   <path d="M26 29 L32 27.3 L74 39.3 L68 41 Z" fill="#c9b48e" opacity=".8"/>
   <path d="M68 41 L74 39.3 L74 56 L68 57.7 Z" fill="#c9b48e" opacity=".8"/>
-</svg>`;
-// Tymczasowy drewniany stolik pod przedmioty (do podmiany na obrazek od grafika).
-const TABLE_SVG = `<svg class="gr-road-table" viewBox="0 0 100 50" aria-hidden="true">
-  <ellipse cx="50" cy="46" rx="44" ry="4" fill="rgba(60,30,10,.22)"/>
-  <path d="M16 24 V45 M84 24 V45 M30 26 V40 M70 26 V40" stroke="#5a3424" stroke-width="7" stroke-linecap="round"/>
-  <path d="M16 24 V45 M84 24 V45 M30 26 V40 M70 26 V40" stroke="#a8754a" stroke-width="3.5" stroke-linecap="round"/>
-  <path d="M6 14 Q50 4 94 14 L94 21 Q50 31 6 21 Z" fill="#9a6a42" stroke="#5a3424" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M6 14 Q50 4 94 14 Q50 24 6 14 Z" fill="#c8915e" stroke="#5a3424" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M20 13 Q50 8 80 13" stroke="#e0b07c" stroke-width="1.5" fill="none" opacity=".8"/>
 </svg>`;
 // Mrugające tło za pudełkiem celu: poświata i iskierki.
 const GLOW = `<span class="gr-road-glow" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>`;
@@ -75,9 +66,8 @@ export class DrogaWidok {
       if (it.type === 'wp') {
         const o = this.objects[it.decor];
         const badge = it.decor === 'inne' && it.w.ikona ? `<span class="gr-road-badge">${esc(it.w.ikona)}</span>` : '';
-        const table = it.table ? TABLE_SVG : '';
-        parts.push(`<button class="gr-road-obj${it.table ? ' on-table' : ''}" data-i="${i}" style="left:${pct(it.x)};top:${ty(it.y)};width:${pct(it.wFrac)}"
-          aria-label="${esc(this.label(it.w))}"><img src="${this.base}${o.plik}" alt="" draggable="false">${table}${badge}</button>`);
+        parts.push(`<button class="gr-road-obj" data-i="${i}" style="left:${pct(it.x)};top:${ty(it.y)};width:${pct(it.wFrac)}"
+          aria-label="${esc(this.label(it.w))}"><img src="${this.base}${o.plik}" alt="" draggable="false">${badge}</button>`);
       } else {
         const g = it.flag;
         parts.push(`<button class="gr-road-goal${g.reachedNow ? ' done' : ''}" data-goal="${esc(g.goal.id)}"
@@ -176,8 +166,6 @@ export const DROGA_CSS = `
   -webkit-tap-highlight-color: transparent; }
 .gr-road-obj img { display: block; width: 100%; height: auto; filter: drop-shadow(0 3px 3px rgba(60,30,10,.25)); transition: transform .15s; }
 .gr-road-obj:active img { transform: scale(.94); }
-.gr-road-obj.on-table img { width: ${TABLE.item * 100}%; margin: 0 auto -${TABLE.overlap * 100}%; position: relative; z-index: 1; filter: none; }
-.gr-road-table { display: block; width: 100%; height: auto; overflow: visible; }
 .gr-road-badge { position: absolute; left: 50%; top: 24%; transform: translateX(-50%); font-size: clamp(10px, 3vw, 18px); }
 .gr-road-goal { aspect-ratio: 1; container-type: inline-size; }
 .gr-road-glow { position: absolute; left: -45%; top: -50%; width: 190%; height: 190%; pointer-events: none;

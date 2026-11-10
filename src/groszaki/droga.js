@@ -143,9 +143,8 @@ const DECOR = {
   mikolajki: 'mikolajki', wigilia: 'wigilia', ferie: 'ferie', wielkanoc: 'wielkanoc',
   dzienDziecka: 'dzienDziecka', poczatekRoku: 'poczatekRoku',
 };
-// Przedmioty, które stoją na stoliku (tort nie może stać na ziemi). Stolik: drogaWidok.js.
-export const ON_TABLE = new Set(['urodziny', 'wielkanoc', 'mikolajki', 'poczatekRoku']);
-export const TABLE = { item: 0.78, ratio: 0.5, overlap: 0.1 };   // ułamki szerokości obiektu
+// Dekoracje większe niż pozostałe (mnożnik szerokości), np. bramka urodzinowa to cała scenka.
+export const DECOR_SCALE = { urodziny: 1.9 };
 
 export function decorOf(w) {
   if (w.kind === 'wlasne') return w.ikona === '🎂' ? 'urodziny' : 'inne';
@@ -170,9 +169,8 @@ export function layoutRoad(road, data, { sizes = {}, objW = 0.15, goalW = 0.13, 
     const decor = decorOf(w);
     if (!decor) continue;
     const [iw, ih] = sizes[decor] || [1, 1];
-    const table = ON_TABLE.has(decor);
-    const hObj = table ? objW * (TABLE.item * ih / iw + TABLE.ratio - TABLE.overlap) : objW * ih / iw;
-    items.push({ type: 'wp', w, decor, table, y: yOf(w.day), wFrac: objW, h: hObj / aspect });
+    const wFrac = objW * (DECOR_SCALE[decor] || 1);
+    items.push({ type: 'wp', w, decor, y: yOf(w.day), wFrac, h: wFrac * ih / iw / aspect });
   }
   for (const g of road.goals) {
     if (g.beyond) continue;

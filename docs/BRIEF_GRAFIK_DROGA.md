@@ -46,10 +46,11 @@ Dekoracje postawione wprost na trawie wyglądają jak naklejki. Potrzebne:
    > presents with bows at the foot of one post, a birthday cake on a small low table under the arch.
    > Slight top-down view, soft shadow underneath, plain white background, no characters, no road.
 
-Do czasu dostarczenia aplikacja rysuje tymczasowe szare pudełko z naklejką (za nim pulsująca poświata
-z iskierkami) i prosty stolik pod tortem, workiem, koszykiem i tornistrem. Tort nie może stać na ziemi.
+Bramka urodzinowa przyszła i jest w aplikacji (`zrodla/droga-urodziny.png`) zamiast tortu; stoliki usunięte.
+Do czasu dostarczenia pudełka aplikacja rysuje tymczasowe szare pudełko z naklejką (za nim pulsująca
+poświata z iskierkami).
 
-**Nadal brakuje:** stolika, pudełka celu i bramki urodzinowej (patrz wyżej), obiektów na koniec roku
+**Nadal brakuje:** pudełka celu (patrz wyżej), obiektów na koniec roku
 szkolnego i wakacje, a z „Listy elementów”: straganu (pkt 3), obrazków celów (pkt 4), Groszaka z boku (pkt 5)
 i drobnych elementów (pkt 6).
 
