@@ -134,6 +134,9 @@ export function roadXAt(data, y) {
   return a + (b - a) * (f - i);
 }
 
+// Pudełko celu (drogaWidok.js): wysokość / szerokość.
+export const GOAL_RATIO = 1.0;
+
 // Mapowanie drogowskazów na obiekty z arkusza (manifest.obiekty.droga).
 // Wydarzenia bez obrazka (koniec roku szkolnego, wakacje) na razie pomijamy.
 const DECOR = {
@@ -152,7 +155,7 @@ export function decorOf(w) {
  *  objW   – szerokość obiektu wydarzenia (ułamek szerokości drogi), goalW – znacznika celu
  * Zwraca y0/y1 (wycinek panoramy), y dziś i końca oraz obiekty z x, y (punkt na ziemi) i w, h.
  */
-export function layoutRoad(road, data, { sizes = {}, objW = 0.26, goalW = 0.17, pre = 0.012 } = {}) {
+export function layoutRoad(road, data, { sizes = {}, objW = 0.15, goalW = 0.13, pre = 0.012 } = {}) {
   const aspect = data.h / data.w;
   const base = Math.floor(yearPos(road.today, data.miesiace));
   const yOf = (day) => yearPos(day, data.miesiace) - base;
@@ -167,7 +170,7 @@ export function layoutRoad(road, data, { sizes = {}, objW = 0.26, goalW = 0.17, 
   }
   for (const g of road.goals) {
     if (g.beyond) continue;
-    items.push({ type: 'goal', flag: g, y: yOf(g.day), wFrac: goalW, h: goalW * 1.3 / aspect });
+    items.push({ type: 'goal', flag: g, y: yOf(g.day), wFrac: goalW, h: goalW * GOAL_RATIO / aspect });
   }
   items.sort((a, b) => a.y - b.y);
 
@@ -200,12 +203,12 @@ export function layoutRoad(road, data, { sizes = {}, objW = 0.26, goalW = 0.17, 
   }
 
   const beyond = road.goals.filter((g) => g.beyond);
-  const tail = beyond.length ? goalW * 1.6 / aspect + 0.02 : 0.02;
+  const tail = beyond.length ? goalW * GOAL_RATIO * 1.2 / aspect + 0.02 : 0.02;
   const y1 = Math.max(yEnd, ...items.map((i) => i.y)) + tail;
   beyond.forEach((g, i) => {
     const n = beyond.length;
     const x = Math.min(1 - goalW / 2, Math.max(goalW / 2, 0.5 + (i - (n - 1) / 2) * (goalW + 0.03)));
-    items.push({ type: 'goal', flag: g, beyond: true, y: y1 - 0.012, x, wFrac: goalW, h: goalW * 1.3 / aspect });
+    items.push({ type: 'goal', flag: g, beyond: true, y: y1 - 0.012, x, wFrac: goalW, h: goalW * GOAL_RATIO / aspect });
   });
   // u góry tyle miejsca, żeby obiekty stojące przy „dziś” nie były ucięte
   const y0 = Math.min(yToday - pre, ...items.map((i) => i.y - i.h - 0.004));

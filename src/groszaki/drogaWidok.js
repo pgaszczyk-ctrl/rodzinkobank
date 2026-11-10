@@ -12,6 +12,17 @@ import { t, plural } from './teksty.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const pct = (v) => `${(v * 100).toFixed(3)}%`;
+// Cel to zwykłe szare pudełko kartonowe z naklejonym obrazkiem tego, co jest w środku
+// (nie prezent). Rysunek tymczasowy – do podmiany na obrazek od grafika.
+const BOX_SVG = `<svg class="gr-road-box" viewBox="0 0 100 100" aria-hidden="true">
+  <ellipse cx="50" cy="94" rx="44" ry="5" fill="rgba(60,30,10,.22)"/>
+  <path d="M8 34 L50 22 L92 34 L50 46 Z" fill="#d3cdc2" stroke="#5a3424" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M8 34 L50 46 L50 93 L8 81 Z" fill="#b7b0a4" stroke="#5a3424" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M92 34 L50 46 L50 93 L92 81 Z" fill="#a39c90" stroke="#5a3424" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M29 28 L71 40" stroke="#5a3424" stroke-width="1.6" opacity=".55"/>
+  <path d="M26 29 L32 27.3 L74 39.3 L68 41 Z" fill="#c9b48e" opacity=".8"/>
+  <path d="M68 41 L74 39.3 L74 56 L68 57.7 Z" fill="#c9b48e" opacity=".8"/>
+</svg>`;
 const WALKER = 0.12;         // wielkość Groszaka (ułamek szerokości drogi)
 const VIEW_Y = 0.55;         // na jakiej wysokości ekranu idzie Groszak
 
@@ -59,7 +70,7 @@ export class DrogaWidok {
         const g = it.flag;
         parts.push(`<button class="gr-road-goal${g.reachedNow ? ' done' : ''}" data-goal="${esc(g.goal.id)}"
           style="left:${pct(it.x)};top:${ty(it.y)};width:${pct(it.wFrac)}" aria-label="${esc(g.goal.nazwa)}">
-          <span class="gr-road-goal-b">${esc(g.goal.ikona || '⭐')}</span><span class="gr-road-goal-p"></span></button>`);
+          ${BOX_SVG}<span class="gr-road-sticker">${esc(g.goal.ikona || '⭐')}</span>${g.reachedNow ? '<span class="gr-road-ok">✓</span>' : ''}</button>`);
       }
     });
     parts.push('<div class="gr-road-fade"></div><canvas class="gr-road-walker" aria-hidden="true"></canvas><div class="gr-road-tip" hidden></div>');
@@ -152,13 +163,17 @@ export const DROGA_CSS = `
 .gr-road-obj, .gr-road-goal { position: absolute; transform: translate(-50%, -92%); padding: 0; border: 0; background: none; cursor: pointer;
   -webkit-tap-highlight-color: transparent; }
 .gr-road-obj img { display: block; width: 100%; height: auto; filter: drop-shadow(0 3px 3px rgba(60,30,10,.25)); transition: transform .15s; }
-.gr-road-obj:active img, .gr-road-goal:active .gr-road-goal-b { transform: scale(.94); }
-.gr-road-badge { position: absolute; left: 50%; top: 24%; transform: translateX(-50%); font-size: clamp(14px, 4.5vw, 26px); }
-.gr-road-goal { display: flex; flex-direction: column; align-items: center; }
-.gr-road-goal-b { display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 50%; background: #fffaf0;
-  border: 3px solid #5a3424; font-size: clamp(20px, 7vw, 40px); box-shadow: 0 3px 0 rgba(60,30,10,.25); transition: transform .15s; }
-.gr-road-goal.done .gr-road-goal-b { border-color: #2f9e44; background: #f2fbef; }
-.gr-road-goal-p { width: 7%; min-width: 4px; height: 0; padding-bottom: 28%; background: #8a5a3a; border: 1.5px solid #5a3424; border-top: 0; border-radius: 0 0 3px 3px; }
+.gr-road-obj:active img { transform: scale(.94); }
+.gr-road-badge { position: absolute; left: 50%; top: 24%; transform: translateX(-50%); font-size: clamp(10px, 3vw, 18px); }
+.gr-road-goal { aspect-ratio: 1; container-type: inline-size; }
+.gr-road-box { display: block; width: 100%; height: 100%; overflow: visible; transition: transform .15s; }
+.gr-road-goal:active .gr-road-box { transform: scale(.94); }
+/* naklejka na przedniej (lewej) ścianie pudełka */
+.gr-road-sticker { position: absolute; left: 13%; top: 50%; width: 31%; aspect-ratio: 1; display: grid; place-items: center;
+  background: #fffdf7; border: 1.5px solid #5a3424; border-radius: 4px; transform: skewY(16deg);
+  font-size: 19cqw; line-height: 1; overflow: hidden; }
+.gr-road-ok { position: absolute; right: 0; top: 4%; width: 34%; aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%;
+  background: #2f9e44; color: #fff; border: 2px solid #fff; font-weight: 900; font-size: 20cqw; }
 .gr-road-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 90px; pointer-events: none;
   background: linear-gradient(to bottom, rgba(255,250,240,0), rgba(255,250,240,.85)); }
 .gr-road-walker { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform; }

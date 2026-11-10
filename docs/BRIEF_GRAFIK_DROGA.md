@@ -9,8 +9,26 @@ góra, więc kafle z pkt 1 nie są już potrzebne. Jest w aplikacji (`zrodla/dro
 Z pkt 2 są: worek Mikołaja, choinka, bałwan na nartach (ferie), koszyk z pisankami, balony (Dzień Dziecka),
 tornister (1 września), tort (urodziny), drogowskaz (inne wydarzenie rodzica) – `zrodla/droga-wydarzenia.jpg`.
 
-**Nadal brakuje:** obiektów na koniec roku szkolnego i wakacje, straganu celu (pkt 3 – na razie okrągły
-znacznik z obrazkiem celu), obrazków celów (pkt 4), Groszaka z boku (pkt 5) i drobnych elementów (pkt 6).
+### Prośba do grafika po pierwszym podglądzie (10 XI)
+
+Dekoracje postawione wprost na trawie wyglądają jak naklejki. Potrzebne:
+
+1. **Stolik pod dekoracje.** Niski drewniany stolik (albo ława / skrzynka), widziany lekko z góry,
+   w stylu panoramy, z cieniem pod spodem. Dekoracje stoją **na blacie** jako małe przedmioty.
+   Najlepiej: pusty stolik osobno + zaznaczone miejsce na blacie, gdzie stawiamy przedmiot
+   (wtedy każdą dekorację postawimy na tym samym stoliku). Druga możliwość: każda dekoracja od razu
+   narysowana na stoliku. Dekoracje są na drodze małe (ok. 1/7 szerokości panoramy), więc proste kształty.
+2. **Pudełko celu zamiast ikonki.** Zwykłe **szare kartonowe pudełko** (nie prezent: bez kokardy,
+   bez wstążki, bez kolorowego papieru), zaklejone taśmą, widziane lekko z góry i z boku, z cieniem.
+   Na przedniej ściance **pusta biała naklejka** – aplikacja nakleja na nią obrazek tego, co jest w środku
+   (hulajnoga, klocki…). Zaznacz prostokątem na osobnej warstwie, gdzie jest naklejka.
+   Warianty: zamknięte, **otwarte z wystającym przedmiotem / konfetti** („cel osiągnięty”).
+   Zamiast pudełka może być stragan z pkt 3 – wtedy na ladzie stoi takie pudełko.
+
+Do czasu dostarczenia aplikacja rysuje tymczasowe szare pudełko z naklejką, a dekoracje są pomniejszone.
+
+**Nadal brakuje:** obiektów na koniec roku szkolnego i wakacje, stolika i pudełka celu (patrz wyżej) albo
+straganu (pkt 3), obrazków celów (pkt 4), Groszaka z boku (pkt 5) i drobnych elementów (pkt 6).
 
 ## ⚠️ Korekta po pierwszych kaflach (lato, jesień) – przeczytaj najpierw
 
