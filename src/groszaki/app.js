@@ -67,6 +67,7 @@ async function run(fn) {
 
 function applyTexts(root = document) {
   root.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
+  root.querySelectorAll('[data-t-label]').forEach((el) => { el.ariaLabel = el.title = t(el.dataset.tLabel); });
 }
 
 // ---------------------------------------------------------------- stan aplikacji
@@ -170,7 +171,8 @@ function afterChange(prevBalance) {
   renderTop();
   renderSaldo(b);
   renderGoalsView();
-  if (pz.open) renderParent();
+  // Nie przerysowuj formularza w trakcie wpisywania (np. przy zmianie z innego urządzenia).
+  if (pz.open && !FORM_VIEWS.includes(pz.view)) renderParent();
   return reason;
 }
 
@@ -240,8 +242,11 @@ $('unlinkBtn').addEventListener('click', () => {
 });
 
 // ---------------------------------------------------------------- strefa rodzica
-const pz = { open: false, tab: 'operacje', type: 'deposit', kidBalances: null };
-const TABS = ['dzieci', 'operacje', 'historia', 'oprocentowanie', 'regularne', 'kalendarz', 'rodzina'];
+// Ekran główny: dziecko, saldo, „Wpłata / Wypłata”, ostatnie operacje i lista ustawień.
+// Każda rzadsza rzecz ma osobny widok z przyciskiem „wstecz”.
+const pz = { open: false, view: 'home', kidBalances: null, sign: 1 };
+const FORM_VIEWS = ['deposit', 'withdrawal', 'adjustment'];
+const SETTINGS = ['oprocentowanie', 'regularne', 'kalendarz', 'rodzina'];
 
 let gateAnswer = 0;
 $('parentBtn').addEventListener('click', () => {
@@ -259,14 +264,24 @@ $('gateForm').addEventListener('submit', (e) => {
 });
 $('gateClose').addEventListener('click', () => $('gateDialog').close());
 $('parentClose').addEventListener('click', () => $('parentDialog').close());
+$('parentBack').addEventListener('click', () => goParent(pz.view === 'adjustment' ? 'historia' : 'home'));
 $('parentDialog').addEventListener('close', () => { pz.open = false; });
 
+/** Panel zawsze otwiera się na ekranie głównym – bez pamiętania ostatniej zakładki. */
 function openParent() {
   pz.open = true;
+  pz.view = 'home';
   pz.kidBalances = null;
   $('parentDialog').showModal();
   renderParent();
-  if (mode === 'parent') loadKidBalances();
+  if (mode === 'parent' && family.kids.length > 1) loadKidBalances();
+}
+
+function goParent(view) {
+  pz.view = view;
+  if (view === 'adjustment') pz.sign = 1;
+  renderParent();
+  $('parentDialog').scrollTop = 0;
 }
 
 async function loadKidBalances() {
@@ -277,88 +292,158 @@ async function loadKidBalances() {
       return [k.id, balanceAt(s.state.events, now())];
     }));
     pz.kidBalances = Object.fromEntries(states);
-    if (pz.open && pz.tab === 'dzieci') renderParent();
-  } catch { /* lista bez sald */ }
+    if (pz.open && pz.view === 'home') renderParent();
+  } catch { /* przełącznik bez sald */ }
+}
+
+function viewTitle(v) {
+  const imie = S().kid.name;
+  if (v === 'home') return t('rz.tytul');
+  if (v === 'rodzina') return t(mode === 'parent' ? 'rz.m.rodzina' : 'rz.m.konto');
+  return t('rz.v.' + v, { imie });
 }
 
 function renderParent() {
-  const tabs = $('ptabs');
-  tabs.innerHTML = TABS.map((k) => `<button class="pill" data-tab="${k}" aria-pressed="${k === pz.tab}">${esc(t('rz.' + k))}</button>`).join('');
-  tabs.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { pz.tab = b.dataset.tab; renderParent(); }));
+  const v = pz.view;
+  $('parentTitle').textContent = viewTitle(v);
+  $('parentBack').hidden = v === 'home';
   const sec = $('psec');
-  const kidHead = `<p class="note" style="margin:0 0 6px">${esc(t('app.skarbiecDziecka', { imie: S().kid.name }))} · ${esc(money(balanceAt(S().events, now())))}</p>`;
-  sec.innerHTML = (pz.tab === 'dzieci' || pz.tab === 'rodzina' ? '' : kidHead) + ({
-    dzieci: tabDzieci, operacje: tabOperacje, historia: tabHistoria, oprocentowanie: tabOprocentowanie,
-    regularne: tabRegularne, kalendarz: tabKalendarz, rodzina: tabRodzina,
-  }[pz.tab])();
+  const perKid = ['oprocentowanie', 'regularne', 'kalendarz'].includes(v) && mode === 'parent' && family.kids.length > 1;
+  sec.innerHTML = (perKid ? `<p class="note" style="margin:0 0 4px">${esc(t('rz.dotyczy', { imie: S().kid.name }))}</p>` : '') + VIEWS[v]();
   bindParent(sec);
 }
 
 const todayIso = () => dayToIso(dayOf(now()));
+const fmtOpDay = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short', timeZone: 'Europe/Warsaw' });
+const fmtMonth = new Intl.DateTimeFormat('pl-PL', { month: 'long', year: 'numeric', timeZone: 'Europe/Warsaw' });
+const signedMoney = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + money(Math.abs(v));
 
-function tabDzieci() {
-  const kids = mode === 'parent' ? family.kids : [{ id: 'local', name: S().kid.name }];
-  const bal = (k) => (mode === 'parent' ? pz.kidBalances?.[k.id] : balanceAt(S().events, now()));
-  return `<div class="kidlist">${kids.map((k) => `<button class="kidcard" data-pick="${esc(k.id)}" aria-pressed="${mode !== 'parent' || k.id === store.kidId}">
-      <b>${esc(k.name)}</b><span class="note">${bal(k) === undefined ? '…' : esc(money(bal(k)))}</span></button>`).join('')}
-    </div>
-    <div class="row" style="margin-top:10px">
+function opInfo(e) {
+  if (e.type === 'rate') {
+    return { icon: '%', cls: '', amount: '', title: t('op.rate'),
+      sub: `${fmtPct.format(e.rates.low)} / ${fmtPct.format(e.rates.high)}, ${t('st.progKrotko')} ${moneyRound(e.rates.threshold)}` };
+  }
+  const v = e.type === 'withdrawal' ? -e.amount : e.amount;
+  const label = t('op.' + e.type);
+  return {
+    icon: e.type === 'adjustment' ? '✎' : v > 0 ? '+' : '−',
+    cls: v > 0 ? 'plus' : 'minus',
+    amount: signedMoney(v),
+    title: e.note || label,
+    sub: e.note ? label.toLowerCase() : '',
+  };
+}
+
+function opRow(e, tag = 'div') {
+  const o = opInfo(e);
+  const sub = [fmtOpDay.format(new Date(e.ts)), o.sub].filter(Boolean).join(' · ');
+  return `<${tag} class="op"><span class="op-ico ${o.cls}" aria-hidden="true">${o.icon}</span>
+    <span class="op-main"><b>${esc(o.title)}</b><small>${esc(sub)}</small></span>
+    <span class="op-amt ${o.cls}">${esc(o.amount)}</span></${tag}>`;
+}
+
+function menuHint(k) {
+  const st = S();
+  if (k === 'oprocentowanie') {
+    const r = ratesAt(st.events, now());
+    return t('rz.h.stawki', { niska: fmtPct.format(r.low), prog: moneyRound(r.threshold), wysoka: fmtPct.format(r.high) });
+  }
+  if (k === 'regularne') return st.plans.length ? st.plans.map((p) => `${money(p.amount)} ${t('pl.' + p.every)}`).join(', ') : t('pl.brak');
+  if (k === 'kalendarz') return t('rz.h.kalendarz', { n: st.calendar.length });
+  return t(mode === 'parent' ? 'rz.h.rodzina' : 'rz.h.konto');
+}
+
+function viewHome() {
+  const n = now();
+  const sum = simulate(S().events, n);
+  const recent = S().events.filter((e) => e.type !== 'rate' && e.ts <= n).sort((a, b) => b.ts - a.ts).slice(0, 4);
+  const kids = mode === 'parent' ? family.kids : [];
+  const kidSwitch = kids.length > 1 ? `<div class="kidswitch">${kids.map((k) => {
+    const b = pz.kidBalances?.[k.id];
+    return `<button class="pill" data-pick="${esc(k.id)}" aria-pressed="${k.id === store.kidId}">${esc(k.name)}${b === undefined ? '' : ` <span class="pill-bal">${esc(money(b))}</span>`}</button>`;
+  }).join('')}</div>` : '';
+  const facts = sum.deposited || sum.withdrawn || sum.adjusted ? [
+    t('rz.wplacono', { kwota: money(sum.deposited) }),
+    sum.withdrawn ? t('rz.wyplacono', { kwota: money(sum.withdrawn) }) : '',
+    sum.adjusted ? t('rz.poprawki', { kwota: signedMoney(sum.adjusted) }) : '',
+  ].filter(Boolean).map(esc).join(' · ') + `<b class="plus">${esc(t('rz.zarobily', { kwota: money(sum.interest) }))}</b>` : esc(t('pusty'));
+  return `${kidSwitch}
+    <section class="hero">
+      <div class="hero-name">${esc(S().kid.name)}</div>
+      <div class="hero-bal">${esc(money(sum.total))}</div>
+      <div class="hero-sub">${facts}</div>
+      <div class="hero-actions">
+        <button class="btn big" data-go="deposit">${esc(t('rz.wplata'))}</button>
+        <button class="btn big light" data-go="withdrawal">${esc(t('rz.wyplata'))}</button>
+      </div>
+    </section>
+    <h4 class="lbl">${esc(t('rz.ostatnio'))}</h4>
+    ${recent.length ? `<div class="ops">${recent.map((e) => opRow(e)).join('')}</div>
+      <button class="link" data-go="historia">${esc(t('rz.calaHistoria'))}</button>` : `<p class="note">${esc(t('hist.brak'))}</p>`}
+    <h4 class="lbl">${esc(t('rz.ustawienia'))}</h4>
+    <div class="menu">${SETTINGS.map((k) => `<button class="menu-row" data-go="${k}">
+      <span><b>${esc(t(k === 'rodzina' && mode !== 'parent' ? 'rz.m.konto' : 'rz.m.' + k))}</b><small>${esc(menuHint(k))}</small></span>
+      <span class="chev" aria-hidden="true">›</span></button>`).join('')}</div>
+    <div class="row foot">
       ${mode === 'parent' ? `<button class="btn light small" data-act="addKid">${esc(t('rz.dodajDziecko'))}</button>` : ''}
       <button class="btn light small" data-act="rename">${esc(t('rz.zmienImie'))}</button>
     </div>`;
 }
 
-function tabOperacje() {
-  const ty = pz.type;
+function viewMoney() {
+  const ty = pz.view;
   const max = maxWithdrawal(S().events, now());
-  return `<div class="card">
-    <div class="row" style="gap:6px;margin-bottom:6px">${['deposit', 'withdrawal', 'adjustment'].map((k) =>
-      `<button class="pill" data-type="${k}" aria-pressed="${k === ty}">${esc(t('op.' + k))}</button>`).join('')}</div>
-    <form id="moneyForm">
-      <div class="row">
-        <label class="field"><span>${esc(t(ty === 'adjustment' ? 'op.korektaKwota' : 'op.kwota'))}</span>
-          <input name="kwota" inputmode="decimal" autocomplete="off" required placeholder="${ty === 'adjustment' ? '-1,50' : '10'}"></label>
-        <label class="field"><span>${esc(t('op.data'))}</span><input name="data" type="date" value="${todayIso()}" max="${todayIso()}" required></label>
-      </div>
-      <label class="field"><span>${esc(t('op.opis'))}</span><input name="opis" maxlength="80"></label>
-      <p class="note" id="opHint">${ty === 'withdrawal' ? esc(t('op.maks', { kwota: money(max) })) : ''}</p>
-      <button class="btn">${esc(t('op.zapisz'))}</button>
-    </form></div>`;
+  const opisKey = { deposit: 'rz.opisWplaty', withdrawal: 'rz.opisWyplaty', adjustment: 'rz.opisKorekty' }[ty];
+  return `<form id="moneyForm" class="moneyform">
+    ${ty === 'adjustment' ? `<p class="note center">${esc(t('rz.korektaOpis'))}</p>
+      <div class="tabs2">${[1, -1].map((s) => `<button type="button" data-sign="${s}" aria-pressed="${pz.sign === s}">${esc(t(s > 0 ? 'rz.dodaj' : 'rz.odejmij'))}</button>`).join('')}</div>` : ''}
+    <label class="amount"><span class="sr">${esc(t('op.kwota'))}</span>
+      <input name="kwota" inputmode="decimal" autocomplete="off" required placeholder="0"><span>zł</span></label>
+    ${ty === 'adjustment' ? '' : `<div class="chips">${[5, 10, 20, 50].map((v) => `<button type="button" class="chip" data-add="${v}">+${v} zł</button>`).join('')}</div>`}
+    <p class="note center" id="opHint">${ty === 'withdrawal' ? esc(t('op.maks', { kwota: money(max) })) : ''}</p>
+    <label class="field"><span>${esc(t(opisKey))}</span><input name="opis" maxlength="80" ${ty === 'deposit' ? 'list="opisy"' : ''}></label>
+    ${ty === 'deposit' ? `<datalist id="opisy">${t('rz.podpowiedzi').split('|').map((s) => `<option value="${esc(s)}">`).join('')}</datalist>` : ''}
+    <div class="when"><span>${esc(t('op.data'))}:</span>
+      <button type="button" class="link" data-act="pickDate">${esc(t('rz.dzis'))} ▾</button>
+      <input name="data" type="date" value="${todayIso()}" max="${todayIso()}" required hidden></div>
+    <button class="btn wide">${esc(t('rz.zapisz.' + ty))}</button>
+  </form>`;
 }
 
-function opLabel(e) {
-  if (e.type === 'rate') {
-    return `${t('op.rate')}: ${fmtPct.format(e.rates.low)} / ${fmtPct.format(e.rates.high)}, ${t('st.progKrotko')} ${moneyRound(e.rates.threshold)}`;
-  }
-  return t('op.' + e.type) + (e.note ? ` – ${e.note}` : '');
-}
-
-function tabHistoria() {
+function viewHistoria() {
   const n = now();
-  const rows = history(S().events, n).reverse();
-  const futureRates = S().events.filter((e) => e.type === 'rate' && e.ts > n);
+  const all = history(S().events, n);
   const sum = simulate(S().events, n);
-  const sign = (e) => (e.type === 'withdrawal' ? -e.amount : e.amount);
-  const body = rows.map(({ event: e, balanceAfter, interestSincePrev }) => `<tr>
-      <td>${esc(fmtShort.format(new Date(e.ts)))}</td>
-      <td>${esc(opLabel(e))}</td>
-      <td class="n ${e.type === 'rate' ? '' : sign(e) > 0 ? 'plus' : 'minus'}">${e.type === 'rate' ? '' : (sign(e) > 0 ? '+' : '−') + esc(money(Math.abs(sign(e))))}</td>
-      <td class="n" data-l="${esc(t('hist.odsetki'))}:">${e.type === 'rate' ? '' : '+' + esc(money(interestSincePrev))}</td>
-      <td class="n" data-l="${esc(t('hist.saldoPo'))}:">${esc(money(balanceAfter))}</td>
-      <td class="n"><button class="x" data-del="${esc(e.id)}" title="${esc(t('hist.usun'))}" aria-label="${esc(t('hist.usun'))}">×</button></td>
-    </tr>`).join('');
-  return `<div class="summary">
-      <div>${esc(t('hist.wplacono'))}<b>${esc(money(sum.deposited))}</b></div>
-      <div>${esc(t('hist.wyplacono'))}<b>${esc(money(sum.withdrawn))}</b></div>
-      <div>${esc(t('hist.korekty'))}<b>${esc(money(sum.adjusted))}</b></div>
-      <div>${esc(t('hist.odsetkiRazem'))}<b class="plus">${esc(money(sum.interest))}</b></div>
-      <div>${esc(t('hist.teraz'))}<b>${esc(money(sum.total))}</b></div>
+  const sinceLast = sum.interest - all.reduce((a, r) => a + r.interestSincePrev, 0);
+  const futureRates = S().events.filter((e) => e.type === 'rate' && e.ts > n);
+  const parts = [
+    t('rz.h.wplacono', { kwota: money(sum.deposited) }),
+    sum.withdrawn ? t('rz.h.wyplacono', { kwota: money(sum.withdrawn) }) : '',
+    sum.adjusted ? t('rz.h.poprawki', { kwota: signedMoney(sum.adjusted) }) : '',
+  ].filter(Boolean).map(esc).join(', ');
+  let month = '';
+  const rows = all.slice().reverse().map(({ event: e, balanceAfter, interestSincePrev }) => {
+    const m = fmtMonth.format(new Date(e.ts));
+    const head = m !== month ? `<h4 class="mhead">${esc(m)}</h4>` : '';
+    month = m;
+    return `${head}<details class="orow">${opRow(e, 'summary')}
+      <div class="op-more">
+        ${e.type === 'rate' ? '' : `<span>${esc(t('rz.przedOperacja'))} <b class="plus">+${esc(money(interestSincePrev))}</b></span>`}
+        <span>${esc(t('rz.saldoPotem'))} <b>${esc(money(balanceAfter))}</b></span>
+        <button class="btn light small" data-del="${esc(e.id)}">${esc(t('hist.usun'))}</button>
+      </div></details>`;
+  }).join('');
+  return `<div class="hsum">
+      <p>${parts}${parts ? ', ' : ''}<b class="plus">${esc(t('rz.h.zarobily', { kwota: money(sum.interest) }))}</b>.</p>
+      <p class="hsum-total">${esc(t('rz.h.razem', { kwota: money(sum.total) }))}</p>
     </div>
     ${futureRates.length ? `<p class="note">${esc(t('st.zaplanowane'))}: ${futureRates.map((e) => esc(fmtShort.format(new Date(e.ts)))).join(', ')}</p>` : ''}
-    <div class="tablewrap card" style="padding:4px 6px"><table class="hist">
-      <thead><tr><th>${esc(t('hist.data'))}</th><th>${esc(t('hist.operacja'))}</th><th class="n">${esc(t('hist.kwota'))}</th>
-        <th class="n">${esc(t('hist.odsetki'))}</th><th class="n">${esc(t('hist.saldoPo'))}</th><th></th></tr></thead>
-      <tbody>${body || `<tr><td colspan="6" class="note">${esc(t('hist.brak'))}</td></tr>`}</tbody></table></div>`;
+    ${all.length ? `<div class="orow op op-live"><span class="op-ico plus" aria-hidden="true">✦</span>
+      <span class="op-main"><b>${esc(t('rz.odOstatniej'))}</b><small>${esc(t('rz.naBiezaco'))}</small></span>
+      <span class="op-amt plus">+${esc(money(sinceLast))}</span></div>` : ''}
+    <div class="ops">${rows || `<p class="note">${esc(t('hist.brak'))}</p>`}</div>
+    <p class="note" style="margin-top:18px">${esc(t('rz.korektaPodpowiedz'))}
+      <button class="link" data-go="adjustment">${esc(t('rz.poprawSaldo'))}</button></p>`;
 }
 
 function tabOprocentowanie() {
@@ -370,7 +455,7 @@ function tabOprocentowanie() {
       <p style="margin:2px 0">${esc(t('st.dolnaCzesc', { prog: moneyRound(r.threshold), stawka: fmtPct.format(r.low) }))}</p>
       <p style="margin:2px 0">${esc(t('st.gornaCzesc', { prog: moneyRound(r.threshold), stawka: fmtPct.format(r.high) }))}</p></div>
     ${future.length ? `<div class="card"><h4>${esc(t('st.zaplanowane'))}</h4><div class="list">${future.map((e) => `<div class="item">
-      <span>${esc(fmtShort.format(new Date(e.ts)))}: ${esc(opLabel(e))}</span>
+      <span>${esc(fmtShort.format(new Date(e.ts)))}: ${esc(opInfo(e).sub)}</span>
       <button class="btn light small" data-del="${esc(e.id)}">${esc(t('st.cofnij'))}</button></div>`).join('')}</div></div>` : ''}
     <div class="card"><h4>${esc(t('st.nowe'))}</h4>
       <form id="rateForm">
@@ -445,12 +530,21 @@ function tabRodzina() {
       <button class="btn light small" data-act="logout">${esc(t('rd.wyloguj'))}</button></div>`;
 }
 
+const VIEWS = {
+  home: viewHome, historia: viewHistoria, deposit: viewMoney, withdrawal: viewMoney, adjustment: viewMoney,
+  oprocentowanie: tabOprocentowanie, regularne: tabRegularne, kalendarz: tabKalendarz, rodzina: tabRodzina,
+};
+
 function bindParent(sec) {
   sec.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => {
     if (mode !== 'parent') return;
-    run(async () => { await switchKid(b.dataset.pick); pz.tab = 'operacje'; renderParent(); });
+    run(() => switchKid(b.dataset.pick));
   }));
-  sec.querySelectorAll('[data-type]').forEach((b) => b.addEventListener('click', () => { pz.type = b.dataset.type; renderParent(); }));
+  sec.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => goParent(b.dataset.go)));
+  sec.querySelectorAll('[data-sign]').forEach((b) => b.addEventListener('click', () => {
+    pz.sign = Number(b.dataset.sign);
+    sec.querySelectorAll('[data-sign]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  }));
   sec.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => {
     if (!confirm(t('hist.usunPytanie'))) return;
     const prev = balanceAt(S().events, now());
@@ -463,27 +557,45 @@ function bindParent(sec) {
 
   const mf = sec.querySelector('#moneyForm');
   if (mf) {
+    const ty = pz.view;
     const hint = sec.querySelector('#opHint');
     const update = () => {
+      if (ty !== 'deposit') return;
       const a = parseZl(mf.kwota.value);
-      if (pz.type === 'deposit' && a > 0) {
-        const c = depositCostPreview(S().events, now(), a, { plans: S().plans });
-        hint.textContent = t('op.koszt', { kwota: moneyRound(c.yearInterestFromDeposit) });
-      } else if (pz.type === 'deposit') hint.textContent = '';
+      hint.textContent = a > 0
+        ? t('op.koszt', { kwota: moneyRound(depositCostPreview(S().events, now(), a, { plans: S().plans }).yearInterestFromDeposit) })
+        : '';
     };
-    mf.kwota.addEventListener('input', update);
+    // Pole kwoty rośnie razem z liczbą, żeby „zł” stało tuż obok.
+    const fit = () => { mf.kwota.style.width = `${Math.max(1, mf.kwota.value.length) * 0.62 + 0.4}em`; };
+    mf.kwota.addEventListener('input', () => { fit(); update(); });
+    sec.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', () => {
+      const cur = parseZl(mf.kwota.value);
+      const sum = (Number.isFinite(cur) && cur > 0 ? cur : 0) + Number(b.dataset.add) * 1e6;
+      mf.kwota.value = String(sum / 1e6).replace('.', ',');
+      fit(); update();
+    }));
+    sec.querySelector('[data-act="pickDate"]').addEventListener('click', (e) => {
+      e.currentTarget.hidden = true;
+      mf.data.hidden = false;
+      mf.data.focus();
+      try { mf.data.showPicker(); } catch { /* starsze przeglądarki: samo pole */ }
+    });
+    if (matchMedia('(pointer: fine)').matches) mf.kwota.focus();
     mf.addEventListener('submit', (e) => {
       e.preventDefault();
-      let amount = parseZl(mf.kwota.value);
-      if (!Number.isFinite(amount) || amount === 0) { toast(t('op.kwota') + '?', 'error'); return; }
-      if (pz.type !== 'adjustment') amount = Math.abs(amount);
+      let amount = Math.abs(parseZl(mf.kwota.value));
+      if (!Number.isFinite(amount) || amount === 0) { toast(t('rz.podajKwote'), 'error'); mf.kwota.focus(); return; }
+      if (ty === 'adjustment') amount *= pz.sign;
       const day = isoToDay(mf.data.value);
       const ts = day >= dayOf(now()) ? now() : dayStart(day) + 12 * 3600000;
       const prev = balanceAt(S().events, now());
       run(async () => {
-        await store.addMoney(pz.type, ts, amount, mf.opis.value.trim());
+        await store.addMoney(ty, ts, amount, mf.opis.value.trim());
+        pz.view = ty === 'adjustment' ? 'historia' : 'home';
         afterChange(prev);
-        toast(pz.type === 'deposit' ? t('op.zapisanoWplate') : t('op.zapisano'));
+        $('parentDialog').scrollTop = 0;
+        toast(ty === 'deposit' ? t('op.zapisanoWplate') : t('op.zapisano'));
       });
     });
   }
