@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Wycina części Groszaków z arkuszy na białym tle.
 
-Użycie:  python3 tools/wytnij_czesci.py            (wszystkie materiały)
-         python3 tools/wytnij_czesci.py miedziany  (jeden materiał)
+Użycie:  python3 tools/wytnij_czesci.py            (wszystko)
+         python3 tools/wytnij_czesci.py miedziany  (jeden materiał, postać albo grupa obiektów, np. droga)
 
 Czyta assets/groszaki/czesci.config.json, arkusze z assets/groszaki/zrodla/
 (pliki źródłowe zostają bez zmian) i zapisuje:
   assets/groszaki/<material>/<czesc>.webp   – przezroczyste części
+  assets/groszaki/<postac|grupa>/<nazwa>.webp – postacie i obiekty (np. dekoracje drogi)
   assets/groszaki/czesci.json               – rozmiary, punkty obrotu, buzie
 
 Jak usuwane jest tło:
@@ -208,6 +209,7 @@ def process_material(mat, layout, pack_colors):
 
 
 def process_character(cid, spec):
+    """Wycina całe obiekty z arkusza (postacie, dekoracje drogi) do assets/groszaki/<cid>/."""
     sheet = Image.open(SRC / spec['arkusz']).convert('RGB')
     out = {}
     for pose, box in spec['pozy'].items():
@@ -228,6 +230,11 @@ def main():
             continue
         manifest.setdefault('postacie', {})[cid] = process_character(cid, spec)
         print('wycięto postać:', cid)
+    for gid, spec in cfg.get('obiekty', {}).items():
+        if gid.startswith('_') or (only and gid not in only):
+            continue
+        manifest.setdefault('obiekty', {})[gid] = process_character(gid, spec)
+        print('wycięto obiekty:', gid)
     for mat in cfg['materialy']:
         if only and mat['id'] not in only:
             continue

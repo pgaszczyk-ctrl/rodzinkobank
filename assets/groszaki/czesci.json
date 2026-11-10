@@ -132,5 +132,49 @@
         "h": 759
       }
     }
+  },
+  "obiekty": {
+    "droga": {
+      "wigilia": {
+        "plik": "droga/wigilia.webp",
+        "w": 392,
+        "h": 473
+      },
+      "mikolajki": {
+        "plik": "droga/mikolajki.webp",
+        "w": 378,
+        "h": 449
+      },
+      "ferie": {
+        "plik": "droga/ferie.webp",
+        "w": 387,
+        "h": 453
+      },
+      "wielkanoc": {
+        "plik": "droga/wielkanoc.webp",
+        "w": 388,
+        "h": 435
+      },
+      "dzienDziecka": {
+        "plik": "droga/dzienDziecka.webp",
+        "w": 361,
+        "h": 416
+      },
+      "poczatekRoku": {
+        "plik": "droga/poczatekRoku.webp",
+        "w": 348,
+        "h": 373
+      },
+      "urodziny": {
+        "plik": "droga/urodziny.webp",
+        "w": 375,
+        "h": 388
+      },
+      "inne": {
+        "plik": "droga/inne.webp",
+        "w": 316,
+        "h": 400
+      }
+    }
   }
 }

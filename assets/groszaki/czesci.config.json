@@ -156,5 +156,104 @@
         ]
       }
     }
+  },
+  "obiekty": {
+    "_opis": "Obiekty wycinane w całości z arkuszy (np. dekoracje Drogi przez rok). Grupa: arkusz + pola obiektów; pliki trafiają do assets/groszaki/<grupa>/.",
+    "droga": {
+      "arkusz": "droga-wydarzenia.jpg",
+      "pozy": {
+        "wigilia": [
+          72,
+          56,
+          494,
+          558
+        ],
+        "mikolajki": [
+          560,
+          71,
+          968,
+          550
+        ],
+        "ferie": [
+          1035,
+          69,
+          1440,
+          550
+        ],
+        "wielkanoc": [
+          1518,
+          84,
+          1935,
+          549
+        ],
+        "dzienDziecka": [
+          74,
+          585,
+          463,
+          1031
+        ],
+        "poczatekRoku": [
+          574,
+          628,
+          952,
+          1030
+        ],
+        "urodziny": [
+          1025,
+          613,
+          1430,
+          1030
+        ],
+        "inne": [
+          1582,
+          603,
+          1928,
+          1031
+        ]
+      },
+      "punkty_tla": {
+        "wielkanoc": [
+          [
+            1614,
+            230
+          ],
+          [
+            1722,
+            238
+          ],
+          [
+            1830,
+            230
+          ],
+          [
+            1660,
+            200
+          ],
+          [
+            1790,
+            200
+          ]
+        ]
+      }
+    }
+  },
+  "droga_rok": {
+    "_opis": "Panorama Drogi przez rok (pionowa, zapętlona: pod dołem znowu jest góra). 'miesiace': gdzie zaczyna się dany miesiąc, jako ułamek wysokości (0 = góra). Po zmianie: python3 tools/droga_rok.py",
+    "arkusz": "droga-rok.jpg",
+    "szew": 0.03,
+    "miesiace": {
+      "3": 0.9,
+      "4": 0.03,
+      "5": 0.13,
+      "6": 0.21,
+      "7": 0.285,
+      "8": 0.355,
+      "9": 0.425,
+      "10": 0.5,
+      "11": 0.63,
+      "12": 0.735,
+      "1": 0.79,
+      "2": 0.845
+    }
   }
 }

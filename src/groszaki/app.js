@@ -4,6 +4,7 @@ import { Store, uuid, isoToDay, dayToIso } from './dane.js';
 import { Miasteczko, MIASTECZKO_CSS } from './miasteczko.js';
 import { renderGoals, Ksiegowy, CELE_CSS } from './cele.js';
 import { buildRoad } from './droga.js';
+import { DrogaWidok, DROGA_CSS } from './drogaWidok.js';
 import {
   balanceAt, tickTime, splitAmount, crossedFullGrosz, maxWithdrawal, ratesAt, history, simulate,
   depositCostPreview, DEFAULT_RATES, TICK_MS, MICRO_PER_GROSZ,
@@ -77,6 +78,7 @@ let family = null;
 let userEmail = '';
 let town = null;
 let ksiegowy = null;
+let drogaWidok = null;
 let shown = 0;
 let tickTimer = null;
 let pollTimer = null;
@@ -110,13 +112,14 @@ function renderGoalsView() {
   const road = roadNow();
   renderGoals($('goals'), road, {
     formatMoney: moneyRound, formatDate, canEdit: true,
-    onTap: (f) => ksiegowy.say(f, road, formatDate),
+    onTap: (f) => { ksiegowy.say(f, road, formatDate); drogaWidok?.scrollToGoal(f.goal.id); },
     onAdd: ({ nazwa, kwotaZl, ikona }) => run(async () => {
       await store.saveGoal({ nazwa, kwota: Math.round(kwotaZl * 100) * MICRO_PER_GROSZ, ikona });
       renderGoalsView();
     }),
     onRemove: (g) => run(async () => { await store.deleteGoal(g.id); renderGoalsView(); }),
   });
+  drogaWidok?.render(road, { formatMoney: moneyRound, formatDate, onGoal: (f) => ksiegowy.say(f, road, formatDate) });
 }
 
 function renderTop() {
@@ -199,11 +202,15 @@ document.addEventListener('visibilitychange', () => {
 async function ensureTown() {
   if (town) return;
   const style = document.createElement('style');
-  style.textContent = MIASTECZKO_CSS + CELE_CSS;
+  style.textContent = MIASTECZKO_CSS + CELE_CSS + DROGA_CSS;
   document.head.appendChild(style);
   town = new Miasteczko($('mapWrap'), { base: BASE, formatMoney: moneyRound });
+  const roadData = fetch(BASE + 'droga-rok.json').then((r) => r.json()).catch(() => null);
   await town.load();
   ksiegowy = new Ksiegowy(BASE, town.manifest);
+  const data = await roadData;
+  if (data) drogaWidok = new DrogaWidok($('road'), { base: BASE, manifest: town.manifest, data, material: town.material });
+  else $('roadTitle').hidden = true;
   town.start();
   scheduleTick();
 }

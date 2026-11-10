@@ -1,5 +1,17 @@
 # Groszaki: brief dla grafika – Droga przez rok
 
+## ✅ Stan (10 XI 2026)
+
+Zamiast kafli przyszła **jedna pionowa panorama całego roku** (768 × 5472 px, wiosna u góry → zima
+i roztopy na dole, droga wchodzi i wychodzi środkiem). Działa jako zapętlony rok: pod dołem znowu jest
+góra, więc kafle z pkt 1 nie są już potrzebne. Jest w aplikacji (`zrodla/droga-rok.jpg`).
+
+Z pkt 2 są: worek Mikołaja, choinka, bałwan na nartach (ferie), koszyk z pisankami, balony (Dzień Dziecka),
+tornister (1 września), tort (urodziny), drogowskaz (inne wydarzenie rodzica) – `zrodla/droga-wydarzenia.jpg`.
+
+**Nadal brakuje:** obiektów na koniec roku szkolnego i wakacje, straganu celu (pkt 3 – na razie okrągły
+znacznik z obrazkiem celu), obrazków celów (pkt 4), Groszaka z boku (pkt 5) i drobnych elementów (pkt 6).
+
 ## ⚠️ Korekta po pierwszych kaflach (lato, jesień) – przeczytaj najpierw
 
 Kafle są ładne, ale **nie da się ich połączyć w jedną drogę**. Co trzeba poprawić:
