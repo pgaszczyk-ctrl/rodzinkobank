@@ -25,7 +25,8 @@ Dekoracje postawione wprost na trawie wyglądają jak naklejki. Potrzebne:
    Warianty: zamknięte, **otwarte z wystającym przedmiotem / konfetti** („cel osiągnięty”).
    Zamiast pudełka może być stragan z pkt 3 – wtedy na ladzie stoi takie pudełko.
 
-Do czasu dostarczenia aplikacja rysuje tymczasowe szare pudełko z naklejką, a dekoracje są pomniejszone.
+Do czasu dostarczenia aplikacja rysuje tymczasowe szare pudełko z naklejką (za nim pulsująca poświata
+z iskierkami) i prosty stolik pod tortem, workiem, koszykiem i tornistrem. Tort nie może stać na ziemi.
 
 **Nadal brakuje:** obiektów na koniec roku szkolnego i wakacje, stolika i pudełka celu (patrz wyżej) albo
 straganu (pkt 3), obrazków celów (pkt 4), Groszaka z boku (pkt 5) i drobnych elementów (pkt 6).
