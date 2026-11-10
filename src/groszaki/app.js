@@ -387,7 +387,10 @@ function viewHome() {
     <div class="row foot">
       ${mode === 'parent' ? `<button class="btn light small" data-act="addKid">${esc(t('rz.dodajDziecko'))}</button>` : ''}
       <button class="btn light small" data-act="rename">${esc(t('rz.zmienImie'))}</button>
-    </div>`;
+    </div>
+    ${mode === 'parent' ? `<div class="row account">
+      <span class="note">${esc(t('rd.zalogowano', { email: userEmail }))}</span>
+      <button class="btn light small" data-act="logout">${esc(t('rd.wyloguj'))}</button></div>` : ''}`;
 }
 
 function viewMoney() {
