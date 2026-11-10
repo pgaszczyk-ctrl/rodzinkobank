@@ -136,5 +136,25 @@
       "barwa": 330,
       "nasycenie": 0.55
     }
+  },
+  "postacie": {
+    "_opis": "Gotowe postacie wycinane w całości (np. Księgowy do dymku). Pozycja: arkusz + pola póz.",
+    "ksiegowy": {
+      "arkusz": "ksiegowy.jpg",
+      "pozy": {
+        "kalkulator": [
+          100,
+          190,
+          1110,
+          975
+        ],
+        "wskazuje": [
+          1150,
+          190,
+          1915,
+          975
+        ]
+      }
+    }
   }
 }

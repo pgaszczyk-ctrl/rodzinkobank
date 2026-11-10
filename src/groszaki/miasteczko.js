@@ -60,6 +60,7 @@ export class Miasteczko {
       fetch(this.base + 'trasy.json').then((r) => r.json()),
       fetch(this.base + 'przeslony.json').then((r) => r.json()),
     ]);
+    this.manifest = manifest;
     this.routesData = routes;
     this.occData = occ;
     this.occluders = prepareOccluders(occ.przeslony);

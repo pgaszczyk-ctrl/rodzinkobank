@@ -27,6 +27,11 @@
   .controls .in { border-color: #8fc98f; }
   .controls .out { border-color: #e7b07a; }
   .note { font-size: 13px; opacity: .75; }
+  .saldo .micro { cursor: pointer; }
+  .tip { display: inline-block; margin-top: 4px; font-size: 13px; background: #fff; border: 2px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+  .tip[hidden] { display: none; }
+  h2.sec { font-size: 18px; margin: 22px 0 8px; }
+  .plan { font-size: 13px; display: flex; gap: 6px; align-items: center; margin: 6px 0 0; }
   .studio { background: var(--card); border: 2px solid var(--line); border-radius: 16px; }
   #studio { display: block; width: 100%; height: 380px; }
   @media (max-width: 600px) { #studio { height: 520px; } }
@@ -37,6 +42,7 @@
   <div class="saldo">
     <div class="big" id="big"><span id="zl">0</span>,<span id="gr">00</span><span class="micro" id="mic">0000</span><span class="cur">zł</span></div>
     <div class="sub" id="crew"></div>
+    <div class="tip" id="tip" hidden></div>
   </div>
 
   <div class="map-wrap" id="mapWrap"><canvas></canvas></div>
@@ -50,6 +56,13 @@
     <button class="out" data-wd="all">Wypłać wszystko</button>
   </div>
   <div class="controls" id="seasonBtns"></div>
+
+  <h2 class="sec" id="drogaTytul">Droga przez rok</h2>
+  <div class="gr-road" id="road"></div>
+  <label class="plan"><input type="checkbox" id="plan"> Prototyp: regularnie 10 zł co tydzień (wpływa na prognozy)</label>
+
+  <h2 class="sec" id="celeTytul">Moje cele</h2>
+  <div id="goals"></div>
   <p class="note">Przeciągnij, żeby przesunąć mapę; kółko myszy lub dwa palce przybliżają. Dotknij Groszaka.
     Prototyp: dane tylko w tej karcie. <a href="?edytor=1">Edytor tras</a></p>
 
@@ -61,14 +74,22 @@
 import { Miasteczko, MIASTECZKO_CSS } from './src/groszaki/miasteczko.js';
 import { createGroszak, drawGroszak } from './src/groszaki/kukielka.js';
 import { zl, balanceAt, tickTime, splitAmount, crossedFullGrosz, maxWithdrawal, DEFAULT_RATES, TICK_MS } from './src/groszaki/finanse.js';
+import { buildRoad } from './src/groszaki/droga.js';
+import { renderRoad, DROGA_CSS } from './src/groszaki/drogaWidok.js';
+import { renderGoals, Ksiegowy, CELE_CSS } from './src/groszaki/cele.js';
+import { dayOf, dayNumberOf, dateOfDay } from './src/groszaki/czas.js';
+import { t } from './src/groszaki/teksty.js';
 
 const params = new URLSearchParams(location.search);
 const style = document.createElement('style');
-style.textContent = MIASTECZKO_CSS;
+style.textContent = MIASTECZKO_CSS + DROGA_CSS + CELE_CSS;
 document.head.appendChild(style);
 
 const fmt = new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 });
 const formatMoney = (micro) => fmt.format(Math.round(micro / 1e6));
+const fmtDay = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+const fmtDayY = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const formatDate = (day) => (dateOfDay(day).year === new Date().getFullYear() ? fmtDay : fmtDayY).format(new Date(day * 86400000));
 
 const town = new Miasteczko(document.getElementById('mapWrap'), {
   formatMoney,
@@ -120,6 +141,7 @@ for (const b of document.querySelectorAll('[data-dep]')) {
     shown = balanceAt(events, Date.now());
     town.setBalance(shown, threshold, 'deposit');
     render(shown);
+    renderYear();
   };
 }
 for (const b of document.querySelectorAll('[data-wd]')) {
@@ -131,8 +153,51 @@ for (const b of document.querySelectorAll('[data-wd]')) {
     shown = balanceAt(events, Date.now());
     town.setBalance(shown, threshold, 'withdrawal');
     render(shown);
+    renderYear();
   };
 }
+
+// ---------------------------------------------------------------- Droga przez rok i cele
+document.getElementById('drogaTytul').textContent = t('droga.tytul');
+document.getElementById('celeTytul').textContent = t('cele.tytul');
+const ksiegowy = new Ksiegowy('./assets/groszaki/', town.manifest);
+const GOALS_KEY = 'groszaki.prototyp.cele';
+let goals;
+try { goals = JSON.parse(localStorage.getItem(GOALS_KEY)); } catch { goals = null; }
+if (!Array.isArray(goals)) goals = [
+  { id: 'g1', nazwa: 'Klocki', kwota: zl(89), ikona: '🧩' },
+  { id: 'g2', nazwa: 'Hulajnoga', kwota: zl(349), ikona: '🛴' },
+  { id: 'g3', nazwa: 'Konsola', kwota: zl(1499), ikona: '🎮' },
+];
+const saveGoals = () => { try { localStorage.setItem(GOALS_KEY, JSON.stringify(goals)); } catch {} };
+const today = dayOf(Date.now());
+const yr = dateOfDay(today).month >= 3 ? dateOfDay(today).year + 1 : dateOfDay(today).year;
+const ferie = { start: dayNumberOf(yr, 2, 15), end: dayNumberOf(yr, 2, 28) };   // termin ustawia rodzic
+const custom = [{ id: 'urodziny', nazwa: 'Urodziny', day: today + 75 }];
+const planBox = document.getElementById('plan');
+let road;
+function renderYear() {
+  const plans = planBox.checked ? [{ id: 'p', amount: zl(10), every: 'week', startDay: today + 1 }] : [];
+  road = buildRoad({ events, now: Date.now(), plans, custom, ferie, goals });
+  const roadEl = document.getElementById('road');
+  const keep = roadEl.scrollLeft;
+  renderRoad(roadEl, road, { formatMoney, formatDate, onFlag: (f) => ksiegowy.say(f, road, formatDate) });
+  roadEl.scrollLeft = keep;
+  renderGoals(document.getElementById('goals'), road, {
+    formatMoney, formatDate, canEdit: true,
+    onTap: (f) => ksiegowy.say(f, road, formatDate),
+    onAdd: ({ nazwa, kwotaZl, ikona }) => { goals.push({ id: 'g' + Date.now(), nazwa, kwota: zl(kwotaZl), ikona }); saveGoals(); renderYear(); },
+    onRemove: (g) => { goals = goals.filter((x) => x.id !== g.id); saveGoals(); renderYear(); },
+  });
+}
+planBox.onchange = renderYear;
+renderYear();
+setInterval(renderYear, 60000);
+document.getElementById('mic').onclick = () => {
+  const tip = document.getElementById('tip');
+  tip.textContent = t('saldo.mikro'); tip.hidden = false;
+  clearTimeout(tip.timer); tip.timer = setTimeout(() => { tip.hidden = true; }, 3500);
+};
 
 // pory roku
 const NAMES = { spring: 'Wiosna', summer: 'Lato', autumn: 'Jesień', winter: 'Zima' };

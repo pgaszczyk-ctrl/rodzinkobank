@@ -118,5 +118,19 @@
         "szerokosc": 0.6
       }
     }
+  },
+  "postacie": {
+    "ksiegowy": {
+      "kalkulator": {
+        "plik": "ksiegowy/kalkulator.webp",
+        "w": 990,
+        "h": 771
+      },
+      "wskazuje": {
+        "plik": "ksiegowy/wskazuje.webp",
+        "w": 725,
+        "h": 759
+      }
+    }
   }
 }

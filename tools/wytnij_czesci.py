@@ -80,7 +80,7 @@ def large_holes(rgb: np.ndarray, core: np.ndarray, min_area: int) -> np.ndarray:
         img.paste(1, mask=Image.fromarray(np.where(comp, 255, 0).astype(np.uint8)))
 
 
-def cut(region: Image.Image, soft=False, holes=0) -> Image.Image:
+def cut(region: Image.Image, soft=False, holes=0, seeds=()) -> Image.Image:
     rgb = np.asarray(region.convert('RGB')).astype(np.float32)
     if soft:
         bg = background_mask(rgb, LIGHT)
@@ -88,6 +88,11 @@ def cut(region: Image.Image, soft=False, holes=0) -> Image.Image:
         core = background_mask(rgb, NEAR_WHITE)
         if holes:
             core |= large_holes(rgb, core, holes)
+        for sx, sy in seeds:
+            # ręcznie wskazane prześwity tła (np. między ręką a korpusem)
+            cand = Image.fromarray(np.where(rgb.min(axis=2) > NEAR_WHITE, 255, 0).astype(np.uint8)).copy()
+            ImageDraw.floodfill(cand, (int(sx), int(sy)), 100, thresh=0)
+            core |= np.asarray(cand) == 100
         bg = core | (dilate(core, FRINGE) & (rgb.min(axis=2) > FRINGE_LIGHT))
 
     # kolor → alfa względem bieli (tylko dla pikseli tła)
@@ -202,11 +207,27 @@ def process_material(mat, layout, pack_colors):
     return meta
 
 
+def process_character(cid, spec):
+    sheet = Image.open(SRC / spec['arkusz']).convert('RGB')
+    out = {}
+    for pose, box in spec['pozy'].items():
+        part = cut(sheet.crop(tuple(box)), holes=spec.get('dziury', 0), seeds=[(x - box[0], y - box[1]) for x, y in spec.get('punkty_tla', {}).get(pose, [])])
+        part = part.crop(tight_box(part))
+        save(part, GROSZ / cid / f'{pose}.webp')
+        out[pose] = {'plik': f'{cid}/{pose}.webp', 'w': part.width, 'h': part.height}
+    return out
+
+
 def main():
     cfg = json.loads((GROSZ / 'czesci.config.json').read_text())
     only = set(sys.argv[1:])
     manifest_path = GROSZ / 'czesci.json'
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {'materialy': {}}
+    for cid, spec in cfg.get('postacie', {}).items():
+        if cid.startswith('_') or (only and cid not in only):
+            continue
+        manifest.setdefault('postacie', {})[cid] = process_character(cid, spec)
+        print('wycięto postać:', cid)
     for mat in cfg['materialy']:
         if only and mat['id'] not in only:
             continue
