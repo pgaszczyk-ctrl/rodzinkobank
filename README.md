@@ -1,32 +1,64 @@
-# Rodzinobank
+# Groszaki
 
-Domowy „Tata-Bank” dla dzieci: dziecko odkłada kieszonkowe u rodziców, a im dłużej monety czekają, tym większą dostają **Premię za cierpliwość** (od +5% po 1 miesiącu do +50% po 6 miesiącach, potem cykl zaczyna się od powiększonej kwoty).
-
-Cała aplikacja to jeden plik: `index.html` (Tailwind CSS z CDN + czysty JavaScript). Wspólna baza rodziny działa na Supabase (`supabase/schema.sql`).
+Rodzinny bank dla dzieci. Rodzic prowadzi ewidencję wpłat i wypłat, a aplikacja nalicza procent.
+Dziecko ogląda miasteczko, w którym jego pieniądze (Groszaki) pracują i co 10 sekund dokładają odrobinę.
 
 ## Co jest w środku
-- **Wielki Skarbiec** – licznik na żywo, co 10 s dolicza ułamki groszy i wypuszcza monety; pod nim kopalnia z kręcącymi się zębatkami i blokowymi górnikami.
-- **Schody Cierpliwości** – pokazują, na którym schodku premii jest najstarsza wpłata.
-- **3 Marzenia** – Proste / Średnie / Niesamowite, z własnym zdjęciem (wgranie pliku lub link) i paskiem postępu.
-- **Magiczna Oś Oszczędzania** – rok podzielony na pory roku; po wpisaniu kwoty (domyślnie 10 zł) i częstotliwości pokazuje, kiedy każde marzenie będzie w zasięgu.
-- **Strefa Rodzica** – wpłaty (także z datą wsteczną), wypłaty, historia, link/kod QR dla dziecka, kod rodziny dla drugiego rodzica, kilkoro dzieci.
+
+- **Saldo** w złotych i groszach plus cztery cyfry mikrogroszy, które rosną na oczach dziecka.
+- **Miasteczko**: 1 Groszak na każde 10 zł (najwyżej 80). Pracują na rynku, w piekarni i w młynie,
+  a pieniądze ponad próg – na farmie. Wracają z okruszkami do Skarbca równo z tyknięciem salda.
+  Wpłata: nowe Groszaki wybiegają ze Skarbca. Wypłata: kilka rusza z plecakami po marzenie.
+- **Cele** z paskiem postępu i Groszakiem Księgowym, który mówi, kiedy cel będzie w zasięgu (prognoza).
+- **Strefa rodzica**: wpłaty, wypłaty i korekty (także z datą wsteczną), historia z rozbiciem na kapitał
+  i odsetki, oprocentowanie (stawki i próg od wybranej daty, nigdy wstecz), regularne wpłaty,
+  kalendarz (ferie, własne wydarzenia), magiczny link/QR dla dziecka, kod rodziny dla drugiego rodzica.
+
+Oprocentowanie: domyślnie część salda do 1000 zł rośnie 5% miesięcznie, część powyżej – 3%,
+składane codziennie (strefa czasowa Europe/Warsaw). Kwoty są przechowywane w całkowitych mikrogroszach,
+a saldo zawsze liczone z dziennika operacji, więc odświeżenie strony ani druga karta niczego nie dublują.
 
 ## Trzy tryby
+
 | Tryb | Kto | Co może |
 |---|---|---|
 | **Rodzic** | zalogowany e-mailem i hasłem | wszystko w skarbcach dzieci ze swojej rodziny |
-| **Dziecko** | otwiera magiczny link / kod QR od rodzica, bez konta | ogląda swój skarbiec, zmienia swoje 3 marzenia |
-| **Próbny** | bez konta | wszystko, ale dane zostają tylko w tej przeglądarce |
+| **Dziecko** | magiczny link / kod QR od rodzica, bez konta | ogląda swój skarbiec, zmienia swoje cele |
+| **Próbny** | bez konta (`?probny`) | wszystko, dane tylko w tej przeglądarce |
 
-Urządzenia same sprawdzają zmiany co 15 sekund – wpłata zrobiona na telefonie rodzica pojawia się u dziecka z animacją monety.
+Uprawnienia sprawdza baza (funkcje SQL): pieniądze zmienia wyłącznie rodzic z rodziny dziecka.
 
-## Uruchomienie wspólnej bazy (jednorazowo)
-1. **Baza:** w Supabase otwórz projekt → **SQL Editor** → *New query* → wklej całą zawartość `supabase/schema.sql` → **Run**.
-2. **Klucz:** **Project Settings → API Keys** → skopiuj *Publishable key* (`sb_publishable_…`) i wklej go w `index.html` w stałą `SUPABASE_KEY` (już wpisany). Ten klucz jest publiczny – tabele są zamknięte, a wszystkie operacje idą przez funkcje, które same sprawdzają uprawnienia.
-3. **Adres strony:** **Authentication → URL Configuration** → w *Site URL* wpisz adres, pod którym działa aplikacja (np. `https://pgaszczyk-ctrl.github.io/rodzinkobank/`) i dodaj go też do *Redirect URLs*. Dzięki temu linki z e-maili (potwierdzenie konta, reset hasła) wrócą do aplikacji.
-4. Opcjonalnie: **Authentication → Sign In / Providers → Email** – wyłącz *Confirm email*, jeśli nie chcesz potwierdzać adresu przy zakładaniu konta.
+## Pliki
 
-Dopóki klucz nie jest wpisany, aplikacja działa w trybie próbnym.
+- `index.html` – strona aplikacji; logika w `src/groszaki/` (czyste moduły ES, bez budowania).
+  - `finanse.js`, `czas.js`, `kalendarz.js`, `liczenie.js`, `droga.js` – czyste obliczenia (testy w Node),
+  - `dane.js` – zapis i odczyt (Supabase albo localStorage),
+  - `miasteczko.js`, `symulacja.js`, `kukielka.js`, `trasy.js`, `przeslony.js` – miasteczko na canvasie,
+  - `cele.js`, `teksty.js` (wszystkie napisy, gotowe do tłumaczenia), `app.js`.
+- `assets/groszaki/` – grafika: źródła w `zrodla/`, wycięte części, `trasy.json`, `przeslony.json`.
+- `prototyp.html` – plac zabaw: miasteczko ze studiem póz, `?edytor=1` – edytor tras i przesłon.
+- `tools/wytnij_czesci.py` – wycina części z arkuszy (nowy materiał monety = arkusz + wpis w `czesci.config.json`).
+- `tools/sprawdz_trasy.py` – sprawdza trasy z mapą (`--poszerz` poszerza drogi).
+- `supabase/schema.sql` – baza Rodzinobanku; `supabase/migracje/20261110_groszaki.sql` – migracja do Groszaków.
 
-## Hosting
-Najprościej GitHub Pages: **Settings → Pages → Deploy from a branch** → wybierz gałąź i folder `/ (root)`.
+## Testy
+
+```bash
+npm test
+```
+
+Baza (lokalny Postgres, bez dotykania produkcji):
+
+```bash
+PGHOST=… PGPORT=… PGUSER=postgres tools/test_bazy.sh
+```
+
+## Wdrożenie
+
+1. **Najpierw baza.** Supabase → SQL Editor → wklej `supabase/migracje/20261110_groszaki.sql` → Run.
+   Migracja tylko dodaje tabele i funkcje; stare dane zostają. Każde dziecko dostaje jedną wpłatę
+   otwierającą równą temu, co pokazywał Rodzinobank (z Premią za cierpliwość), a marzenia stają się celami.
+2. **Potem strona** (GitHub Pages z tej gałęzi albo po scaleniu). Nowa strona bez migracji pokaże
+   komunikat, że baza nie jest gotowa.
+3. Jednorazowo, jak dotychczas: w **Authentication → URL Configuration** adres strony w *Site URL*
+   i *Redirect URLs*. Klucz publiczny jest w `index.html` (`GROSZAKI_CONFIG`).

@@ -2,33 +2,19 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Rodzinobank</title>
-<meta name="description" content="Rodzinobank – domowy bank dla dzieci. Odkładaj kieszonkowe i zbieraj Premię za cierpliwość!" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Groszaki</title>
+<meta name="description" content="Groszaki – rodzinny bank dla dzieci. Pieniądze pracują w miasteczku i rosną co kilka sekund." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
 <script src="https://cdn.tailwindcss.com/3.4.16"></script>
 <script>
-  tailwind.config = {
+  if (window.tailwind) tailwind.config = {
     theme: {
       extend: {
-        fontFamily: {
-          display: ['"Baloo 2"', 'system-ui', 'sans-serif'],
-          body: ['Nunito', 'system-ui', 'sans-serif'],
-        },
-        colors: {
-          sky:   { 50:'#f0f9ff', 100:'#e0f2fe', 200:'#bae6fd', 300:'#7dd3fc', 400:'#38bdf8', 500:'#0ea5e9', 600:'#0284c7', 700:'#0369a1', 800:'#075985', 900:'#0c4a6e' },
-          sun:   { 50:'#fffbeb', 100:'#fef3c7', 200:'#fde68a', 300:'#fcd34d', 400:'#fbbf24', 500:'#f59e0b', 600:'#d97706', 700:'#b45309' },
-          mint:  { 50:'#ecfdf5', 100:'#d1fae5', 200:'#a7f3d0', 300:'#6ee7b7', 400:'#34d399', 500:'#10b981', 600:'#059669', 700:'#047857' },
-          berry: { 50:'#fdf2f8', 100:'#fce7f3', 200:'#fbcfe8', 300:'#f9a8d4', 400:'#f472b6', 500:'#ec4899', 600:'#db2777' },
-          grape: { 50:'#f5f3ff', 100:'#ede9fe', 200:'#ddd6fe', 300:'#c4b5fd', 400:'#a78bfa', 500:'#8b5cf6', 600:'#7c3aed', 700:'#6d28d9' },
-          ink:   '#2b3a55',
-        },
-        boxShadow: {
-          brick: '0 6px 0 0 rgba(43,58,85,.12), 0 14px 30px -10px rgba(43,58,85,.25)',
-          brickSm: '0 4px 0 0 rgba(43,58,85,.12)',
-        },
+        fontFamily: { display: ['"Baloo 2"', 'system-ui', 'sans-serif'], body: ['Nunito', 'system-ui', 'sans-serif'] },
+        colors: { ink: '#4a2c1a', cream: '#fdf6e7', line: '#ecd9b8' },
       },
     },
   };
@@ -36,1768 +22,216 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-  :root { color-scheme: light; }
-  html { scroll-behavior: smooth; }
-  body {
-    background:
-      radial-gradient(1200px 600px at 10% -10%, #dff3ff 0%, transparent 60%),
-      radial-gradient(900px 500px at 100% 0%, #fff4c9 0%, transparent 55%),
-      radial-gradient(900px 600px at 50% 110%, #dcf8e8 0%, transparent 60%),
-      #fdfbf4;
-    color: #2b3a55;
-    min-height: 100vh;
+  :root { color-scheme: light; --bg: #fdf6e7; --ink: #4a2c1a; --card: #fffaf0; --line: #ecd9b8; --ok: #2f7a3a; --warn: #b4532a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: Nunito, system-ui, sans-serif; }
+  body { overflow-x: hidden; }
+  button, input, select { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+  main { max-width: 1100px; margin: 0 auto; padding: 8px 16px 48px; }
+  .topbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 0 4px; }
+  .topbar h1 { font: 800 22px/1 "Baloo 2", system-ui, sans-serif; margin: 0; }
+  .kidtabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill { border: 2px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 12px; font-weight: 700; cursor: pointer; }
+  .pill[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .pill.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .ml-auto { margin-left: auto; }
+  .note { font-size: 13px; opacity: .75; }
+  .saldo { text-align: center; margin: 4px 0 10px; font-variant-numeric: tabular-nums; }
+  .saldo .big { font: 800 clamp(34px, 11vw, 60px)/1.05 "Baloo 2", system-ui, sans-serif; letter-spacing: -0.5px; transition: color .4s, text-shadow .4s; white-space: nowrap; }
+  .saldo .big.flash { color: #c27a00; text-shadow: 0 0 14px rgba(255, 200, 60, .7); }
+  .saldo .micro { font-size: .45em; font-weight: 700; opacity: .7; margin-left: 1px; cursor: pointer; }
+  .saldo .cur { font-size: .55em; margin-left: 6px; }
+  .saldo .sub { font-size: 13px; opacity: .7; }
+  .tip { display: inline-block; margin-top: 4px; font-size: 13px; background: #fff; border: 2px solid var(--line); border-radius: 999px; padding: 2px 10px; }
+  .map-wrap { position: relative; width: 100%; aspect-ratio: 2000 / 1116; border-radius: 16px; overflow: hidden;
+    border: 2px solid var(--line); background: #f1e3c6; touch-action: none; user-select: none; -webkit-user-select: none; }
+  @media (max-width: 600px) { .map-wrap { aspect-ratio: 4 / 5; } }
+  .map-wrap canvas { display: block; width: 100%; height: 100%; }
+  h2.sec { font: 800 20px/1.2 "Baloo 2", system-ui, sans-serif; margin: 22px 0 8px; }
+  footer { text-align: center; font-size: 12px; opacity: .55; margin-top: 30px; }
+
+  /* okna */
+  dialog { border: 0; padding: 0; border-radius: 20px; background: var(--card); color: var(--ink); max-width: min(560px, calc(100vw - 24px)); width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+  dialog::backdrop { background: rgba(60, 35, 20, .45); }
+  .dlg { padding: 18px; }
+  .dlg h3 { font: 800 22px/1.2 "Baloo 2", system-ui, sans-serif; margin: 0 0 10px; }
+  .field { display: grid; gap: 4px; margin: 8px 0; font-weight: 700; font-size: 14px; }
+  .field input, .field select { padding: 9px 11px; border: 2px solid var(--line); border-radius: 12px; background: #fff; font-weight: 600; width: 100%; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+  .row > .field { flex: 1 1 140px; }
+  .btn { border: 2px solid var(--ink); background: var(--ink); color: #fff; border-radius: 999px; padding: 8px 16px; font-weight: 800; cursor: pointer; }
+  .btn.light { background: #fff; color: var(--ink); }
+  .btn.small { padding: 4px 10px; font-size: 13px; }
+  .btn:disabled { opacity: .5; cursor: progress; }
+  .msg { margin-top: 10px; border-radius: 12px; padding: 8px 12px; font-weight: 700; font-size: 14px; }
+  .msg.err { background: #fde8e4; color: #a33a22; }
+  .msg.ok { background: #e6f5e4; color: var(--ok); }
+  .tabs2 { display: flex; background: #f3e6cc; border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 8px; }
+  .tabs2 button { flex: 1; border: 0; background: none; border-radius: 9px; padding: 7px; font-weight: 800; cursor: pointer; }
+  .tabs2 button[aria-pressed="true"] { background: #fff; }
+
+  /* ekran powitalny */
+  #welcome { position: fixed; inset: 0; z-index: 30; overflow-y: auto; background: var(--bg); display: grid; place-items: center; padding: 20px; }
+  #welcome .box { max-width: 460px; text-align: center; }
+  #welcome h2 { font: 800 34px/1.1 "Baloo 2", system-ui, sans-serif; margin: 6px 0; }
+  #welcome .stack { display: grid; gap: 10px; margin-top: 16px; }
+  #welcome img { width: 140px; height: auto; }
+
+  /* strefa rodzica */
+  #parentDialog { max-width: min(980px, calc(100vw - 16px)); }
+  #parentDialog .head { position: sticky; top: 0; z-index: 2; background: var(--card); padding: 14px 18px 8px; border-bottom: 2px solid var(--line); }
+  #parentDialog .head h3 { margin: 0; }
+  .ptabs { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; scrollbar-width: none; }
+  .ptabs button { white-space: nowrap; }
+  .psec { padding: 14px 18px 22px; }
+  .card { background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 12px 14px; margin: 10px 0; }
+  .card h4 { margin: 0 0 6px; font: 800 17px/1.2 "Baloo 2", system-ui, sans-serif; }
+  .kidlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .kidcard { text-align: left; background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; cursor: pointer; }
+  .kidcard[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 3px 0 rgba(74,44,26,.25); }
+  .kidcard b { display: block; font: 800 17px/1.2 "Baloo 2", system-ui, sans-serif; }
+  table.hist { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+  table.hist th { text-align: left; font-size: 12px; opacity: .65; padding: 6px; }
+  table.hist td { border-top: 1px solid var(--line); padding: 7px 6px; vertical-align: top; }
+  table.hist td.n, table.hist th.n { text-align: right; white-space: nowrap; }
+  .tablewrap { overflow-x: auto; }
+  @media (max-width: 600px) {
+    table.hist thead { display: none; }
+    table.hist tr { display: grid; grid-template-columns: 1fr auto auto; gap: 2px 10px; border-top: 1px solid var(--line); padding: 8px 4px; }
+    table.hist td { border: 0; padding: 0; }
+    table.hist td:nth-child(1) { grid-column: 1; font-size: 12px; opacity: .7; }
+    table.hist td:nth-child(2) { grid-column: 1 / 3; grid-row: 2; }
+    table.hist td:nth-child(3) { grid-column: 2; grid-row: 1; font-weight: 800; }
+    table.hist td:nth-child(4), table.hist td:nth-child(5) { grid-row: 3; font-size: 12px; opacity: .8; text-align: left; }
+    table.hist td:nth-child(4) { grid-column: 1; } table.hist td:nth-child(5) { grid-column: 2; }
+    table.hist td:nth-child(4):not(:empty)::before { content: attr(data-l) ' '; }
+    table.hist td:nth-child(5)::before { content: attr(data-l) ' '; }
+    table.hist td:nth-child(6) { grid-column: 3; grid-row: 1 / 4; align-self: center; }
+    table.hist tbody tr:first-child { border-top: 0; }
   }
-
-  /* ---------- Klocki (bricks) ---------- */
-  .brick { position: relative; border-radius: 28px; box-shadow: 0 6px 0 0 rgba(43,58,85,.12), 0 14px 30px -10px rgba(43,58,85,.25); }
-  .studs { position: absolute; top: -12px; left: 28px; display: flex; gap: 14px; pointer-events: none; }
-  .studs span { width: 34px; height: 14px; border-radius: 10px 10px 4px 4px; background: inherit; box-shadow: inset 0 -3px 0 rgba(0,0,0,.08), inset 0 3px 0 rgba(255,255,255,.55); }
-  .stud-bg-white span   { background: #ffffff; }
-  .stud-bg-sky span     { background: #d9f0ff; }
-  .stud-bg-sun span     { background: #fff1b8; }
-  .stud-bg-mint span    { background: #d3f7e4; }
-  .stud-bg-grape span   { background: #ebe4ff; }
-  .stud-bg-berry span   { background: #ffe1ef; }
-
-  /* ---------- Puzzle knob ---------- */
-  .puzzle-r::after {
-    content: ""; position: absolute; right: -14px; top: 50%; width: 28px; height: 28px; margin-top: -14px;
-    border-radius: 50%; background: inherit; z-index: 1;
-  }
-  .puzzle-step { position: relative; }
-  .puzzle-step:not(:last-child)::after {
-    content: ""; position: absolute; right: -11px; top: 50%; width: 20px; height: 20px; margin-top: -10px;
-    border-radius: 50%; background: inherit; z-index: 2;
-  }
-
-  /* ---------- Stars ---------- */
-  @keyframes twinkle { 0%,100% { transform: scale(1) rotate(0deg); opacity: .9 } 50% { transform: scale(.65) rotate(20deg); opacity: .45 } }
-  .twinkle { animation: twinkle 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-
-  /* ---------- Big counter ---------- */
-  .counter-num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; text-shadow: 0 4px 0 rgba(245,158,11,.25); }
-  @keyframes bump { 0% { transform: scale(1) } 30% { transform: scale(1.04) } 100% { transform: scale(1) } }
-  .bump { animation: bump .6s ease-out; }
-
-  /* ---------- Coins ---------- */
-  .coin-pop {
-    position: absolute; pointer-events: none; display: flex; align-items: center; gap: 6px;
-    font-family: "Baloo 2", sans-serif; font-weight: 800; color: #b45309; font-size: 18px;
-    animation: coinUp 2.4s cubic-bezier(.2,.7,.3,1) forwards; white-space: nowrap; z-index: 30;
-  }
-  .coin {
-    width: 30px; height: 30px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #fff6c2 0 18%, #ffd447 19% 60%, #f2a516 61% 100%);
-    box-shadow: inset 0 -3px 0 rgba(180,83,9,.35), 0 2px 6px rgba(180,83,9,.3);
-    display: grid; place-items: center; color: #b45309; font-size: 14px; font-weight: 800;
-    animation: coinSpin 1.2s linear infinite;
-  }
-  @keyframes coinUp {
-    0%   { transform: translate(0, 10px) scale(.4); opacity: 0 }
-    15%  { transform: translate(0, -10px) scale(1.1); opacity: 1 }
-    70%  { opacity: 1 }
-    100% { transform: translate(var(--dx, 0px), -120px) scale(.9); opacity: 0 }
-  }
-  @keyframes coinSpin { 0% { transform: rotateY(0) } 100% { transform: rotateY(360deg) } }
-  .mini-coin { position: absolute; width: 16px; height: 16px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #fff6c2 0 18%, #ffd447 19% 60%, #f2a516 61% 100%);
-    animation: miniCoin 1.3s ease-out forwards; pointer-events: none; z-index: 25; }
-  @keyframes miniCoin {
-    0% { transform: translate(0,0) scale(.3); opacity: 0 }
-    20% { opacity: 1; transform: translate(calc(var(--dx) * .3), -40px) scale(1) }
-    100% { transform: translate(var(--dx), 30px) scale(.7); opacity: 0 }
-  }
-
-  /* ---------- Gears ---------- */
-  @keyframes spin   { to { transform: rotate(360deg) } }
-  @keyframes spinR  { to { transform: rotate(-360deg) } }
-  .gear-cw  { animation: spin 8s linear infinite; transform-box: fill-box; transform-origin: center; }
-  .gear-ccw { animation: spinR 5.33s linear infinite; transform-box: fill-box; transform-origin: center; }
-  .gear-cw-slow { animation: spin 12s linear infinite; transform-box: fill-box; transform-origin: center; }
-
-  /* ---------- Miners ---------- */
-  @keyframes swing {
-    0%   { transform: rotate(-200deg) }
-    45%  { transform: rotate(-72deg) }
-    55%  { transform: rotate(-72deg) }
-    100% { transform: rotate(-200deg) }
-  }
-  .pick-arm { animation: swing 1.1s cubic-bezier(.55,0,.4,1) infinite; transform-box: view-box; transform-origin: 27px 25px; }
-  @keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(1.5px) } }
-  .miner-body { animation: bob 1.1s ease-in-out infinite; }
-  @keyframes spark {
-    0%, 40% { opacity: 0; transform: scale(.2) }
-    48%     { opacity: 1; transform: scale(1.2) }
-    70%     { opacity: 0; transform: scale(.6) }
-    100%    { opacity: 0 }
-  }
-  .spark { animation: spark 1.1s linear infinite; transform-box: fill-box; transform-origin: center; }
-  @keyframes oreShake { 0%,44%,60%,100% { transform: translateX(0) } 48% { transform: translateX(1.5px) } 52% { transform: translateX(-1.5px) } }
-  .ore-shake { animation: oreShake 1.1s linear infinite; }
-  @keyframes cartRoll { 0% { transform: translateX(-80px) } 100% { transform: translateX(calc(100% + 80px)) } }
-  @keyframes glow { 0%,100% { opacity: .35 } 50% { opacity: .9 } }
-  .lamp-glow { animation: glow 2s ease-in-out infinite; }
-
-  /* ---------- Season art ---------- */
-  @keyframes leafFall {
-    0%   { transform: translate(0, -20px) rotate(0deg); opacity: 0 }
-    10%  { opacity: 1 }
-    100% { transform: translate(40px, 150px) rotate(320deg); opacity: 0 }
-  }
-  .leaf { animation: leafFall 6s linear infinite; transform-box: fill-box; transform-origin: center; }
-  @keyframes snowFall {
-    0%   { transform: translate(0, -20px); opacity: 0 }
-    10%  { opacity: 1 }
-    100% { transform: translate(-15px, 170px); opacity: .2 }
-  }
-  .flake { animation: snowFall 7s linear infinite; }
-  @keyframes flap { 0%,100% { transform: scaleX(1) } 50% { transform: scaleX(.25) } }
-  .wing { animation: flap .35s ease-in-out infinite; transform-box: fill-box; }
-  .wing-l { transform-origin: right center; }
-  .wing-r { transform-origin: left center; }
-  @keyframes flutter {
-    0%   { transform: translate(0,0) }
-    25%  { transform: translate(18px,-12px) }
-    50%  { transform: translate(36px,2px) }
-    75%  { transform: translate(18px,10px) }
-    100% { transform: translate(0,0) }
-  }
-  .flutter { animation: flutter 7s ease-in-out infinite; }
-  .sun-rays { animation: spin 30s linear infinite; transform-box: fill-box; transform-origin: center; }
-  @keyframes wave { 0%,100% { transform: translateX(0) } 50% { transform: translateX(-12px) } }
-  .wave { animation: wave 3s ease-in-out infinite; }
-  @keyframes sway { 0%,100% { transform: rotate(-2deg) } 50% { transform: rotate(2deg) } }
-  .sway { animation: sway 4s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom center; }
-
-  /* ---------- Timeline ---------- */
-  .axis-bar {
-    background: linear-gradient(90deg, #f59e0b 0%, #fb923c 18%, #7dd3fc 30%, #bae6fd 45%, #86efac 58%, #4ade80 70%, #fde047 85%, #facc15 100%);
-  }
-  .marker { transition: left .6s cubic-bezier(.3,1.3,.5,1), opacity .3s; }
-  .marker-pin::after {
-    content: ""; position: absolute; left: var(--px, 50%); bottom: -10px; transform: translateX(-50%);
-    border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 12px solid var(--pin, #8b5cf6);
-  }
-  @keyframes markerHop { 0%,100% { transform: translate(var(--tx, -50%), 0) } 50% { transform: translate(var(--tx, -50%), -6px) } }
-  .marker-hop { animation: markerHop 2.2s ease-in-out infinite; }
-  .axis-tree { transition: transform .6s cubic-bezier(.3,1.4,.5,1); transform-origin: bottom center; }
-
-  /* ---------- Progress bars ---------- */
-  .progress-fill { position: relative; overflow: hidden; transition: width 1s cubic-bezier(.3,1,.4,1); }
-  .progress-fill::after { content: ""; position: absolute; inset: 0; background-size: 28px 28px;
-    background-image: linear-gradient(45deg, rgba(255,255,255,.3) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.3) 50%, rgba(255,255,255,.3) 75%, transparent 75%, transparent);
-    animation: stripes 1.2s linear infinite; }
-  @keyframes stripes { to { background-position: 28px 0 } }
-
-  @keyframes tickBar { from { width: 0% } to { width: 100% } }
-  .tick-bar { animation: tickBar 10s linear infinite; }
-
-  @keyframes pop { 0% { transform: scale(.6); opacity: 0 } 60% { transform: scale(1.06); opacity: 1 } 100% { transform: scale(1) } }
-  .pop-in { animation: pop .45s cubic-bezier(.3,1.4,.5,1) both; }
-
-  @keyframes celebrate { 0%,100% { transform: rotate(-6deg) scale(1) } 50% { transform: rotate(6deg) scale(1.12) } }
-  .celebrate { animation: celebrate 1.4s ease-in-out infinite; }
-
-  input[type=number]::-webkit-inner-spin-button { opacity: 1; }
-  @keyframes toastIn { from { transform: translate(-50%, 20px); opacity: 0 } to { transform: translate(-50%, 0); opacity: 1 } }
-  .toast-in { animation: toastIn .3s ease-out both; }
-  #kidQr img, #kidQr canvas { width: 100%; height: auto; image-rendering: pixelated; }
-  .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
-
-  dialog::backdrop { background: rgba(43,58,85,.35); backdrop-filter: blur(3px); }
-  dialog { border: none; padding: 0; background: transparent; max-width: min(560px, calc(100vw - 32px)); width: 100%; }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
-  }
+  .plus { color: var(--ok); } .minus { color: var(--warn); }
+  .summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .summary div { background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; font-size: 13px; }
+  .summary b { display: block; font-size: 16px; }
+  .list { display: grid; gap: 6px; }
+  .list .item { display: flex; gap: 8px; align-items: center; background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 7px 10px; }
+  .list .item span { flex: 1; }
+  .x { border: 0; background: none; font-size: 20px; line-height: 1; cursor: pointer; opacity: .55; padding: 2px 6px; }
+  .qr { width: 120px; height: 120px; background: #fff; border-radius: 12px; padding: 6px; border: 2px solid var(--line); flex: none; }
+  .code { font: 800 20px/1 "Baloo 2", monospace; letter-spacing: 3px; background: #fff; border: 2px solid var(--line); border-radius: 10px; padding: 4px 10px; }
+  #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 100; max-width: calc(100vw - 32px);
+    padding: 10px 18px; border-radius: 16px; font-weight: 800; box-shadow: 0 6px 20px rgba(0,0,0,.2); }
+  #toast.info { background: #e6f5e4; color: var(--ok); } #toast.error { background: #fde8e4; color: #a33a22; }
 </style>
 </head>
-<body class="font-body antialiased">
-
-<!-- Decorative stars background -->
-<svg class="fixed inset-0 w-full h-full pointer-events-none -z-10" aria-hidden="true" preserveAspectRatio="none">
-  <defs>
-    <path id="star5" d="M0,-10 L2.9,-3.1 10,-3.1 4.3,1.2 6.5,8.1 0,4 -6.5,8.1 -4.3,1.2 -10,-3.1 -2.9,-3.1Z" />
-  </defs>
-  <g fill="#fcd34d">
-    <use href="#star5" class="twinkle" x="6%"  y="14%" />
-    <use href="#star5" class="twinkle" x="92%" y="22%" style="animation-delay:.8s" />
-    <use href="#star5" class="twinkle" x="48%" y="6%"  style="animation-delay:1.6s" />
-    <use href="#star5" class="twinkle" x="80%" y="64%" style="animation-delay:.4s" />
-    <use href="#star5" class="twinkle" x="3%"  y="72%" style="animation-delay:2.2s" />
-  </g>
-  <g fill="#a7f3d0">
-    <use href="#star5" class="twinkle" x="30%" y="42%" style="animation-delay:1.2s" />
-    <use href="#star5" class="twinkle" x="66%" y="90%" style="animation-delay:2.6s" />
-  </g>
-  <g fill="#bae6fd">
-    <use href="#star5" class="twinkle" x="18%" y="92%" style="animation-delay:.2s" />
-    <use href="#star5" class="twinkle" x="96%" y="48%" style="animation-delay:1.9s" />
-  </g>
-</svg>
-
-<div class="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
-
-  <!-- ================= HEADER ================= -->
-  <header class="flex items-center justify-between gap-3 pt-6 pb-4">
-    <div class="flex items-center gap-3">
-      <svg viewBox="0 0 64 64" class="w-12 h-12 sm:w-14 sm:h-14 shrink-0" aria-hidden="true">
-        <!-- piggy bank built from blocks -->
-        <rect x="6" y="18" width="48" height="34" rx="14" fill="#f9a8d4"/>
-        <rect x="10" y="22" width="40" height="8" rx="4" fill="#fbcfe8"/>
-        <rect x="48" y="28" width="12" height="12" rx="5" fill="#f472b6"/>
-        <circle cx="52" cy="34" r="1.6" fill="#9d174d"/><circle cx="56" cy="34" r="1.6" fill="#9d174d"/>
-        <circle cx="40" cy="28" r="2.6" fill="#2b3a55"/>
-        <path d="M18 18 L22 8 L28 18Z" fill="#f472b6"/>
-        <rect x="14" y="50" width="8" height="8" rx="2" fill="#f472b6"/><rect x="38" y="50" width="8" height="8" rx="2" fill="#f472b6"/>
-        <rect x="24" y="14" width="14" height="4" rx="2" fill="#9d174d"/>
-        <circle cx="31" cy="7" r="6" fill="#fcd34d" stroke="#f59e0b" stroke-width="2"/>
-      </svg>
-      <div>
-        <h1 class="font-display font-extrabold text-3xl sm:text-4xl leading-none text-ink">Rodzino<span class="text-berry-500">bank</span></h1>
-        <p class="text-sm sm:text-base font-bold text-ink/60">Cześć, <button id="kidNameBtn" class="underline decoration-dotted decoration-2 underline-offset-4 hover:text-berry-500" title="Zmień imię"><span id="kidName">Skarbniku</span></button>! Twoje pieniądze pracują dla Ciebie.</p>
-      </div>
-    </div>
-    <button id="parentBtn" class="brick bg-white hover:bg-sun-50 active:translate-y-1 transition px-4 py-2.5 font-display font-bold text-ink flex items-center gap-2 shrink-0">
-      <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-      <span class="hidden sm:inline">Strefa Rodzica</span>
-    </button>
-  </header>
-  <div id="modeBar" class="flex flex-wrap items-center gap-2 min-h-[8px]"></div>
-
-  <!-- ================= 1. SKARBIEC ================= -->
-  <section aria-labelledby="vaultTitle" class="mt-6">
-    <div class="grid lg:grid-cols-3 gap-6">
-
-      <!-- Big counter + mine -->
-      <div class="brick bg-white lg:col-span-2 p-5 sm:p-7 pt-8 overflow-hidden">
-        <div class="studs stud-bg-white"><span></span><span></span><span></span><span></span></div>
-
-        <div class="flex items-center justify-between gap-2 flex-wrap">
-          <h2 id="vaultTitle" class="font-display font-extrabold text-xl sm:text-2xl flex items-center gap-2">
-            <svg viewBox="0 0 24 24" class="w-7 h-7" aria-hidden="true"><rect x="2" y="4" width="20" height="17" rx="4" fill="#fcd34d"/><rect x="2" y="4" width="20" height="5" rx="2.5" fill="#f59e0b"/><circle cx="12" cy="14" r="4" fill="#fff" stroke="#f59e0b" stroke-width="2"/><path d="M12 12v2.2l1.4 1" stroke="#b45309" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
-            Mój Wielki Skarbiec
-          </h2>
-          <span class="inline-flex items-center gap-1.5 bg-mint-100 text-mint-700 font-bold text-sm px-3 py-1 rounded-full">
-            <span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-mint-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-mint-500"></span></span>
-            Rośnie na żywo
-          </span>
-        </div>
-
-        <div id="counterWrap" class="relative mt-4 text-center select-none">
-          <p class="text-ink/60 font-bold">Twoje oszczędności</p>
-          <div id="counter" class="counter-num font-display font-extrabold text-sun-600 leading-none mt-1 inline-flex items-baseline justify-center flex-wrap">
-            <span id="cInt" class="text-[64px] sm:text-[96px] md:text-[112px]">0</span><span id="cDec" class="text-[40px] sm:text-[60px] md:text-[70px]">,00</span><span id="cMicro" class="text-xl sm:text-3xl text-sun-500/70 ml-1" title="Ułamki grosza – tak drobne, że rosną co chwilę!">00</span><span class="text-3xl sm:text-5xl ml-3 text-sun-500">zł</span>
-          </div>
-          <div class="mt-3 flex flex-wrap justify-center gap-2 text-sm font-bold">
-            <span class="bg-sky-100 text-sky-700 px-3 py-1 rounded-full">Wpłaciłeś: <span id="statDeposited">0 zł</span></span>
-            <span class="bg-sun-100 text-sun-700 px-3 py-1 rounded-full">Premia za cierpliwość: <span id="statBonus">+0 zł</span></span>
-          </div>
-          <div class="mx-auto mt-4 max-w-xs">
-            <div class="flex justify-between text-xs font-bold text-ink/50 mb-1"><span>Następna moneta już leci…</span><span id="tickLabel">+0 gr / 10 s</span></div>
-            <div class="h-2.5 bg-sun-100 rounded-full overflow-hidden"><div class="tick-bar h-full bg-gradient-to-r from-sun-300 to-sun-500 rounded-full"></div></div>
-          </div>
-        </div>
-
-        <!-- Mine scene -->
-        <div id="mine" class="relative mt-6 rounded-3xl overflow-hidden h-44 sm:h-52" aria-label="Kopalnia, w której pracują Twoje pieniądze">
-          <svg id="mineSvg" viewBox="0 0 640 200" preserveAspectRatio="xMidYMid slice" class="absolute inset-0 w-full h-full"></svg>
-        </div>
-        <p class="text-center text-sm font-bold text-ink/50 mt-3">Twoi pomocnicy kopią złote monety, a zębatki kręcą się, bo Twoje pieniądze <span class="text-mint-600">pracują</span>!</p>
-      </div>
-
-      <!-- Patience ladder -->
-      <div class="brick bg-sun-50 p-5 sm:p-6 pt-8 flex flex-col">
-        <div class="studs stud-bg-sun"><span></span><span></span><span></span></div>
-        <h3 class="font-display font-extrabold text-xl flex items-center gap-2">
-          <svg viewBox="0 0 24 24" class="w-6 h-6" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.2l7.1-.6z" fill="#fbbf24" stroke="#d97706" stroke-width="1.2" stroke-linejoin="round"/></svg>
-          Schody Cierpliwości
-        </h3>
-        <p class="text-sm font-semibold text-ink/60 mt-1">Im dłużej monety czekają w skarbcu, tym większą premię dostają!</p>
-        <ol id="ladder" class="mt-4 flex flex-col gap-2 flex-1"></ol>
-        <div id="ladderHint" class="mt-4 bg-white rounded-2xl p-3 text-sm font-bold text-ink/70 shadow-brickSm"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 2. MARZENIA ================= -->
-  <section aria-labelledby="dreamsTitle" class="mt-12">
-    <div class="flex items-end justify-between gap-3 flex-wrap">
-      <div>
-        <h2 id="dreamsTitle" class="font-display font-extrabold text-2xl sm:text-3xl">Moje 3 Marzenia</h2>
-        <p class="font-semibold text-ink/60">Kliknij „Zmień”, żeby wpisać swoje marzenie i dodać jego obrazek.</p>
-      </div>
-    </div>
-    <div id="dreams" class="grid md:grid-cols-3 gap-6 mt-6"></div>
-  </section>
-
-  <!-- ================= 3. OŚ CZASU ================= -->
-  <section aria-labelledby="timelineTitle" class="mt-12">
-    <div class="brick bg-white p-5 sm:p-7 pt-8">
-      <div class="studs stud-bg-white"><span></span><span></span><span></span><span></span><span></span></div>
-      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        <div>
-          <h2 id="timelineTitle" class="font-display font-extrabold text-2xl sm:text-3xl flex items-center gap-2">
-            <svg viewBox="0 0 24 24" class="w-8 h-8" aria-hidden="true"><path d="M5 19c4-1 6-5 7-9 1 4 3 8 7 9" stroke="#10b981" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="12" cy="7" r="4" fill="#a78bfa"/><path d="M12 3.5l.9 2 2.1.2-1.6 1.4.5 2.1L12 8.1l-1.9 1.1.5-2.1L9 5.7l2.1-.2z" fill="#fff"/></svg>
-            Magiczna Oś Oszczędzania
-          </h2>
-          <p class="font-semibold text-ink/60">Sprawdź, kiedy spełnisz swoje marzenia, jeśli będziesz odkładać kieszonkowe.</p>
-        </div>
-        <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <label class="block">
-            <span class="text-sm font-bold text-ink/70">Ile chcesz wpłacać?</span>
-            <div class="mt-1 flex items-center bg-sky-50 rounded-2xl ring-2 ring-sky-200 focus-within:ring-sky-400 px-3">
-              <button type="button" data-step="-5" class="stepBtn w-9 h-9 rounded-xl bg-white font-display font-extrabold text-xl text-sky-600 shadow-brickSm active:translate-y-0.5" aria-label="Mniej">−</button>
-              <input id="simAmount" type="number" min="0" step="1" value="10" inputmode="decimal" class="w-20 bg-transparent text-center font-display font-extrabold text-2xl text-ink py-2 outline-none" aria-label="Kwota wpłaty w złotych" />
-              <span class="font-display font-bold text-ink/60 mr-2">zł</span>
-              <button type="button" data-step="5" class="stepBtn w-9 h-9 rounded-xl bg-white font-display font-extrabold text-xl text-sky-600 shadow-brickSm active:translate-y-0.5" aria-label="Więcej">+</button>
-            </div>
-          </label>
-          <div role="radiogroup" aria-label="Jak często" class="flex bg-grape-50 rounded-2xl p-1 ring-2 ring-grape-100">
-            <button type="button" data-freq="week"  class="freqBtn px-3 py-2 rounded-xl font-bold text-sm">co tydzień</button>
-            <button type="button" data-freq="month" class="freqBtn px-3 py-2 rounded-xl font-bold text-sm">co miesiąc</button>
-            <button type="button" data-freq="once"  class="freqBtn px-3 py-2 rounded-xl font-bold text-sm">tylko raz</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Timeline -->
-      <div class="scroll-x mt-6 -mx-2 px-2 pb-2">
-        <div id="timeline" class="relative min-w-[760px]">
-          <!-- markers lane -->
-          <div id="markers" class="relative h-[90px] transition-[height] duration-500"></div>
-          <!-- seasons strip -->
-          <div id="seasons" class="relative grid grid-cols-4 gap-0 rounded-[28px] overflow-hidden h-40 shadow-brick"></div>
-          <!-- axis bar with trees -->
-          <div class="relative mt-[-26px] mx-3">
-            <div id="axisTrees" class="absolute left-0 right-0 bottom-[30px] h-0"></div>
-            <div class="axis-bar h-8 rounded-full ring-4 ring-white shadow-brickSm relative overflow-hidden">
-              <div class="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent_0_calc(8.333%-2px),rgba(255,255,255,.7)_calc(8.333%-2px)_8.333%)]"></div>
-            </div>
-            <div id="todayDot" class="absolute -left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white ring-4 ring-berry-300 grid place-items-center font-display font-extrabold text-xs text-berry-600 shadow-brickSm">dziś</div>
-          </div>
-          <div id="monthTicks" class="relative h-8 mt-2 mx-3 text-xs font-bold text-ink/50"></div>
-        </div>
-      </div>
-
-      <div id="simSummary" class="grid sm:grid-cols-3 gap-3 mt-4"></div>
-      <p class="text-xs font-semibold text-ink/50 mt-4">Symulacja liczy Twoje obecne oszczędności oraz nowe wpłaty razem z Premią za cierpliwość. Prawdziwe wpłaty dodaje Rodzic w Strefie Rodzica.</p>
-    </div>
-  </section>
-
-  <footer class="text-center text-sm font-bold text-ink/40 mt-10"><span id="footerText">Rodzinobank · domowa szkoła oszczędzania</span>
-    <button id="unlinkBtn" class="hidden ml-2 underline hover:text-berry-500">Odłącz to urządzenie</button></footer>
-</div>
-
-<!-- ================= DIALOG: DREAM EDIT ================= -->
-<dialog id="dreamDialog">
-  <form method="dialog" id="dreamForm" class="brick bg-white p-6 pt-8 m-0">
-    <div class="studs stud-bg-white"><span></span><span></span><span></span></div>
-    <h3 class="font-display font-extrabold text-2xl" id="dreamDialogTitle">Moje marzenie</h3>
-    <div class="mt-4 grid gap-4">
-      <label class="block"><span class="text-sm font-bold text-ink/70">Jak się nazywa?</span>
-        <input id="dName" required maxlength="40" class="mt-1 w-full rounded-2xl bg-sky-50 ring-2 ring-sky-200 focus:ring-sky-400 outline-none px-4 py-3 font-bold text-lg" /></label>
-      <label class="block"><span class="text-sm font-bold text-ink/70">Ile kosztuje? (zł)</span>
-        <input id="dPrice" type="number" min="1" step="0.01" required class="mt-1 w-full rounded-2xl bg-sky-50 ring-2 ring-sky-200 focus:ring-sky-400 outline-none px-4 py-3 font-bold text-lg" /></label>
-      <div>
-        <span class="text-sm font-bold text-ink/70">Obrazek</span>
-        <div class="mt-1 flex gap-3 items-center">
-          <img id="dPreview" alt="" class="w-20 h-20 rounded-2xl object-cover bg-sky-50 ring-2 ring-sky-100" />
-          <div class="flex-1 grid gap-2">
-            <label class="cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl bg-mint-100 hover:bg-mint-200 text-mint-700 font-bold px-4 py-2.5">
-              <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 18v2h16v-2"/></svg>
-              Wgraj zdjęcie
-              <input id="dFile" type="file" accept="image/*" class="hidden" />
-            </label>
-            <input id="dUrl" type="url" placeholder="…albo wklej link do obrazka" class="w-full rounded-2xl bg-sky-50 ring-2 ring-sky-200 focus:ring-sky-400 outline-none px-4 py-2.5 font-semibold text-sm" />
-          </div>
-        </div>
-        <button type="button" id="dResetImg" class="mt-2 text-xs font-bold text-ink/50 underline">Przywróć domyślny obrazek</button>
-      </div>
-    </div>
-    <div class="mt-6 flex justify-end gap-3">
-      <button value="cancel" formnovalidate class="px-5 py-2.5 rounded-2xl font-bold text-ink/60 hover:bg-ink/5">Anuluj</button>
-      <button value="save" id="dSave" class="px-6 py-2.5 rounded-2xl font-display font-extrabold text-white bg-grape-500 hover:bg-grape-600 shadow-brickSm active:translate-y-0.5">Zapisz marzenie</button>
-    </div>
-  </form>
-</dialog>
-
-<!-- ================= DIALOG: PARENT ================= -->
-<dialog id="parentDialog">
-  <div class="brick bg-white p-6 pt-8 m-0 max-h-[85vh] overflow-y-auto">
-    <div class="studs stud-bg-white"><span></span><span></span><span></span></div>
-    <div class="flex items-start justify-between gap-3">
-      <div>
-        <h3 class="font-display font-extrabold text-2xl">Strefa Rodzica</h3>
-        <p class="text-sm font-semibold text-ink/60">Tu dodajesz prawdziwe wpłaty i wypłaty dziecka.</p>
-      </div>
-      <button id="parentClose" class="w-10 h-10 rounded-xl hover:bg-ink/5 grid place-items-center text-2xl font-bold text-ink/50" aria-label="Zamknij">×</button>
-    </div>
-
-    <div id="gate" class="mt-5 bg-sun-50 rounded-2xl p-4">
-      <p class="font-bold">Zagadka dla dorosłych: ile to <span id="gateQ"></span>?</p>
-      <div class="mt-2 flex gap-2">
-        <input id="gateA" type="number" inputmode="numeric" class="w-28 rounded-xl bg-white ring-2 ring-sun-200 focus:ring-sun-400 outline-none px-3 py-2 font-bold" />
-        <button id="gateBtn" class="px-4 py-2 rounded-xl bg-sun-400 hover:bg-sun-500 font-display font-extrabold text-ink">Wejdź</button>
-      </div>
-      <p id="gateErr" class="text-sm font-bold text-berry-600 mt-2 hidden">Spróbuj jeszcze raz!</p>
-    </div>
-
-    <div id="parentPanel" class="hidden">
-      <div id="familyBox" class="hidden mt-5 grid gap-3"></div>
-      <form id="depForm" class="mt-5 grid sm:grid-cols-[1fr_1fr_auto] gap-2 items-end bg-mint-50 rounded-2xl p-4">
-        <label class="block"><span class="text-xs font-bold text-ink/60">Wpłata (zł)</span>
-          <input id="depAmount" type="number" min="0.01" step="0.01" value="10" required class="mt-1 w-full rounded-xl bg-white ring-2 ring-mint-200 focus:ring-mint-400 outline-none px-3 py-2 font-bold" /></label>
-        <label class="block"><span class="text-xs font-bold text-ink/60">Data</span>
-          <input id="depDate" type="date" required class="mt-1 w-full rounded-xl bg-white ring-2 ring-mint-200 focus:ring-mint-400 outline-none px-3 py-2 font-bold" /></label>
-        <button class="px-4 py-2.5 rounded-xl bg-mint-500 hover:bg-mint-600 text-white font-display font-extrabold">Wpłać</button>
-      </form>
-
-      <form id="wdForm" class="mt-3 grid sm:grid-cols-[1fr_auto] gap-2 items-end bg-berry-50 rounded-2xl p-4">
-        <label class="block"><span class="text-xs font-bold text-ink/60">Wypłata na spełnione marzenie (zł) – najpierw zabieramy najmłodsze monety, żeby starsze dalej zbierały premię</span>
-          <input id="wdAmount" type="number" min="0.01" step="0.01" required class="mt-1 w-full rounded-xl bg-white ring-2 ring-berry-200 focus:ring-berry-400 outline-none px-3 py-2 font-bold" /></label>
-        <button class="px-4 py-2.5 rounded-xl bg-berry-500 hover:bg-berry-600 text-white font-display font-extrabold">Wypłać</button>
-      </form>
-
-      <h4 class="font-display font-extrabold text-lg mt-6">Historia wpłat</h4>
-      <div class="mt-2 rounded-2xl ring-2 ring-sky-100 overflow-hidden">
-        <table class="w-full text-sm">
-          <thead class="bg-sky-50 text-ink/60 text-xs uppercase"><tr><th class="text-left p-2 pl-3">Data</th><th class="text-right p-2">Wpłata</th><th class="text-right p-2">Premia</th><th class="text-right p-2">Teraz</th><th class="p-2"></th></tr></thead>
-          <tbody id="depList" class="font-bold"></tbody>
-        </table>
-      </div>
-      <div id="wdList" class="mt-3"></div>
-
-      <details class="mt-5 bg-sky-50 rounded-2xl p-4 text-sm">
-        <summary class="font-bold cursor-pointer">Jak działa Premia za cierpliwość?</summary>
-        <div class="mt-2 font-semibold text-ink/70 space-y-2">
-          <p>Każda wpłata dostaje własną premię, która rośnie płynnie z każdym dniem, zgodnie ze schodami: <span id="tierText"></span>.</p>
-          <p>Po 6 miesiącach premia „zamienia się” w oszczędności i cykl zaczyna się od nowa – od powiększonej kwoty (procent składany). Przykład: 100 zł po 6 mies. = 150 zł, po roku = 225 zł.</p>
-          <p>Licznik dolicza ułamki grosza co 10 sekund, żeby dziecko widziało, że czas naprawdę pracuje na jego korzyść.</p>
-        </div>
-      </details>
-
-      <div id="cloudCta" class="hidden mt-5 bg-grape-50 rounded-2xl p-4 text-sm font-semibold text-ink/70">
-        Teraz dane są tylko na tym urządzeniu. <button id="cloudCtaBtn" class="font-extrabold text-grape-600 underline">Załóż konto Rodzica</button>, żeby dziecko widziało swój skarbiec na swoim tablecie, a drugi rodzic też mógł wpłacać.
-      </div>
-      <div id="localTools" class="mt-5 flex flex-wrap gap-2 justify-end">
-        <button id="demoBtn" class="px-4 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 font-bold text-sky-700">Wczytaj przykładowe dane</button>
-        <button id="clearBtn" class="px-4 py-2 rounded-xl bg-berry-100 hover:bg-berry-200 font-bold text-berry-600">Wyczyść wszystko</button>
-      </div>
-    </div>
+<body>
+<main id="app" hidden>
+  <div class="topbar">
+    <h1 id="kidName">Groszaki</h1>
+    <div class="kidtabs" id="kidTabs"></div>
+    <span class="ml-auto note" id="modeNote"></span>
+    <button class="pill dark" id="parentBtn" data-t="app.strefaRodzica"></button>
+    <button class="pill" id="unlinkBtn" data-t="app.odlacz" hidden></button>
   </div>
-</dialog>
 
-<!-- ================= WELCOME ================= -->
-<div id="welcome" class="hidden fixed inset-0 z-50 overflow-y-auto bg-[#fdfbf4]">
-  <div class="min-h-full grid place-items-center p-4 bg-[radial-gradient(900px_500px_at_10%_0%,#dff3ff,transparent_60%),radial-gradient(800px_500px_at_100%_100%,#fff4c9,transparent_60%)]">
-    <div class="brick bg-white p-6 sm:p-8 pt-10 w-full max-w-lg text-center pop-in">
-      <div class="studs stud-bg-white"><span></span><span></span><span></span><span></span></div>
-      <h2 class="font-display font-extrabold text-4xl">Rodzino<span class="text-berry-500">bank</span></h2>
-      <p class="font-bold text-ink/60 mt-1">Domowy bank, w którym cierpliwość się opłaca!</p>
-      <div class="grid gap-3 mt-6 text-left">
-        <button id="wParent" class="text-left rounded-3xl bg-sun-100 hover:bg-sun-200 p-4 flex items-center gap-4 shadow-brickSm active:translate-y-0.5">
-          <span class="w-12 h-12 rounded-2xl bg-sun-400 grid place-items-center shrink-0"><svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="#2b3a55" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></span>
-          <span><span class="block font-display font-extrabold text-xl">Jestem Rodzicem</span><span class="block text-sm font-bold text-ink/60">Zaloguj się lub załóż konto rodziny</span></span>
-        </button>
-        <button id="wKid" class="text-left rounded-3xl bg-mint-100 hover:bg-mint-200 p-4 flex items-center gap-4 shadow-brickSm active:translate-y-0.5">
-          <span class="w-12 h-12 rounded-2xl bg-mint-400 grid place-items-center shrink-0"><svg viewBox="0 0 24 24" class="w-7 h-7"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.2l7.1-.6z" fill="#fff" stroke="#047857" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
-          <span><span class="block font-display font-extrabold text-xl">Jestem Dzieckiem</span><span class="block text-sm font-bold text-ink/60">Otwórz swój skarbiec</span></span>
-        </button>
-        <div id="wKidInfo" class="hidden rounded-2xl bg-mint-50 p-4 text-sm font-bold text-ink/70">
-          Poproś Rodzica, żeby otworzył <span class="text-mint-700">Strefę Rodzica</span> na swoim telefonie i pokazał Ci <span class="text-mint-700">kod QR</span> albo wysłał magiczny link. Zeskanuj go aparatem tego urządzenia – i gotowe!
-        </div>
-        <button id="wLocal" class="rounded-2xl p-3 font-bold text-ink/50 hover:bg-ink/5 text-center">Tylko wypróbuj (bez konta, dane na tym urządzeniu)</button>
-      </div>
-      <p id="wError" class="hidden mt-3 text-sm font-bold text-berry-600"></p>
+  <div class="saldo">
+    <div class="big" id="big"><span id="zl">0</span>,<span id="gr">00</span><span class="micro" id="mic" role="button" tabindex="0">0000</span><span class="cur">zł</span></div>
+    <div class="sub" id="crew"></div>
+    <div class="tip" id="tip" hidden></div>
+  </div>
+
+  <div class="map-wrap" id="mapWrap"><canvas></canvas></div>
+
+  <h2 class="sec" data-t="cele.tytul"></h2>
+  <div id="goals"></div>
+
+  <footer data-t="app.tytul"></footer>
+</main>
+
+<!-- Ekran powitalny -->
+<div id="welcome" hidden>
+  <div class="box">
+    <img id="welcomeImg" alt="" />
+    <h2 data-t="start.witaj"></h2>
+    <p data-t="start.opis"></p>
+    <div class="msg err" id="wError" hidden></div>
+    <div class="stack">
+      <button class="btn" id="wParent" data-t="start.rodzic"></button>
+      <button class="btn light" id="wKid" data-t="start.dziecko"></button>
+      <p class="note" id="wKidInfo" data-t="start.dzieckoInfo" hidden></p>
+      <button class="btn light" id="wLocal" data-t="start.probny"></button>
     </div>
   </div>
 </div>
 
-<!-- ================= DIALOG: AUTH ================= -->
+<!-- Logowanie -->
 <dialog id="authDialog">
-  <form id="authForm" class="brick bg-white p-6 pt-8 m-0">
-    <div class="studs stud-bg-white"><span></span><span></span><span></span></div>
-    <div class="flex items-start justify-between">
-      <h3 class="font-display font-extrabold text-2xl">Konto Rodzica</h3>
-      <button type="button" id="authClose" class="w-10 h-10 rounded-xl hover:bg-ink/5 text-2xl font-bold text-ink/50" aria-label="Zamknij">×</button>
+  <form class="dlg" id="authForm">
+    <div class="tabs2">
+      <button type="button" class="authTab" data-auth="login" data-t="auth.logowanie"></button>
+      <button type="button" class="authTab" data-auth="signup" data-t="auth.nowe"></button>
     </div>
-    <div class="flex bg-sky-50 rounded-2xl p-1 mt-3" role="tablist">
-      <button type="button" data-auth="login" class="authTab flex-1 py-2 rounded-xl font-bold">Logowanie</button>
-      <button type="button" data-auth="signup" class="authTab flex-1 py-2 rounded-xl font-bold">Nowe konto</button>
+    <label class="field"><span data-t="auth.email"></span><input id="authEmail" type="email" autocomplete="email" required /></label>
+    <label class="field"><span data-t="auth.haslo"></span><input id="authPass" type="password" minlength="8" required /></label>
+    <div class="row" style="justify-content: space-between; align-items: center;">
+      <button class="btn" id="authSubmit" type="submit"></button>
+      <button class="btn light small" id="authForgot" type="button" data-t="auth.zapomnialem"></button>
+      <button class="btn light small" id="authClose" type="button" data-t="auth.zamknij"></button>
     </div>
-    <div class="grid gap-3 mt-4">
-      <label class="block"><span class="text-sm font-bold text-ink/70">E-mail</span>
-        <input id="authEmail" type="email" required autocomplete="email" class="mt-1 w-full rounded-2xl bg-sky-50 ring-2 ring-sky-200 focus:ring-sky-400 outline-none px-4 py-3 font-bold" /></label>
-      <label class="block"><span class="text-sm font-bold text-ink/70">Hasło <span class="font-semibold text-ink/40">(min. 8 znaków)</span></span>
-        <input id="authPass" type="password" required minlength="8" autocomplete="current-password" class="mt-1 w-full rounded-2xl bg-sky-50 ring-2 ring-sky-200 focus:ring-sky-400 outline-none px-4 py-3 font-bold" /></label>
-    </div>
-    <p id="authMsg" class="hidden mt-3 text-sm font-bold rounded-2xl p-3"></p>
-    <div class="mt-5 flex items-center justify-between gap-3">
-      <button type="button" id="authForgot" class="text-sm font-bold text-ink/50 underline">Nie pamiętam hasła</button>
-      <button id="authSubmit" class="px-6 py-2.5 rounded-2xl font-display font-extrabold text-white bg-grape-500 hover:bg-grape-600 shadow-brickSm active:translate-y-0.5 disabled:opacity-50">Zaloguj</button>
-    </div>
+    <div class="msg" id="authMsg" hidden></div>
   </form>
 </dialog>
 
-<!-- ================= DIALOG: ONBOARDING ================= -->
+<!-- Założenie rodziny -->
 <dialog id="onboardDialog">
-  <div class="brick bg-white p-6 pt-8 m-0">
-    <div class="studs stud-bg-white"><span></span><span></span><span></span></div>
-    <h3 class="font-display font-extrabold text-2xl">Witaj w Rodzinobanku!</h3>
-    <p class="text-sm font-semibold text-ink/60">Załóż skarbiec dla dziecka albo dołącz do rodziny, którą założył drugi rodzic.</p>
-    <form id="obCreate" class="mt-4 bg-sun-50 rounded-2xl p-4 grid gap-2">
-      <label class="block"><span class="text-sm font-bold text-ink/70">Jak ma na imię Twoje dziecko?</span>
-        <input id="obKid" required maxlength="30" class="mt-1 w-full rounded-xl bg-white ring-2 ring-sun-200 focus:ring-sun-400 outline-none px-3 py-2.5 font-bold" /></label>
-      <button class="justify-self-end px-5 py-2.5 rounded-xl bg-sun-400 hover:bg-sun-500 font-display font-extrabold">Załóż skarbiec</button>
+  <div class="dlg">
+    <h3 data-t="onb.tytul"></h3>
+    <form id="obCreate" class="row">
+      <label class="field"><span data-t="onb.imie"></span><input id="obKid" maxlength="30" required /></label>
+      <button class="btn" data-t="onb.zaloz"></button>
     </form>
-    <form id="obJoin" class="mt-3 bg-sky-50 rounded-2xl p-4 grid gap-2">
-      <label class="block"><span class="text-sm font-bold text-ink/70">…albo wpisz kod rodziny od drugiego rodzica</span>
-        <input id="obCode" required maxlength="12" class="mt-1 w-full rounded-xl bg-white ring-2 ring-sky-200 focus:ring-sky-400 outline-none px-3 py-2.5 font-bold uppercase tracking-widest" /></label>
-      <button class="justify-self-end px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-display font-extrabold">Dołącz</button>
+    <p class="note" data-t="onb.albo"></p>
+    <form id="obJoin" class="row">
+      <label class="field"><span data-t="onb.kod"></span><input id="obCode" maxlength="12" required style="text-transform: uppercase" /></label>
+      <button class="btn light" data-t="onb.dolacz"></button>
     </form>
-    <div class="mt-4 text-right"><button id="obLogout" class="text-sm font-bold text-ink/50 underline">Wyloguj</button></div>
+    <div class="row" style="justify-content: flex-end"><button class="btn light small" id="obLogout" data-t="onb.wyloguj"></button></div>
   </div>
 </dialog>
 
-<div id="toast" class="hidden fixed bottom-5 left-1/2 z-[60] max-w-[calc(100vw-32px)] px-5 py-3 rounded-2xl font-bold shadow-brick"></div>
+<!-- Zagadka przed strefą rodzica (tryb próbny) -->
+<dialog id="gateDialog">
+  <form class="dlg" id="gateForm">
+    <h3 data-t="gate.tytul"></h3>
+    <label class="field"><span id="gateQ"></span><input id="gateA" inputmode="numeric" autocomplete="off" /></label>
+    <div class="msg err" id="gateErr" data-t="gate.zle" hidden></div>
+    <div class="row"><button class="btn" data-t="gate.dalej"></button><button type="button" class="btn light" id="gateClose" data-t="rz.zamknij"></button></div>
+  </form>
+</dialog>
+
+<!-- Strefa rodzica -->
+<dialog id="parentDialog">
+  <div class="head">
+    <div class="row" style="align-items: center;">
+      <h3 data-t="rz.tytul"></h3>
+      <button class="btn light small ml-auto" id="parentClose" data-t="rz.zamknij"></button>
+    </div>
+    <div class="ptabs" id="ptabs"></div>
+  </div>
+  <div class="psec" id="psec"></div>
+</dialog>
+
+<div id="toast" hidden></div>
 
 <script>
-(() => {
-  'use strict';
-
-  /* =====================================================================
-   *  0. KONFIGURACJA WSPÓLNEJ BAZY (Supabase)
-   *  Wklej tu „Publishable key” z: Supabase → Project Settings → API Keys.
-   *  Ten klucz jest publiczny – bezpieczeństwo zapewniają funkcje w bazie.
-   *  Dopóki klucza nie ma, aplikacja działa w trybie próbnym (bez konta).
-   * ===================================================================== */
-  const SUPABASE_URL = 'https://kjvwvgvwsdtlfogliizz.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_1PE_924lLY417qyhUExM3w_NJAzfloC';
-  const cloudReady = !!(window.supabase && SUPABASE_KEY && !SUPABASE_KEY.startsWith('WKLEJ'));
-  const sb = cloudReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
-
-  /* =====================================================================
-   *  1. MODEL ODSETEK – progresywna Premia za cierpliwość + procent składany
-   * ===================================================================== */
-  const DAY = 86400000;
-  const MONTH_DAYS = 365 / 12;           // ~30.42 dnia
-  const CYCLE_DAYS = MONTH_DAYS * 6;     // 6 miesięcy
-  // Schodki premii: [miesiąc, premia]. Między schodkami premia rośnie płynnie.
-  const TIERS = [[0, 0], [1, 0.05], [2, 0.10], [3, 0.18], [4, 0.27], [5, 0.38], [6, 0.50]];
-  const MAX_BONUS = 0.50;
-
-  /** Premia (0–0.5) dla wieku w obrębie jednego 6-miesięcznego cyklu. */
-  function cycleBonus(days) {
-    const m = Math.max(0, days) / MONTH_DAYS;
-    if (m >= 6) return MAX_BONUS;
-    const i = Math.floor(m);
-    const [m0, b0] = TIERS[i], [m1, b1] = TIERS[i + 1];
-    return b0 + (b1 - b0) * (m - m0) / (m1 - m0);
-  }
-
-  /** Wartość pojedynczej wpłaty po `days` dniach (z procentem składanym co 6 mies.). */
-  function valueAfter(amount, days) {
-    if (days <= 0) return amount;
-    const cycles = Math.floor(days / CYCLE_DAYS);
-    const rest = days - cycles * CYCLE_DAYS;
-    return amount * Math.pow(1 + MAX_BONUS, cycles) * (1 + cycleBonus(rest));
-  }
-
-  const ageDays = (ts, now) => (now - ts) / DAY;
-  const totalAt = (now) => state.deposits.reduce((s, d) => s + valueAfter(d.amount, ageDays(d.ts, now)), 0);
-  const depositedSum = () => state.deposits.reduce((s, d) => s + d.amount, 0);
-
-  /* =====================================================================
-   *  2. STAN + ZAPIS
-   * ===================================================================== */
-  const svgUri = (s) => 'data:image/svg+xml;utf8,' + encodeURIComponent(s);
-  const DEFAULT_IMG = [
-    // Klocek
-    svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d1fae5"/><stop offset="1" stop-color="#a7f3d0"/></linearGradient></defs><rect width="200" height="200" fill="url(#g)"/><g transform="translate(30 60)"><rect x="0" y="30" width="140" height="70" rx="10" fill="#ef4444"/><rect x="0" y="30" width="140" height="14" rx="7" fill="#f87171"/><g fill="#ef4444"><rect x="12" y="10" width="28" height="24" rx="6"/><rect x="56" y="10" width="28" height="24" rx="6"/><rect x="100" y="10" width="28" height="24" rx="6"/></g><g fill="#fca5a5"><rect x="12" y="10" width="28" height="7" rx="3.5"/><rect x="56" y="10" width="28" height="7" rx="3.5"/><rect x="100" y="10" width="28" height="7" rx="3.5"/></g><rect x="0" y="86" width="140" height="14" rx="7" fill="#b91c1c" opacity=".35"/></g><g transform="translate(118 26)"><rect x="0" y="16" width="56" height="34" rx="6" fill="#3b82f6"/><rect x="8" y="4" width="16" height="15" rx="4" fill="#3b82f6"/><rect x="32" y="4" width="16" height="15" rx="4" fill="#3b82f6"/><rect x="8" y="4" width="16" height="5" rx="2.5" fill="#93c5fd"/><rect x="32" y="4" width="16" height="5" rx="2.5" fill="#93c5fd"/></g></svg>`),
-    // Hulajnoga
-    svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0f2fe"/><stop offset="1" stop-color="#bae6fd"/></linearGradient></defs><rect width="200" height="200" fill="url(#g)"/><rect x="0" y="160" width="200" height="40" fill="#7dd3fc" opacity=".5"/><path d="M140 40 L150 150" stroke="#475569" stroke-width="10" stroke-linecap="round"/><path d="M122 40 H158" stroke="#0ea5e9" stroke-width="12" stroke-linecap="round"/><rect x="40" y="138" width="112" height="14" rx="7" fill="#8b5cf6"/><circle cx="52" cy="158" r="18" fill="#2b3a55"/><circle cx="52" cy="158" r="8" fill="#e2e8f0"/><circle cx="150" cy="158" r="18" fill="#2b3a55"/><circle cx="150" cy="158" r="8" fill="#e2e8f0"/><path d="M60 110 l6 -8 m6 22 l10 -4" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".8"/></svg>`),
-    // Konsola
-    svgUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ede9fe"/><stop offset="1" stop-color="#ddd6fe"/></linearGradient></defs><rect width="200" height="200" fill="url(#g)"/><path d="M40 80 Q40 62 58 62 H142 Q160 62 160 80 L170 130 Q174 152 152 150 Q140 148 132 132 H68 Q60 148 48 150 Q26 152 30 130Z" fill="#6d28d9"/><path d="M48 70 H152" stroke="#a78bfa" stroke-width="6" stroke-linecap="round"/><rect x="58" y="88" width="10" height="30" rx="3" fill="#ede9fe"/><rect x="48" y="98" width="30" height="10" rx="3" fill="#ede9fe"/><circle cx="134" cy="92" r="7" fill="#fcd34d"/><circle cx="148" cy="106" r="7" fill="#f472b6"/><circle cx="120" cy="106" r="7" fill="#34d399"/><circle cx="134" cy="120" r="7" fill="#38bdf8"/><path d="M100 30 l4 9 10 1 -8 6 3 10 -9 -6 -9 6 3 -10 -8 -6 10 -1z" fill="#fcd34d"/></svg>`),
-  ];
-
-  const DREAM_STYLES = [
-    { label: 'Proste',       stars: 1, bg: 'bg-mint-50',  stud: 'stud-bg-mint',  bar: 'from-mint-300 to-mint-500',   chip: 'bg-mint-100 text-mint-700',   pin: '#10b981', btn: 'bg-mint-500 hover:bg-mint-600' },
-    { label: 'Średnie',      stars: 2, bg: 'bg-sky-50',   stud: 'stud-bg-sky',   bar: 'from-sky-300 to-sky-500',     chip: 'bg-sky-100 text-sky-700',     pin: '#0ea5e9', btn: 'bg-sky-500 hover:bg-sky-600' },
-    { label: 'Niesamowite',  stars: 3, bg: 'bg-grape-50', stud: 'stud-bg-grape', bar: 'from-grape-300 to-grape-500', chip: 'bg-grape-100 text-grape-700', pin: '#8b5cf6', btn: 'bg-grape-500 hover:bg-grape-600' },
-  ];
-
-  const STORAGE_KEY = 'rodzinobank.v1';
-
-  function demoState() {
-    const now = Date.now();
-    return {
-      kidName: 'Skarbniku',
-      deposits: [
-        { id: uid(), ts: now - 128 * DAY, amount: 50 },
-        { id: uid(), ts: now - 70 * DAY,  amount: 30 },
-        { id: uid(), ts: now - 33 * DAY,  amount: 20 },
-        { id: uid(), ts: now - 9 * DAY,   amount: 15 },
-        { id: uid(), ts: now - 2 * DAY,   amount: 10 },
-      ],
-      dreams: [
-        { name: 'Klocki LEGO',       price: 89,   img: '' },
-        { name: 'Hulajnoga',         price: 349,  img: '' },
-        { name: 'Konsola do gier',   price: 1499, img: '' },
-      ],
-      sim: { amount: 10, freq: 'week' },
-    };
-  }
-
-  function uid() { return Math.random().toString(36).slice(2, 10); }
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const s = JSON.parse(raw);
-        if (s && Array.isArray(s.deposits) && Array.isArray(s.dreams) && s.dreams.length === 3) {
-          s.sim = s.sim || { amount: 10, freq: 'week' };
-          return s;
-        }
-      }
-    } catch (e) { /* brak dostępu do pamięci – działamy na danych demo */ }
-    return demoState();
-  }
-  function save() {
-    try {
-      localStorage.setItem('rb.sim', JSON.stringify(state.sim));
-      if (mode === 'local') localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) { console.warn('Nie udało się zapisać danych (np. za duży obrazek).', e); }
-  }
-  const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* tryb prywatny */ } };
-  const lsDel = (k) => { try { localStorage.removeItem(k); } catch (e) { /* tryb prywatny */ } };
-  function loadSim() {
-    try { const s = JSON.parse(lsGet('rb.sim')); if (s && s.freq) return s; } catch (e) { /* brak */ }
-    return { amount: 10, freq: 'week' };
-  }
-
-  // mode: 'local' (tylko to urządzenie) | 'parent' (zalogowany rodzic) | 'kid' (link dziecka)
-  let mode = 'local';
-  let state = load();
-  let family = null;          // dane rodziny (tryb rodzica)
-  let currentKidId = null;    // wybrane dziecko (tryb rodzica)
-  let kidToken = null;        // token z linku (tryb dziecka)
-  let remoteVersion = null;   // „odcisk” stanu z bazy do wykrywania zmian
-  let userEmail = '';
-
-  /* =====================================================================
-   *  3. POMOCNICZE – formatowanie po polsku
-   * ===================================================================== */
-  const nf2 = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const nf0 = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 });
-  const zl = (v) => nf2.format(v) + ' zł';
-  const zlShort = (v) => (Math.abs(v - Math.round(v)) < 0.005 ? nf0.format(Math.round(v)) : nf2.format(v)) + ' zł';
-  const $ = (id) => document.getElementById(id);
-  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-  function fmtTiny(deltaZl) {
-    const gr = deltaZl * 100;
-    if (gr >= 1) return '+' + nf2.format(deltaZl) + ' zł';
-    const digits = gr >= 0.1 ? 2 : 3;
-    return '+' + gr.toLocaleString('pl-PL', { minimumFractionDigits: digits, maximumFractionDigits: digits }) + ' gr';
-  }
-
-  function plural(n, one, few, many) {
-    const n10 = n % 10, n100 = n % 100;
-    if (n === 1) return one;
-    if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return few;
-    return many;
-  }
-
-  function humanWait(days) {
-    if (days <= 0) return 'już teraz!';
-    if (days < 14) { const d = Math.max(1, Math.round(days)); return `za ${d} ${plural(d, 'dzień', 'dni', 'dni')}`; }
-    if (days < 60) { const w = Math.round(days / 7); return `za ${w} ${plural(w, 'tydzień', 'tygodnie', 'tygodni')}`; }
-    const m = Math.round(days / MONTH_DAYS);
-    return `za ${m} ${plural(m, 'miesiąc', 'miesiące', 'miesięcy')}`;
-  }
-
-  /* =====================================================================
-   *  4. KOPALNIA – zębatki + górnicy (SVG generowane w JS)
-   * ===================================================================== */
-  function gearPath(cx, cy, teeth, rOut, rIn, rHole) {
-    const step = (Math.PI * 2) / teeth;
-    let d = '';
-    for (let i = 0; i < teeth; i++) {
-      const a = i * step;
-      const pts = [
-        [a - step * 0.30, rIn], [a - step * 0.18, rOut], [a + step * 0.18, rOut], [a + step * 0.30, rIn], [a + step * 0.5, rIn],
-      ];
-      pts.forEach(([ang, r], j) => {
-        const x = (cx + r * Math.cos(ang)).toFixed(2), y = (cy + r * Math.sin(ang)).toFixed(2);
-        d += (i === 0 && j === 0 ? 'M' : 'L') + x + ' ' + y + ' ';
-      });
-    }
-    d += 'Z ';
-    // otwór (evenodd)
-    d += `M${cx + rHole} ${cy} A${rHole} ${rHole} 0 1 0 ${cx - rHole} ${cy} A${rHole} ${rHole} 0 1 0 ${cx + rHole} ${cy}Z`;
-    return d;
-  }
-
-  function gearSvg(cx, cy, teeth, r, fill, cls, delay = 0) {
-    return `<g class="${cls}" style="animation-delay:${delay}s">
-      <path d="${gearPath(cx, cy, teeth, r, r * 0.80, r * 0.28)}" fill="${fill}" fill-rule="evenodd" stroke="rgba(0,0,0,.12)" stroke-width="2"/>
-      <circle cx="${cx}" cy="${cy}" r="${r * 0.55}" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="3"/>
-      ${[0, 1, 2, 3].map((k) => { const a = k * Math.PI / 2 + Math.PI / 4; return `<circle cx="${(cx + Math.cos(a) * r * 0.48).toFixed(1)}" cy="${(cy + Math.sin(a) * r * 0.48).toFixed(1)}" r="${r * 0.09}" fill="rgba(0,0,0,.15)"/>`; }).join('')}
-    </g>`;
-  }
-
-  // Ludzik w stylu "pikselowym" (blokowy górnik) z kilofem
-  function minerSvg(x, y, scale, shirt, delay, flip = false) {
-    const t = `translate(${x} ${y}) scale(${flip ? -scale : scale} ${scale})`;
-    return `<g transform="${t}">
-      <g class="miner-body" style="animation-delay:${delay}s">
-        <!-- nogi -->
-        <rect x="10" y="40" width="9" height="16" fill="#3b4a8c"/><rect x="19" y="40" width="9" height="16" fill="#2f3b73"/>
-        <rect x="10" y="54" width="9" height="4" fill="#4b3621"/><rect x="19" y="54" width="9" height="4" fill="#4b3621"/>
-        <!-- tylna ręka -->
-        <rect x="5" y="22" width="6" height="16" fill="${shirt}" opacity=".8"/><rect x="5" y="36" width="6" height="4" fill="#e8b88a"/>
-        <!-- tułów -->
-        <rect x="10" y="22" width="18" height="18" fill="${shirt}"/>
-        <rect x="10" y="36" width="18" height="4" fill="#7c5a2d"/><rect x="17" y="36" width="4" height="4" fill="#fcd34d"/>
-        <!-- głowa -->
-        <rect x="9" y="4" width="20" height="18" fill="#f1c27d"/>
-        <rect x="9" y="4" width="20" height="5" fill="#6b4423"/><rect x="9" y="4" width="3" height="9" fill="#6b4423"/>
-        <rect x="21" y="12" width="3" height="3" fill="#fff"/><rect x="22" y="13" width="2" height="2" fill="#2b3a55"/>
-        <rect x="14" y="12" width="3" height="3" fill="#fff"/><rect x="15" y="13" width="2" height="2" fill="#2b3a55"/>
-        <rect x="17" y="17" width="6" height="2" fill="#c9875a"/>
-        <!-- kask z lampką -->
-        <rect x="7" y="0" width="24" height="6" rx="1" fill="#fbbf24"/><rect x="7" y="5" width="25" height="2" fill="#d97706"/>
-        <rect x="26" y="1" width="5" height="4" fill="#fff7c2"/>
-        <circle cx="34" cy="3" r="7" fill="#fff7c2" class="lamp-glow"/>
-      </g>
-      <!-- ręka z kilofem -->
-      <g class="pick-arm" style="animation-delay:${delay}s">
-        <rect x="26" y="34" width="3" height="24" fill="#8b5a2b"/>
-        <rect x="24" y="22" width="6" height="14" fill="${shirt}"/>
-        <rect x="24" y="34" width="6" height="5" fill="#f1c27d"/>
-        <rect x="17" y="54" width="21" height="4" fill="#94a3b8"/>
-        <rect x="14" y="56" width="4" height="4" fill="#94a3b8"/><rect x="37" y="56" width="4" height="4" fill="#94a3b8"/>
-        <rect x="12" y="59" width="3" height="3" fill="#64748b"/><rect x="40" y="59" width="3" height="3" fill="#64748b"/>
-        <rect x="19" y="54" width="17" height="1.6" fill="#5eead4"/>
-      </g>
-    </g>`;
-  }
-
-  function oreBlock(x, y, s, delay) {
-    // blok kamienia ze złotymi drobinkami
-    return `<g transform="translate(${x} ${y})"><g class="ore-shake" style="animation-delay:${delay}s">
-      <rect width="${s}" height="${s}" rx="4" fill="#a8b3c4"/>
-      <rect width="${s}" height="${s * 0.18}" rx="3" fill="#c3ccd8"/>
-      <rect x="${s * .15}" y="${s * .30}" width="${s * .2}" height="${s * .2}" fill="#fcd34d"/>
-      <rect x="${s * .55}" y="${s * .50}" width="${s * .22}" height="${s * .22}" fill="#fbbf24"/>
-      <rect x="${s * .35}" y="${s * .70}" width="${s * .15}" height="${s * .15}" fill="#fde68a"/>
-      <rect x="${s * .62}" y="${s * .2}"  width="${s * .12}" height="${s * .12}" fill="#fde68a"/>
-    </g></g>
-    <g class="spark" style="animation-delay:${delay}s"><path d="M${x + 4} ${y + 8} l5 -10 l3 9 l9 -4 l-6 8 l8 5 l-10 0 l-2 9 l-3 -9 l-9 1z" fill="#fff7c2" stroke="#fbbf24" stroke-width="1.5"/></g>`;
-  }
-
-  function buildMine() {
-    const svg = $('mineSvg');
-    const blocks = [];
-    // tło: niebo + trawa + ziemia + kamień
-    let s = `<defs>
-      <linearGradient id="mSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9f2ff"/><stop offset="1" stop-color="#eefaff"/></linearGradient>
-      <linearGradient id="mCave" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9c2"/><stop offset="1" stop-color="#ffd89a"/></linearGradient>
-      <pattern id="dirt" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="#c08a5b"/><rect width="10" height="10" fill="#b57d4f"/><rect x="10" y="10" width="10" height="10" fill="#cc9667"/></pattern>
-      <pattern id="stone" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#b9c3d1"/><rect width="12" height="12" fill="#aeb9c8"/><rect x="12" y="12" width="12" height="12" fill="#c5cedb"/></pattern>
-    </defs>
-    <rect width="640" height="200" fill="url(#mSky)"/>
-    <rect x="0" y="0" width="640" height="18" fill="#7ed957"/><rect x="0" y="18" width="640" height="10" fill="#5fbf3b"/>
-    <rect x="0" y="28" width="640" height="34" fill="url(#dirt)"/>
-    <rect x="0" y="62" width="640" height="138" fill="url(#stone)"/>
-    <!-- tunel kopalni -->
-    <rect x="16" y="72" width="608" height="120" rx="22" fill="url(#mCave)"/>
-    <rect x="16" y="168" width="608" height="24" rx="10" fill="#e8b46a"/>
-    <!-- tory -->
-    <rect x="16" y="176" width="608" height="4" fill="#8b5a2b"/>
-    ${Array.from({ length: 30 }, (_, i) => `<rect x="${24 + i * 20}" y="172" width="8" height="12" fill="#a0703f"/>`).join('')}
-    <!-- belki podporowe -->
-    ${[120, 330, 540].map((x) => `<rect x="${x}" y="72" width="10" height="100" fill="#a0703f"/><rect x="${x - 20}" y="72" width="50" height="10" rx="3" fill="#8b5a2b"/>`).join('')}
-    <!-- lampki -->
-    ${[125, 335, 545].map((x) => `<circle cx="${x + 5}" cy="92" r="16" fill="#fff3b0" class="lamp-glow"/><rect x="${x}" y="84" width="10" height="12" rx="3" fill="#fcd34d"/>`).join('')}`;
-
-    // zębatki (z lewej i prawej)
-    s += gearSvg(70, 120, 12, 34, '#fbbf24', 'gear-cw');
-    s += gearSvg(116, 150, 8, 22, '#34d399', 'gear-ccw');
-    s += gearSvg(590, 118, 12, 32, '#7dd3fc', 'gear-ccw');
-    s += gearSvg(30, 40, 10, 18, '#fde68a', 'gear-cw-slow');
-    s += gearSvg(612, 40, 10, 18, '#c4b5fd', 'gear-cw-slow');
-
-    // górnicy + bloki rudy
-    const miners = [
-      { x: 148, shirt: '#38bdf8', d: 0 },
-      { x: 262, shirt: '#f472b6', d: .35 },
-      { x: 376, shirt: '#34d399', d: .7 },
-    ];
-    miners.forEach((m) => {
-      s += oreBlock(m.x + 78, 130, 38, m.d);
-      s += minerSvg(m.x, 88, 1.4, m.shirt, m.d);
-    });
-
-    // wózek ze złotem
-    s += `<g transform="translate(502 136)">
-      <rect x="0" y="6" width="56" height="26" rx="4" fill="#64748b"/><rect x="0" y="6" width="56" height="6" fill="#94a3b8"/>
-      <circle cx="14" cy="34" r="6" fill="#2b3a55"/><circle cx="42" cy="34" r="6" fill="#2b3a55"/>
-      <circle cx="12" cy="4" r="7" fill="#fcd34d"/><circle cx="26" cy="0" r="8" fill="#fbbf24"/><circle cx="40" cy="4" r="7" fill="#fde68a"/>
-      <circle cx="26" cy="0" r="3" fill="#fff7c2"/>
-    </g>`;
-    svg.innerHTML = s;
-  }
-
-  /* =====================================================================
-   *  5. GRAFIKI PÓR ROKU (ilustracje SVG)
-   * ===================================================================== */
-  const SEASON_ART = {
-    autumn: () => `<svg viewBox="0 0 320 160" preserveAspectRatio="xMidYMid slice" class="w-full h-full">
-      <defs><linearGradient id="auSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1d6"/><stop offset="1" stop-color="#ffd8a8"/></linearGradient></defs>
-      <rect width="320" height="160" fill="url(#auSky)"/>
-      <circle cx="262" cy="38" r="20" fill="#ffb648" opacity=".55"/>
-      <path d="M0 112 Q80 86 160 108 T320 100 V160 H0Z" fill="#f2c27e"/>
-      <path d="M0 132 Q160 114 320 132 V160 H0Z" fill="#df9f5e"/>
-      <g class="sway"><rect x="58" y="72" width="11" height="56" rx="3" fill="#8b5a2b"/>
-        <circle cx="63" cy="62" r="28" fill="#f28c38"/><circle cx="44" cy="72" r="18" fill="#e85d3a"/><circle cx="84" cy="70" r="19" fill="#f6b445"/><circle cx="64" cy="44" r="16" fill="#f6a03a"/></g>
-      <g class="sway" style="animation-delay:1s"><rect x="226" y="82" width="9" height="46" rx="3" fill="#8b5a2b"/>
-        <circle cx="230" cy="74" r="22" fill="#e2632f"/><circle cx="214" cy="84" r="14" fill="#f6b445"/><circle cx="248" cy="82" r="15" fill="#f28c38"/></g>
-      <ellipse cx="66" cy="132" rx="30" ry="6" fill="#e2632f" opacity=".7"/><ellipse cx="232" cy="132" rx="24" ry="5" fill="#f28c38" opacity=".7"/>
-      <g fill="#a3541e"><circle cx="150" cy="130" r="5"/><rect x="146" y="122" width="8" height="5" rx="2" fill="#6b3a17"/></g>
-      ${[[40, 0, '#e85d3a'], [110, 1.4, '#f6b445'], [180, 2.6, '#f28c38'], [250, .8, '#e2632f'], [80, 3.6, '#f6a03a'], [200, 4.4, '#e85d3a'], [290, 2, '#f6b445']].map(([x, d, c]) =>
-        `<path class="leaf" style="animation-delay:${d}s" d="M${x} 20 q6 -8 12 0 q-6 8 -12 0z" fill="${c}"/>`).join('')}
-    </svg>`,
-    winter: () => `<svg viewBox="0 0 320 160" preserveAspectRatio="xMidYMid slice" class="w-full h-full">
-      <defs><linearGradient id="wiSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3f3ff"/><stop offset="1" stop-color="#c3e4ff"/></linearGradient></defs>
-      <rect width="320" height="160" fill="url(#wiSky)"/>
-      <path d="M0 108 Q90 84 180 104 T320 96 V160 H0Z" fill="#f4faff"/>
-      <path d="M0 130 Q160 116 320 130 V160 H0Z" fill="#ffffff"/>
-      ${[[34, 70, 1], [270, 64, 1.2], [300, 84, .8]].map(([x, y, k]) => `<g transform="translate(${x} ${y}) scale(${k})">
-        <rect x="-4" y="44" width="8" height="14" fill="#7a5230"/>
-        <path d="M0 0 L22 28 H-22Z M0 14 L26 46 H-26Z" fill="#3fa776"/>
-        <path d="M0 0 L9 11 Q0 15 -9 11Z M-14 28 Q0 33 14 28 L18 33 Q0 38 -18 33Z" fill="#fff"/></g>`).join('')}
-      <g transform="translate(150 66)">
-        <circle cx="0" cy="56" r="26" fill="#fff" stroke="#cfe3f5" stroke-width="2"/>
-        <circle cx="0" cy="22" r="18" fill="#fff" stroke="#cfe3f5" stroke-width="2"/>
-        <rect x="-14" y="-6" width="28" height="6" rx="2" fill="#2b3a55"/><rect x="-9" y="-22" width="18" height="18" rx="2" fill="#2b3a55"/><rect x="-9" y="-10" width="18" height="4" fill="#ef4444"/>
-        <circle cx="-6" cy="18" r="2.2" fill="#2b3a55"/><circle cx="6" cy="18" r="2.2" fill="#2b3a55"/>
-        <path d="M0 23 L13 26 L0 28Z" fill="#fb923c"/>
-        <path d="M-17 36 Q0 44 17 36 L18 42 Q0 50 -18 42Z" fill="#ef4444"/><rect x="8" y="40" width="7" height="16" rx="2" fill="#dc2626"/>
-        <circle cx="0" cy="50" r="2.4" fill="#2b3a55"/><circle cx="0" cy="60" r="2.4" fill="#2b3a55"/>
-        <path d="M-24 46 L-44 30 M-38 35 l-6 -2 M24 46 L44 32 M38 36 l5 -5" stroke="#7a5230" stroke-width="3" stroke-linecap="round"/>
-      </g>
-      <g fill="#fff">${Array.from({ length: 16 }, (_, i) => `<circle class="flake" style="animation-delay:${(i * 0.45).toFixed(2)}s; animation-duration:${6 + (i % 4)}s" cx="${10 + i * 20}" cy="${(i * 7) % 20}" r="${2 + (i % 3)}"/>`).join('')}</g>
-    </svg>`,
-    spring: () => `<svg viewBox="0 0 320 160" preserveAspectRatio="xMidYMid slice" class="w-full h-full">
-      <defs><linearGradient id="spSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6f7ff"/><stop offset="1" stop-color="#f1fff0"/></linearGradient></defs>
-      <rect width="320" height="160" fill="url(#spSky)"/>
-      <path d="M40 120 A120 120 0 0 1 280 120" fill="none" stroke="#fbcfe8" stroke-width="7" opacity=".7"/>
-      <path d="M50 120 A110 110 0 0 1 270 120" fill="none" stroke="#fde68a" stroke-width="7" opacity=".7"/>
-      <path d="M60 120 A100 100 0 0 1 260 120" fill="none" stroke="#bbf7d0" stroke-width="7" opacity=".7"/>
-      <path d="M60 120 A100 100 0 0 1 260 120" fill="none" stroke="#bae6fd" stroke-width="7" opacity=".7" transform="translate(10 0) scale(.94)" transform-origin="160 120"/>
-      <g fill="#fff" opacity=".9"><ellipse cx="70" cy="34" rx="22" ry="9"/><ellipse cx="86" cy="28" rx="14" ry="9"/><ellipse cx="240" cy="26" rx="20" ry="8"/></g>
-      <path d="M0 106 Q80 88 160 104 T320 98 V160 H0Z" fill="#a8e6a1"/>
-      <path d="M0 126 Q160 110 320 126 V160 H0Z" fill="#86d97f"/>
-      ${[[30, 128, '#f472b6'], [62, 140, '#fcd34d'], [100, 124, '#a78bfa'], [138, 142, '#fb7185'], [196, 130, '#fcd34d'], [232, 144, '#f472b6'], [268, 126, '#60a5fa'], [298, 140, '#fcd34d']].map(([x, y, c]) => `<g class="sway" style="animation-delay:${(x % 7) / 3}s">
-        <path d="M${x} ${y} V${y + 14}" stroke="#3fa776" stroke-width="2"/>
-        <circle cx="${x - 4}" cy="${y}" r="3.6" fill="${c}"/><circle cx="${x + 4}" cy="${y}" r="3.6" fill="${c}"/><circle cx="${x}" cy="${y - 4}" r="3.6" fill="${c}"/><circle cx="${x}" cy="${y + 4}" r="3.6" fill="${c}"/>
-        <circle cx="${x}" cy="${y}" r="2.6" fill="#fff7c2"/></g>`).join('')}
-      ${[[90, 64, '#f472b6', '#fbcfe8', 0], [210, 52, '#60a5fa', '#bae6fd', 2], [150, 84, '#fbbf24', '#fde68a', 4]].map(([x, y, c1, c2, d]) => `<g class="flutter" style="animation-delay:${d}s"><g transform="translate(${x} ${y})">
-        <ellipse class="wing wing-l" cx="-7" cy="-3" rx="8" ry="7" fill="${c1}"/><ellipse class="wing wing-l" cx="-6" cy="6" rx="5" ry="5" fill="${c2}"/>
-        <ellipse class="wing wing-r" cx="7" cy="-3" rx="8" ry="7" fill="${c1}"/><ellipse class="wing wing-r" cx="6" cy="6" rx="5" ry="5" fill="${c2}"/>
-        <rect x="-1.5" y="-8" width="3" height="18" rx="1.5" fill="#2b3a55"/>
-        <path d="M-1 -8 q-3 -6 -6 -6 M1 -8 q3 -6 6 -6" stroke="#2b3a55" stroke-width="1.2" fill="none"/></g></g>`).join('')}
-    </svg>`,
-    summer: () => `<svg viewBox="0 0 320 160" preserveAspectRatio="xMidYMid slice" class="w-full h-full">
-      <defs><linearGradient id="suSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c7ecff"/><stop offset="1" stop-color="#eaf8ff"/></linearGradient></defs>
-      <rect width="320" height="160" fill="url(#suSky)"/>
-      <g transform="translate(262 38)"><g class="sun-rays">${Array.from({ length: 12 }, (_, i) => `<rect x="-2.5" y="-34" width="5" height="12" rx="2.5" fill="#fcd34d" transform="rotate(${i * 30})"/>`).join('')}</g>
-        <circle r="19" fill="#fde047"/><circle cx="-6" cy="-3" r="2" fill="#b45309"/><circle cx="6" cy="-3" r="2" fill="#b45309"/><path d="M-7 5 Q0 11 7 5" stroke="#b45309" stroke-width="2" fill="none" stroke-linecap="round"/></g>
-      <path d="M40 30 q6 -6 12 0 q6 -6 12 0 M130 46 q5 -5 10 0 q5 -5 10 0" stroke="#64748b" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <rect x="0" y="82" width="320" height="34" fill="#5ec6e8"/>
-      <g class="wave"><path d="M-20 88 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0" stroke="#fff" stroke-width="3" fill="none" opacity=".8"/></g>
-      <g class="wave" style="animation-delay:1.4s"><path d="M-10 102 q10 -5 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0" stroke="#bdeefb" stroke-width="3" fill="none"/></g>
-      <path d="M0 112 Q160 100 320 112 V160 H0Z" fill="#ffe2a6"/>
-      <path d="M0 132 Q160 122 320 134 V160 H0Z" fill="#ffd486"/>
-      <g class="sway"><path d="M60 140 Q58 100 70 70" stroke="#a0703f" stroke-width="7" fill="none" stroke-linecap="round"/>
-        <path d="M70 70 q-26 -6 -40 10 q20 -4 40 -10 q-6 -24 -30 -26 q16 10 30 26 q14 -22 38 -18 q-22 6 -38 18 q30 -6 42 12 q-20 -10 -42 -12z" fill="#34c38f"/></g>
-      <g transform="translate(206 92)"><path d="M0 50 V4" stroke="#64748b" stroke-width="3"/>
-        <path d="M-36 8 Q0 -30 36 8Z" fill="#ef4444"/><path d="M-12 8 Q0 -30 12 8Z" fill="#fff"/><path d="M-36 8 Q-26 -14 -20 -10" fill="none"/></g>
-      <g transform="translate(250 130)"><path d="M-8 0 h16 l-3 14 h-10z" fill="#38bdf8"/><path d="M-8 0 q8 -10 16 0" stroke="#0ea5e9" stroke-width="2" fill="none"/></g>
-      <g transform="translate(130 136)"><path d="M0 0 l4 -10 l4 10 l10 0 l-8 6 l3 10 l-9 -6 l-9 6 l3 -10 l-8 -6z" fill="#fb923c"/></g>
-    </svg>`,
+  // Klucz publiczny Supabase – tabele są zamknięte, wszystko idzie przez funkcje,
+  // które same sprawdzają uprawnienia (supabase/schema.sql + supabase/migracje/).
+  window.GROSZAKI_CONFIG = {
+    supabaseUrl: 'https://kjvwvgvwsdtlfogliizz.supabase.co',
+    supabaseKey: 'sb_publishable_1PE_924lLY417qyhUExM3w_NJAzfloC',
   };
-  const SEASON_META = {
-    autumn: { name: 'Jesień', chip: 'bg-sun-100 text-sun-700' },
-    winter: { name: 'Zima',   chip: 'bg-sky-100 text-sky-700' },
-    spring: { name: 'Wiosna', chip: 'bg-mint-100 text-mint-700' },
-    summer: { name: 'Lato',   chip: 'bg-sun-200 text-sun-700' },
-  };
-  const SEASON_LOC = { autumn: 'jesienią', winter: 'zimą', spring: 'wiosną', summer: 'latem' };
-  const SEASON_ORDER = ['winter', 'spring', 'summer', 'autumn'];
-  function seasonOfMonth(m) { return m === 11 || m <= 1 ? 'winter' : m <= 4 ? 'spring' : m <= 7 ? 'summer' : 'autumn'; }
-
-  // Oś zaczyna się od bieżącej pory roku i ma 4 równe sekcje po 3 miesiące
-  function seasonSequence() {
-    const first = seasonOfMonth(new Date().getMonth());
-    const i = SEASON_ORDER.indexOf(first);
-    return [0, 1, 2, 3].map((k) => SEASON_ORDER[(i + k) % 4]);
-  }
-
-  /* =====================================================================
-   *  6. LICZNIK NA ŻYWO + MONETY
-   * ===================================================================== */
-  let shownTotal = totalAt(Date.now());
-  let lastTickTotal = shownTotal;
-  let counterAnim = null;
-
-  function renderCounter(v) {
-    const fixed = Math.max(0, v).toFixed(4);
-    const [i, f] = fixed.split('.');
-    $('cInt').textContent = nf0.format(Number(i));
-    $('cDec').textContent = ',' + f.slice(0, 2);
-    $('cMicro').textContent = f.slice(2, 4);
-  }
-
-  function animateCounter(from, to, ms = 1400) {
-    if (counterAnim) cancelAnimationFrame(counterAnim);
-    const t0 = performance.now();
-    const step = (t) => {
-      const p = Math.min(1, (t - t0) / ms);
-      const e = 1 - Math.pow(1 - p, 3);
-      shownTotal = from + (to - from) * e;
-      renderCounter(shownTotal);
-      if (p < 1) counterAnim = requestAnimationFrame(step);
-    };
-    counterAnim = requestAnimationFrame(step);
-  }
-
-  function spawnCoin(text) {
-    const wrap = $('counterWrap');
-    const el = document.createElement('div');
-    el.className = 'coin-pop';
-    const w = wrap.clientWidth;
-    el.style.left = (w * (0.2 + Math.random() * 0.55)) + 'px';
-    el.style.top = '45%';
-    el.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
-    el.innerHTML = `<span class="coin">zł</span><span>${text}</span>`;
-    wrap.appendChild(el);
-    setTimeout(() => el.remove(), 2500);
-
-    // małe monetki wylatujące z kopalni (z bloków rudy)
-    const mine = $('mine');
-    const mw = mine.clientWidth, mh = mine.clientHeight;
-    [0.38, 0.56, 0.74].forEach((fx, k) => {
-      for (let j = 0; j < 2; j++) {
-        const c = document.createElement('div');
-        c.className = 'mini-coin';
-        c.style.left = (mw * fx + Math.random() * 20) + 'px';
-        c.style.top = (mh * 0.62) + 'px';
-        c.style.setProperty('--dx', (Math.random() * 70 - 35) + 'px');
-        c.style.animationDelay = (k * 0.12 + j * 0.2) + 's';
-        mine.appendChild(c);
-        setTimeout(() => c.remove(), 1900);
-      }
-    });
-  }
-
-  function liveTick() {
-    const now = Date.now();
-    const newTotal = totalAt(now);
-    const delta = newTotal - lastTickTotal;
-    lastTickTotal = newTotal;
-    animateCounter(shownTotal, newTotal);
-    if (delta > 0) {
-      spawnCoin(fmtTiny(delta));
-      const c = $('counter'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
-    }
-    renderStats(newTotal);
-  }
-
-  function renderStats(total) {
-    const dep = depositedSum();
-    $('statDeposited').textContent = zl(dep);
-    $('statBonus').textContent = '+' + zl(Math.max(0, total - dep));
-    const per10s = totalAt(Date.now() + 10000) - totalAt(Date.now());
-    $('tickLabel').textContent = fmtTiny(per10s) + ' / 10 s';
-  }
-
-  /* =====================================================================
-   *  7. SCHODY CIERPLIWOŚCI
-   * ===================================================================== */
-  const LADDER_COLORS = ['bg-sky-100', 'bg-mint-100', 'bg-sun-100', 'bg-berry-100', 'bg-grape-100', 'bg-sun-200'];
-  function renderLadder() {
-    const now = Date.now();
-    const oldest = state.deposits.length ? Math.min(...state.deposits.map((d) => d.ts)) : null;
-    const oldDays = oldest ? ageDays(oldest, now) : 0;
-    const inCycle = oldDays % CYCLE_DAYS;
-    const cyclesDone = Math.floor(oldDays / CYCLE_DAYS);
-    const reachedMonth = oldest ? Math.floor(inCycle / MONTH_DAYS) : 0;
-
-    $('ladder').innerHTML = TIERS.slice(1).map(([m, b], i) => {
-      const reached = oldest && m <= reachedMonth;
-      const isNext = oldest && m === reachedMonth + 1;
-      const width = 58 + i * 8.4; // schody rosną
-      return `<li class="flex items-center gap-3">
-        <div class="relative rounded-2xl ${reached ? 'bg-sun-400 text-ink' : isNext ? LADDER_COLORS[i] + ' ring-2 ring-sun-400 ring-dashed' : LADDER_COLORS[i] + ' text-ink/60'} px-3 py-2 font-display font-extrabold flex items-center justify-between shadow-brickSm transition-all" style="width:${width}%">
-          <span class="whitespace-nowrap">${m} mies.</span>
-          <span class="flex items-center gap-1">+${Math.round(b * 100)}%
-            ${reached ? '<svg viewBox="0 0 24 24" class="w-5 h-5"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.2l7.1-.6z" fill="#fff" stroke="#b45309" stroke-width="1.5" stroke-linejoin="round"/></svg>' : ''}
-          </span>
-        </div>
-        ${isNext ? '<span class="text-xs font-extrabold text-sun-700">← już blisko!</span>' : ''}
-      </li>`;
-    }).join('');
-
-    let hint;
-    if (!oldest) hint = 'Poproś Rodzica o pierwszą wpłatę i wejdź na pierwszy schodek!';
-    else {
-      const nextMonth = reachedMonth + 1;
-      const daysLeft = Math.ceil(nextMonth * MONTH_DAYS - inCycle);
-      const dWait = Math.max(1, Math.round(oldDays));
-      hint = `Twoja najstarsza moneta czeka już <span class="text-sun-600">${dWait} ${plural(dWait, 'dzień', 'dni', 'dni')}</span>. ` +
-        (nextMonth <= 6 ? `Następny schodek (+${Math.round(TIERS[nextMonth][1] * 100)}%) za <span class="text-mint-600">${daysLeft} ${plural(daysLeft, 'dzień', 'dni', 'dni')}</span>!` : '') +
-        (cyclesDone > 0 ? ` <br>Ukończone pełne rundy: <span class="text-grape-600">${cyclesDone}</span> – premia dołączyła do oszczędności i rośnie dalej!` : '');
-    }
-    $('ladderHint').innerHTML = hint;
-    $('tierText').textContent = TIERS.slice(1).map(([m, b]) => `${m} mies. → +${Math.round(b * 100)}%`).join(', ');
-  }
-
-  /* =====================================================================
-   *  8. MARZENIA
-   * ===================================================================== */
-  const starIcon = (fill) => `<svg viewBox="0 0 24 24" class="w-5 h-5"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.2l7.1-.6z" fill="${fill}" stroke="#d97706" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
-  const dreamImg = (i) => state.dreams[i].img || DEFAULT_IMG[i];
-
-  function renderDreams(total = totalAt(Date.now())) {
-    $('dreams').innerHTML = state.dreams.map((d, i) => {
-      const st = DREAM_STYLES[i];
-      const pct = Math.min(100, (total / d.price) * 100);
-      const left = Math.max(0, d.price - total);
-      const done = left <= 0;
-      return `<article class="brick ${st.bg} p-5 pt-8 flex flex-col">
-        <div class="studs ${st.stud}"><span></span><span></span><span></span></div>
-        <div class="flex items-center justify-between">
-          <span class="${st.chip} font-display font-extrabold text-sm px-3 py-1 rounded-full">${st.label}</span>
-          <span class="flex">${[1, 2, 3].map((k) => starIcon(k <= st.stars ? '#fcd34d' : '#ffffff')).join('')}</span>
-        </div>
-        <div class="relative mt-4 aspect-[4/3] rounded-3xl overflow-hidden bg-white ring-4 ring-white shadow-brickSm">
-          <img src="${esc(dreamImg(i))}" alt="${esc(d.name)}" class="w-full h-full object-cover" data-fallback="${i}" />
-          ${done ? `<div class="absolute inset-0 bg-sun-300/40 grid place-items-center"><div class="celebrate bg-white rounded-2xl px-4 py-2 font-display font-extrabold text-xl text-sun-700 shadow-brick">Hurra! Stać Cię!</div></div>` : ''}
-        </div>
-        <h3 class="font-display font-extrabold text-xl mt-4 leading-tight">${esc(d.name)}</h3>
-        <p class="font-bold text-ink/60">Kosztuje <span class="text-ink">${zlShort(d.price)}</span></p>
-        <div class="mt-3 h-6 bg-white rounded-full p-1 shadow-inner ring-2 ring-white">
-          <div class="progress-fill h-full rounded-full bg-gradient-to-r ${st.bar}" style="width:${Math.max(4, pct).toFixed(1)}%"></div>
-        </div>
-        <div class="mt-2 flex justify-between text-sm font-extrabold">
-          <span class="text-ink/70">${Math.floor(pct)}% zebrane</span>
-          <span class="${done ? 'text-mint-600' : 'text-berry-500'}">${done ? 'Masz już wszystko!' : 'Brakuje ' + zl(left)}</span>
-        </div>
-        <button data-edit="${i}" class="mt-4 self-start px-4 py-2 rounded-2xl text-white font-display font-bold ${st.btn} shadow-brickSm active:translate-y-0.5 flex items-center gap-2">
-          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg> Zmień
-        </button>
-      </article>`;
-    }).join('');
-
-    $('dreams').querySelectorAll('img[data-fallback]').forEach((img) => {
-      img.addEventListener('error', () => { const i = +img.dataset.fallback; if (img.src !== DEFAULT_IMG[i]) img.src = DEFAULT_IMG[i]; }, { once: true });
-    });
-    $('dreams').querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => openDream(+b.dataset.edit)));
-  }
-
-  // ---- edycja marzenia ----
-  let editIdx = 0, editImg = '';
-  function openDream(i) {
-    editIdx = i;
-    const d = state.dreams[i];
-    $('dreamDialogTitle').textContent = `Marzenie: ${DREAM_STYLES[i].label}`;
-    $('dName').value = d.name;
-    $('dPrice').value = d.price;
-    $('dUrl').value = d.img && !d.img.startsWith('data:') ? d.img : '';
-    editImg = d.img;
-    $('dPreview').src = d.img || DEFAULT_IMG[i];
-    $('dreamDialog').showModal();
-  }
-  $('dUrl').addEventListener('input', (e) => {
-    const v = e.target.value.trim();
-    editImg = v;
-    $('dPreview').src = v || DEFAULT_IMG[editIdx];
-  });
-  $('dPreview').addEventListener('error', () => { $('dPreview').src = DEFAULT_IMG[editIdx]; });
-  $('dResetImg').addEventListener('click', () => { editImg = ''; $('dUrl').value = ''; $('dPreview').src = DEFAULT_IMG[editIdx]; });
-  $('dFile').addEventListener('change', (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      // zmniejszamy obrazek, żeby zmieścił się w pamięci przeglądarki
-      const img = new Image();
-      img.onload = () => {
-        const max = 480, k = Math.min(1, max / Math.max(img.width, img.height));
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        editImg = c.toDataURL('image/jpeg', 0.82);
-        $('dPreview').src = editImg; $('dUrl').value = '';
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  });
-  $('dreamDialog').addEventListener('close', () => {
-    if ($('dreamDialog').returnValue !== 'save') return;
-    const price = parseFloat($('dPrice').value);
-    const dream = {
-      name: ($('dName').value.trim() || state.dreams[editIdx].name).slice(0, 40),
-      price: price > 0 ? Math.round(price * 100) / 100 : state.dreams[editIdx].price,
-      img: editImg || '',
-    };
-    actions.saveDream(editIdx, dream);
-  });
-
-  /* =====================================================================
-   *  9. SYMULATOR OSI CZASU
-   * ===================================================================== */
-  const SIM_DAYS = 365;
-
-  function simulate() {
-    const amt = Math.max(0, parseFloat(state.sim.amount) || 0);
-    const freq = state.sim.freq;
-    const now = Date.now();
-    const every = freq === 'week' ? 7 : freq === 'month' ? MONTH_DAYS : Infinity;
-    const future = [];
-    if (amt > 0) {
-      if (freq === 'once') future.push(0);
-      else for (let t = 0; t <= SIM_DAYS; t += every) future.push(t);
-    }
-    // wartość całkowita w dniu t (co 1 dzień)
-    const series = new Array(SIM_DAYS + 1);
-    for (let t = 0; t <= SIM_DAYS; t++) {
-      const at = now + t * DAY;
-      let v = totalAt(at);
-      for (const ft of future) if (ft <= t) v += valueAfter(amt, t - ft);
-      series[t] = v;
-    }
-    const hits = state.dreams.map((d) => {
-      const day = series.findIndex((v) => v >= d.price);
-      return { day, price: d.price, missing: day === -1 ? d.price - series[SIM_DAYS] : 0 };
-    });
-    const paidIn = future.length * amt;
-    return { series, hits, paidIn };
-  }
-
-  function treeSvg(color) {
-    return `<svg viewBox="0 0 40 56" class="w-full h-full" aria-hidden="true">
-      <rect x="17" y="34" width="6" height="22" rx="2" fill="#8b5a2b"/>
-      <circle cx="20" cy="22" r="16" fill="${color}"/><circle cx="11" cy="30" r="9" fill="${color}"/><circle cx="29" cy="30" r="9" fill="${color}"/>
-      <circle cx="14" cy="17" r="5" fill="#ffffff" opacity=".35"/>
-      <circle cx="26" cy="26" r="4" fill="#fcd34d" stroke="#d97706" stroke-width="1"/>
-    </svg>`;
-  }
-
-  function buildTimelineStatic() {
-    const seq = seasonSequence();
-    $('seasons').innerHTML = seq.map((key, i) => `<div class="relative overflow-hidden ${i < 3 ? 'border-r-4 border-white' : ''}">
-      ${SEASON_ART[key]()}
-      <span class="absolute top-3 left-3 ${SEASON_META[key].chip} font-display font-extrabold text-sm px-3 py-1 rounded-full shadow-brickSm">${SEASON_META[key].name}</span>
-    </div>`).join('');
-
-    // podpisy miesięcy
-    const start = new Date();
-    const monthsPl = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
-    $('monthTicks').innerHTML = Array.from({ length: 13 }, (_, m) => {
-      const d = new Date(start.getFullYear(), start.getMonth() + m, Math.min(start.getDate(), 28));
-      const label = m === 0 ? '' : m === 12 ? 'rok!' : monthsPl[d.getMonth()];
-      return `<span class="absolute -translate-x-1/2 ${m === 12 ? 'text-grape-600 font-extrabold' : ''}" style="left:${(m / 12) * 100}%">${label}</span>`;
-    }).join('');
-  }
-
-  function renderTimeline() {
-    const { series, hits, paidIn } = simulate();
-    const seq = seasonSequence();
-    const max = series[SIM_DAYS] || 1;
-    const min = series[0];
-
-    // drzewka rosnące razem z oszczędnościami
-    const treeColors = ['#4ade80', '#22c55e', '#34d399', '#10b981'];
-    $('axisTrees').innerHTML = Array.from({ length: 12 }, (_, k) => {
-      const day = Math.round(((k + 0.5) / 12) * SIM_DAYS);
-      const g = max > min ? (series[day] - min) / (max - min) : 0.5;
-      const size = 26 + g * 38;
-      return `<div class="absolute" style="left:${((k + 0.5) / 12) * 100}%; bottom:0; transform:translateX(-50%); width:${size}px; height:${size * 1.4}px">
-        <div class="axis-tree w-full h-full" style="transform:scale(1)">${treeSvg(treeColors[Math.floor(k / 3)])}</div></div>`;
-    }).join('');
-
-    // znaczniki marzeń (z rozkładaniem na „piętra”, gdy są blisko siebie)
-    const placed = [];
-    $('markers').innerHTML = hits.map((h, i) => {
-      if (h.day === -1) return '';
-      const pos = (h.day / SIM_DAYS) * 100;
-      let lane = 0;
-      while (placed.some((p) => p.lane === lane && Math.abs(p.pos - pos) < 24)) lane++;
-      placed.push({ pos, lane });
-      const st = DREAM_STYLES[i];
-      const season = seq[Math.min(3, Math.floor(h.day / (SIM_DAYS / 4)))];
-      // przy krawędziach osi dymek „przykleja się” do brzegu, żeby nie wystawał
-      const edge = pos < 12 ? 'left' : pos > 88 ? 'right' : 'mid';
-      const tx = edge === 'left' ? '0px' : edge === 'right' ? '-100%' : '-50%';
-      const px = edge === 'left' ? '22px' : edge === 'right' ? 'calc(100% - 22px)' : '50%';
-      return `<div class="marker absolute marker-hop" style="--tx:${tx}; left:${pos}%; bottom:14px; z-index:${10 - lane}; animation-delay:${i * .3}s">
-        <div class="marker-pin relative bg-white rounded-2xl p-1.5 pr-3 shadow-brick flex items-center gap-2" style="--pin:${st.pin}; --px:${px}; border:3px solid ${st.pin}; ${lane ? `transform: translateY(-${lane * 62}px)` : ''}">
-          <img src="${esc(dreamImg(i))}" alt="" class="w-10 h-10 rounded-xl object-cover" onerror="this.src='${DEFAULT_IMG[i]}'"/>
-          <div class="leading-tight">
-            <div class="font-display font-extrabold text-sm whitespace-nowrap max-w-[130px] truncate">${esc(state.dreams[i].name)}</div>
-            <div class="text-xs font-extrabold whitespace-nowrap" style="color:${st.pin}">${humanWait(h.day)} · ${SEASON_LOC[season]}</div>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-
-    $('markers').style.height = (90 + Math.max(0, ...placed.map((p) => p.lane)) * 62) + 'px';
-
-    // podsumowanie pod osią
-    $('simSummary').innerHTML = hits.map((h, i) => {
-      const st = DREAM_STYLES[i];
-      const d = state.dreams[i];
-      let txt;
-      if (h.day === 0) txt = `<span class="text-mint-600">Już możesz kupić!</span>`;
-      else if (h.day > 0) {
-        const date = new Date(Date.now() + h.day * DAY).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long' });
-        txt = `Spełnisz je <span style="color:${st.pin}">${humanWait(h.day)}</span> <span class="text-ink/50">(ok. ${date})</span>`;
-      } else txt = `W rok uzbierasz prawie wszystko – brakuje <span class="text-berry-500">${zl(h.missing)}</span>. Spróbuj wpłacać trochę więcej!`;
-      return `<div class="rounded-2xl ${st.bg} p-3 flex items-center gap-3 ring-2 ring-white shadow-brickSm">
-        <img src="${esc(dreamImg(i))}" alt="" class="w-12 h-12 rounded-xl object-cover shrink-0" onerror="this.src='${DEFAULT_IMG[i]}'"/>
-        <div class="text-sm font-bold leading-snug"><div class="font-display font-extrabold text-base">${esc(d.name)}</div>${txt}</div>
-      </div>`;
-    }).join('') + `<div class="sm:col-span-3 text-center font-display font-bold text-ink/70 bg-sun-50 rounded-2xl p-3">
-      Po roku będziesz mieć <span class="text-sun-600 font-extrabold text-xl">${zl(series[SIM_DAYS])}</span>
-      ${paidIn > 0 ? `· nowe wpłaty: ${zl(paidIn)}` : ''}
-      · Premia za cierpliwość dorzuci aż <span class="text-mint-600 font-extrabold">${zl(Math.max(0, series[SIM_DAYS] - depositedSum() - paidIn))}</span>!
-    </div>`;
-  }
-
-  // sterowanie symulatorem
-  function syncFreqButtons() {
-    document.querySelectorAll('.freqBtn').forEach((b) => {
-      const on = b.dataset.freq === state.sim.freq;
-      b.setAttribute('aria-checked', on);
-      b.setAttribute('role', 'radio');
-      b.className = 'freqBtn px-3 py-2 rounded-xl font-bold text-sm transition ' + (on ? 'bg-grape-500 text-white shadow-brickSm' : 'text-grape-700 hover:bg-grape-100');
-    });
-  }
-  $('simAmount').value = state.sim.amount;
-  $('simAmount').addEventListener('input', (e) => {
-    state.sim.amount = Math.max(0, parseFloat(e.target.value) || 0);
-    save(); renderTimeline();
-  });
-  document.querySelectorAll('.stepBtn').forEach((b) => b.addEventListener('click', () => {
-    const v = Math.max(0, (parseFloat($('simAmount').value) || 0) + Number(b.dataset.step));
-    $('simAmount').value = v; state.sim.amount = v; save(); renderTimeline();
-  }));
-  document.querySelectorAll('.freqBtn').forEach((b) => b.addEventListener('click', () => {
-    state.sim.freq = b.dataset.freq; save(); syncFreqButtons(); renderTimeline();
-  }));
-
-  /* =====================================================================
-   *  10. KOMUNIKATY + AKCJE (lokalnie albo przez wspólną bazę)
-   * ===================================================================== */
-  let toastTimer = null;
-  function toast(msg, kind = 'info') {
-    const t = $('toast');
-    (document.querySelector('dialog[open]') || document.body).appendChild(t); // nad otwartym oknem
-    t.textContent = msg;
-    t.className = 'toast-in fixed bottom-5 left-1/2 z-[60] max-w-[calc(100vw-32px)] px-5 py-3 rounded-2xl font-bold shadow-brick ' +
-      (kind === 'error' ? 'bg-berry-100 text-berry-600' : 'bg-mint-100 text-mint-700');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.add('hidden'), 4000);
-  }
-
-  async function rpc(fn, args) {
-    const { data, error } = await sb.rpc(fn, args || {});
-    if (error) throw new Error(error.message || 'Błąd połączenia');
-    return data;
-  }
-
-  // Każda akcja: blokada podwójnego kliknięcia + komunikat o błędzie
-  let busy = false;
-  async function run(fn) {
-    if (busy) return;
-    busy = true; document.body.style.cursor = 'progress';
-    try { await fn(); }
-    catch (e) { console.error(e); toast(e.message && !/fetch/i.test(e.message) ? e.message : 'Brak połączenia z bankiem. Spróbuj za chwilę.', 'error'); }
-    finally { busy = false; document.body.style.cursor = ''; }
-  }
-
-  const DEFAULT_DREAMS = demoState().dreams;
-  function applyServer(js) {
-    state.kidName = js.kid.name;
-    state.deposits = (js.deposits || []).map((d) => ({ id: d.id, ts: Date.parse(d.ts), amount: Number(d.amount) }));
-    state.dreams = [0, 1, 2].map((i) => {
-      const r = (js.dreams || []).find((x) => Number(x.slot) === i);
-      return r ? { name: r.name, price: Number(r.price), img: r.img || '' } : { ...DEFAULT_DREAMS[i] };
-    });
-    state.withdrawals = (js.withdrawals || []).map((w) => ({ ts: Date.parse(w.ts), amount: Number(w.amount) }));
-    remoteVersion = js.version;
-  }
-
-  async function reload(fromPoll = false) {
-    const before = totalAt(Date.now());
-    const js = mode === 'kid'
-      ? await rpc('kid_state_by_token', { p_token: kidToken })
-      : await rpc('kid_state', { p_kid: currentKidId });
-    if (!js) throw new Error('Nie znaleziono skarbca');
-    applyServer(js);
-    renderName(); renderAll(true);
-    if ($('parentDialog').open) renderDepList();
-    const diff = totalAt(Date.now()) - before;
-    if (fromPoll && diff > 0.5) { spawnCoin('+' + zl(diff)); toast('Nowa wpłata w skarbcu: +' + zl(diff)); }
-  }
-
-  function planWithdrawal(w) {
-    const now = Date.now(), changes = [];
-    const sorted = [...state.deposits].sort((a, b) => b.ts - a.ts); // od najmłodszych
-    for (const d of sorted) {
-      if (w <= 1e-9) break;
-      const v = valueAfter(d.amount, ageDays(d.ts, now));
-      if (v <= w + 1e-9) { w -= v; changes.push({ id: d.id, amount: 0 }); }
-      else { changes.push({ id: d.id, amount: d.amount * (v - w) / v }); w = 0; }
-    }
-    return changes;
-  }
-
-  const actions = {
-    addDeposit: (amount, ts) => run(async () => {
-      if (mode === 'local') { state.deposits.push({ id: uid(), ts, amount }); save(); renderAll(true); renderDepList(); }
-      else { await rpc('add_deposit', { p_kid: currentKidId, p_amount: amount, p_ts: new Date(ts).toISOString() }); await reload(); }
-      spawnCoin('+' + zl(amount)); toast('Wpłacono ' + zl(amount));
-    }),
-    deleteDeposit: (id) => run(async () => {
-      if (mode === 'local') { state.deposits = state.deposits.filter((d) => d.id !== id); save(); renderAll(true); renderDepList(); }
-      else { await rpc('delete_deposit', { p_id: id }); await reload(); }
-    }),
-    withdraw: (amount) => run(async () => {
-      const changes = planWithdrawal(amount);
-      if (mode === 'local') {
-        changes.forEach((c) => { const d = state.deposits.find((x) => x.id === c.id); if (d) d.amount = c.amount; });
-        state.deposits = state.deposits.filter((d) => d.amount > 1e-6);
-        state.withdrawals = [{ ts: Date.now(), amount }, ...(state.withdrawals || [])];
-        save(); renderAll(true); renderDepList();
-      } else { await rpc('apply_withdrawal', { p_kid: currentKidId, p_amount: amount, p_changes: changes }); await reload(); }
-      $('wdAmount').value = ''; toast('Wypłacono ' + zl(amount) + '. Gratulacje z okazji spełnionego marzenia!');
-    }),
-    saveDream: (i, d) => run(async () => {
-      if (mode === 'local') { state.dreams[i] = d; save(); renderAll(); return; }
-      const args = { p_slot: i, p_name: d.name, p_price: d.price, p_img: d.img || null };
-      if (mode === 'kid') await rpc('save_dream_by_token', { p_token: kidToken, ...args });
-      else await rpc('save_dream', { p_kid: currentKidId, ...args });
-      await reload(); toast('Marzenie zapisane!');
-    }),
-    renameKid: (name) => run(async () => {
-      if (mode === 'local') { state.kidName = name; save(); renderName(); return; }
-      await rpc('rename_kid', { p_kid: currentKidId, p_name: name });
-      family = await rpc('my_family'); await reload(); renderModeUI();
-    }),
-  };
-
-  /* =====================================================================
-   *  11. STREFA RODZICA
-   * ===================================================================== */
-  let gateAnswer = 0;
-  function newGate() {
-    const a = 6 + Math.floor(Math.random() * 7), b = 6 + Math.floor(Math.random() * 7);
-    gateAnswer = a * b;
-    $('gateQ').textContent = `${a} × ${b}`;
-    $('gateA').value = ''; $('gateErr').classList.add('hidden');
-  }
-  function openParentPanel() {
-    $('gate').classList.add('hidden'); $('parentPanel').classList.remove('hidden');
-    renderFamilyBox(); renderDepList();
-  }
-  $('parentBtn').addEventListener('click', () => {
-    $('depDate').value = new Date().toISOString().slice(0, 10);
-    $('cloudCta').classList.toggle('hidden', !(cloudReady && mode === 'local'));
-    $('localTools').classList.toggle('hidden', mode !== 'local');
-    $('parentDialog').showModal();
-    if (mode === 'parent') { openParentPanel(); return; } // zalogowany rodzic – bez zagadki
-    newGate();
-    $('gate').classList.remove('hidden'); $('parentPanel').classList.add('hidden');
-    setTimeout(() => $('gateA').focus(), 50);
-  });
-  $('parentClose').addEventListener('click', () => $('parentDialog').close());
-  function tryGate() {
-    if (Number($('gateA').value) === gateAnswer) openParentPanel();
-    else $('gateErr').classList.remove('hidden');
-  }
-  $('gateBtn').addEventListener('click', tryGate);
-  $('gateA').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryGate(); });
-  $('cloudCtaBtn').addEventListener('click', () => { $('parentDialog').close(); openAuth('signup'); });
-
-  const kidLink = (token) => `${location.origin}${location.pathname}?dziecko=${token}`;
-
-  function renderFamilyBox() {
-    const box = $('familyBox');
-    if (mode !== 'parent' || !family) { box.classList.add('hidden'); return; }
-    box.classList.remove('hidden');
-    const kid = family.kids.find((k) => k.id === currentKidId) || family.kids[0];
-    box.innerHTML = `
-      <div class="bg-sun-50 rounded-2xl p-4">
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-sm font-bold text-ink/60 mr-1">Skarbiec dziecka:</span>
-          ${family.kids.map((k) => `<button data-kid="${k.id}" class="px-3 py-1.5 rounded-xl font-display font-extrabold text-sm ${k.id === currentKidId ? 'bg-sun-400 text-ink shadow-brickSm' : 'bg-white text-ink/60 hover:bg-sun-100'}">${esc(k.name)}</button>`).join('')}
-          <button id="addKidBtn" class="px-3 py-1.5 rounded-xl font-bold text-sm text-sun-700 hover:bg-sun-100">+ dodaj dziecko</button>
-        </div>
-      </div>
-      <div class="bg-mint-50 rounded-2xl p-4">
-        <p class="font-display font-extrabold">Magiczny link dla: ${esc(kid.name)}</p>
-        <p class="text-xs font-semibold text-ink/60">Otwórz go na urządzeniu dziecka (albo zeskanuj kod aparatem). Dziecko widzi swój skarbiec i może zmieniać marzenia, ale nie może wpłacać ani wypłacać.</p>
-        <div class="mt-3 flex gap-3 items-start">
-          <div id="kidQr" class="w-28 h-28 shrink-0 bg-white rounded-xl p-1.5 ring-2 ring-mint-200"></div>
-          <div class="flex-1 min-w-0 grid gap-2">
-            <input id="kidLinkInput" readonly value="${esc(kidLink(kid.view_token))}" class="w-full rounded-xl bg-white ring-2 ring-mint-200 px-3 py-2 text-xs font-bold text-ink/70" />
-            <div class="flex flex-wrap gap-2">
-              <button id="copyLinkBtn" class="px-3 py-1.5 rounded-xl bg-mint-500 hover:bg-mint-600 text-white font-bold text-sm">Kopiuj link</button>
-              <button id="newLinkBtn" class="px-3 py-1.5 rounded-xl bg-white hover:bg-mint-100 text-mint-700 font-bold text-sm" title="Stary link przestanie działać">Nowy link</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-sky-50 rounded-2xl p-4 text-sm font-semibold text-ink/70">
-        <span class="font-display font-extrabold text-ink">Drugi rodzic?</span> Niech założy konto i wpisze kod rodziny:
-        <span class="font-display font-extrabold text-lg tracking-widest text-sky-700 bg-white rounded-lg px-2 py-0.5 ml-1">${esc(family.join_code)}</span>
-        <span class="block text-xs mt-1">Rodziców w rodzinie: ${family.members}</span>
-      </div>
-      <div class="flex justify-between items-center text-sm font-bold text-ink/50">
-        <span>Zalogowano: ${esc(userEmail)}</span>
-        <button id="logoutBtn" class="underline hover:text-berry-500">Wyloguj</button>
-      </div>`;
-
-    try {
-      if (window.QRCode) new QRCode($('kidQr'), { text: kidLink(kid.view_token), width: 256, height: 256, colorDark: '#2b3a55', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-    } catch (e) { /* QR jest tylko dodatkiem */ }
-
-    box.querySelectorAll('[data-kid]').forEach((b) => b.addEventListener('click', () => run(async () => {
-      currentKidId = b.dataset.kid; lsSet('rb.kidId', currentKidId);
-      await reload(); renderModeUI(); renderFamilyBox();
-    })));
-    $('addKidBtn').addEventListener('click', () => {
-      const n = prompt('Jak ma na imię dziecko?');
-      if (!n || !n.trim()) return;
-      run(async () => {
-        family = await rpc('add_kid', { p_name: n.trim().slice(0, 30) });
-        currentKidId = family.kids[family.kids.length - 1].id; lsSet('rb.kidId', currentKidId);
-        await reload(); renderModeUI(); renderFamilyBox();
-      });
-    });
-    $('copyLinkBtn').addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText($('kidLinkInput').value); toast('Link skopiowany!'); }
-      catch (e) { $('kidLinkInput').select(); toast('Zaznaczyłem link – skopiuj go ręcznie.'); }
-    });
-    $('newLinkBtn').addEventListener('click', () => {
-      if (!confirm('Utworzyć nowy link? Stary przestanie działać na urządzeniach dziecka.')) return;
-      run(async () => { await rpc('regenerate_kid_link', { p_kid: currentKidId }); family = await rpc('my_family'); renderFamilyBox(); toast('Nowy link gotowy.'); });
-    });
-    $('logoutBtn').addEventListener('click', logout);
-  }
-
-  function renderDepList() {
-    const now = Date.now();
-    const rows = [...state.deposits].sort((a, b) => b.ts - a.ts);
-    $('depList').innerHTML = rows.length ? rows.map((d) => {
-      const v = valueAfter(d.amount, ageDays(d.ts, now));
-      return `<tr class="border-t border-sky-100">
-        <td class="p-2 pl-3">${new Date(d.ts).toLocaleDateString('pl-PL')}</td>
-        <td class="p-2 text-right">${zl(d.amount)}</td>
-        <td class="p-2 text-right text-mint-600">+${nf2.format(((v / d.amount) - 1) * 100)}%</td>
-        <td class="p-2 text-right">${zl(v)}</td>
-        <td class="p-2 text-right"><button data-del="${esc(d.id)}" class="w-7 h-7 rounded-lg hover:bg-berry-100 text-berry-500" aria-label="Usuń wpłatę">×</button></td>
-      </tr>`;
-    }).join('') : `<tr><td colspan="5" class="p-4 text-center text-ink/50">Brak wpłat</td></tr>`;
-    $('depList').querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => {
-      if (confirm('Usunąć tę wpłatę?')) actions.deleteDeposit(b.dataset.del);
-    }));
-    const wds = state.withdrawals || [];
-    $('wdList').innerHTML = wds.length ? `<p class="text-xs font-bold text-ink/50 mb-1">Wypłaty na spełnione marzenia:</p>
-      <div class="flex flex-wrap gap-2">${wds.slice(0, 8).map((w) => `<span class="text-xs font-bold bg-berry-50 text-berry-600 rounded-lg px-2 py-1">${new Date(w.ts).toLocaleDateString('pl-PL')} · −${zl(w.amount)}</span>`).join('')}</div>` : '';
-  }
-
-  $('depForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const amount = Math.round(parseFloat($('depAmount').value) * 100) / 100;
-    if (!(amount > 0)) return;
-    const [y, m, d] = $('depDate').value.split('-').map(Number);
-    let ts = new Date(y, m - 1, d, 12).getTime();
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (!(ts < today.getTime())) ts = Date.now(); // dzisiejsza wpłata liczy się od teraz
-    actions.addDeposit(amount, ts);
-  });
-
-  $('wdForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const w = parseFloat($('wdAmount').value);
-    const total = totalAt(Date.now());
-    if (!(w > 0)) return;
-    if (w > total + 1e-9) { alert('W skarbcu jest tylko ' + zl(total) + '.'); return; }
-    actions.withdraw(Math.round(w * 100) / 100);
-  });
-
-  $('demoBtn').addEventListener('click', () => {
-    if (!confirm('Zastąpić obecne dane przykładowymi?')) return;
-    const keepDreams = state.dreams, sim = state.sim;
-    state = demoState(); state.dreams = keepDreams; state.sim = sim;
-    save(); renderAll(true); renderDepList(); renderName();
-  });
-  $('clearBtn').addEventListener('click', () => {
-    if (!confirm('Na pewno usunąć wszystkie wpłaty?')) return;
-    state.deposits = []; state.withdrawals = []; save(); renderAll(true); renderDepList();
-  });
-
-  // imię dziecka
-  function renderName() { $('kidName').textContent = state.kidName || 'Skarbniku'; }
-  $('kidNameBtn').addEventListener('click', () => {
-    if (mode === 'kid') { toast('Imię może zmienić Rodzic w Strefie Rodzica.'); return; }
-    const n = prompt('Jak masz na imię?', state.kidName === 'Skarbniku' ? '' : state.kidName);
-    if (n !== null && n.trim()) actions.renameKid(n.trim().slice(0, 20));
-  });
-
-  /* =====================================================================
-   *  12. KONTA, TRYBY I SYNCHRONIZACJA
-   * ===================================================================== */
-  function renderModeUI() {
-    const bar = $('modeBar');
-    let html = '';
-    if (mode === 'parent' && family) {
-      if (family.kids.length > 1) {
-        html += family.kids.map((k) => `<button data-tab="${k.id}" class="px-3 py-1.5 rounded-2xl font-display font-extrabold text-sm ${k.id === currentKidId ? 'bg-white shadow-brickSm text-ink' : 'text-ink/50 hover:bg-white/60'}">${esc(k.name)}</button>`).join('');
-      }
-      html += `<span class="ml-auto text-xs font-bold text-mint-700 bg-mint-100 rounded-full px-3 py-1">Wspólny bank rodziny · widok Rodzica</span>`;
-    } else if (mode === 'local') {
-      html += `<span class="ml-auto text-xs font-bold text-ink/50 bg-white/70 rounded-full px-3 py-1">Tryb próbny – dane tylko na tym urządzeniu${cloudReady ? ' · <button id="modeLogin" class="underline text-grape-600">Zaloguj się</button>' : ''}</span>`;
-    }
-    bar.innerHTML = html;
-    bar.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => run(async () => {
-      currentKidId = b.dataset.tab; lsSet('rb.kidId', currentKidId); await reload(); renderModeUI();
-    })));
-    const ml = $('modeLogin'); if (ml) ml.addEventListener('click', () => openAuth('login'));
-
-    $('parentBtn').classList.toggle('hidden', mode === 'kid');
-    $('unlinkBtn').classList.toggle('hidden', mode !== 'kid');
-    $('kidNameBtn').title = mode === 'kid' ? '' : 'Zmień imię';
-    $('footerText').textContent = mode === 'local'
-      ? 'Rodzinobank · domowa szkoła oszczędzania · dane zapisują się tylko na tym urządzeniu'
-      : 'Rodzinobank · domowa szkoła oszczędzania · wspólny skarbiec rodziny';
-  }
-
-  let pollTimer = null;
-  function startPolling() {
-    clearInterval(pollTimer);
-    pollTimer = setInterval(async () => {
-      if (mode === 'local' || busy || document.visibilityState !== 'visible') return;
-      try {
-        const v = mode === 'kid'
-          ? await rpc('kid_version_by_token', { p_token: kidToken })
-          : await rpc('kid_version', { p_kid: currentKidId });
-        if (v !== remoteVersion) await reload(true);
-      } catch (e) { /* chwilowy brak sieci – spróbujemy za moment */ }
-    }, 15000);
-  }
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && mode !== 'local') reload(true).catch(() => {});
-  });
-
-  function showWelcome(err) {
-    $('welcome').classList.remove('hidden');
-    $('wError').classList.toggle('hidden', !err);
-    if (err) $('wError').textContent = err;
-  }
-  const hideWelcome = () => $('welcome').classList.add('hidden');
-  $('wParent').addEventListener('click', () => openAuth('login'));
-  $('wKid').addEventListener('click', () => $('wKidInfo').classList.toggle('hidden'));
-  $('wLocal').addEventListener('click', () => { lsSet('rb.mode', 'local'); enterLocal(); });
-
-  function enterLocal() {
-    mode = 'local'; state = load(); state.sim = loadSim();
-    hideWelcome(); renderName(); renderAll(true); renderModeUI();
-  }
-
-  async function enterParent(session) {
-    userEmail = (session && session.user && session.user.email) || '';
-    mode = 'parent';
-    family = await rpc('my_family');
-    if (!family) { hideWelcome(); renderModeUI(); $('onboardDialog').showModal(); return; }
-    const saved = lsGet('rb.kidId');
-    currentKidId = (family.kids.find((k) => k.id === saved) || family.kids[0]).id;
-    await reload();
-    hideWelcome(); renderModeUI(); startPolling();
-  }
-
-  async function enterKid(token) {
-    mode = 'kid'; kidToken = token;
-    try { await reload(); }
-    catch (e) {
-      mode = 'local'; kidToken = null; lsDel('rb.kidToken');
-      showWelcome(/fetch/i.test(e.message) ? 'Brak połączenia z bankiem. Sprawdź internet i odśwież stronę.' : e.message);
-      return;
-    }
-    hideWelcome(); renderModeUI(); startPolling();
-  }
-
-  async function logout() {
-    try { await sb.auth.signOut(); } catch (e) { /* i tak czyścimy */ }
-    lsDel('rb.kidId'); lsDel('rb.mode');
-    location.reload();
-  }
-  $('obLogout').addEventListener('click', logout);
-  $('unlinkBtn').addEventListener('click', () => {
-    if (!confirm('Odłączyć to urządzenie od skarbca? Będzie potrzebny nowy link od Rodzica.')) return;
-    lsDel('rb.kidToken'); location.reload();
-  });
-
-  // --- onboarding ---
-  $('obCreate').addEventListener('submit', (e) => {
-    e.preventDefault();
-    run(async () => {
-      family = await rpc('create_family', { p_kid_name: $('obKid').value.trim().slice(0, 30) });
-      $('onboardDialog').close();
-      await enterParent((await sb.auth.getSession()).data.session);
-      toast('Skarbiec założony! W Strefie Rodzica znajdziesz link dla dziecka.');
-    });
-  });
-  $('obJoin').addEventListener('submit', (e) => {
-    e.preventDefault();
-    run(async () => {
-      family = await rpc('join_family', { p_code: $('obCode').value.trim() });
-      $('onboardDialog').close();
-      await enterParent((await sb.auth.getSession()).data.session);
-      toast('Dołączono do rodziny!');
-    });
-  });
-  $('onboardDialog').addEventListener('cancel', (e) => e.preventDefault());
-
-  // --- logowanie ---
-  let authMode = 'login';
-  function setAuthMode(m) {
-    authMode = m;
-    document.querySelectorAll('.authTab').forEach((b) => {
-      b.className = 'authTab flex-1 py-2 rounded-xl font-bold ' + (b.dataset.auth === m ? 'bg-white shadow-brickSm text-ink' : 'text-ink/50');
-    });
-    $('authSubmit').textContent = m === 'login' ? 'Zaloguj' : 'Załóż konto';
-    $('authPass').autocomplete = m === 'login' ? 'current-password' : 'new-password';
-    $('authForgot').classList.toggle('invisible', m !== 'login');
-    authMsg('');
-  }
-  function authMsg(text, kind = 'error') {
-    const el = $('authMsg');
-    el.classList.toggle('hidden', !text);
-    el.textContent = text;
-    el.className = 'mt-3 text-sm font-bold rounded-2xl p-3 ' + (text ? '' : 'hidden ') + (kind === 'error' ? 'bg-berry-50 text-berry-600' : 'bg-mint-50 text-mint-700');
-  }
-  function openAuth(m) {
-    if (!cloudReady) { toast('Wspólna baza nie jest jeszcze podłączona (brak klucza w pliku).', 'error'); return; }
-    setAuthMode(m); $('authDialog').showModal(); setTimeout(() => $('authEmail').focus(), 50);
-  }
-  document.querySelectorAll('.authTab').forEach((b) => b.addEventListener('click', () => setAuthMode(b.dataset.auth)));
-  $('authClose').addEventListener('click', () => $('authDialog').close());
-  const plAuthError = (m) => /invalid login/i.test(m) ? 'Nieprawidłowy e-mail lub hasło.'
-    : /not confirmed/i.test(m) ? 'Najpierw potwierdź e-mail – kliknij link w wiadomości od nas.'
-    : /already registered/i.test(m) ? 'To konto już istnieje – zaloguj się.'
-    : /password/i.test(m) && /6|8|weak|short/i.test(m) ? 'Hasło jest za słabe – użyj co najmniej 8 znaków.'
-    : /rate limit/i.test(m) ? 'Za dużo prób. Odczekaj chwilę.' : m;
-
-  $('authForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = $('authEmail').value.trim(), password = $('authPass').value;
-    $('authSubmit').disabled = true; authMsg('');
-    try {
-      if (authMode === 'login') {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        $('authDialog').close(); await enterParent(data.session);
-      } else {
-        const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } });
-        if (error) throw error;
-        if (data.session) { $('authDialog').close(); await enterParent(data.session); }
-        else authMsg('Prawie gotowe! Wysłaliśmy e-mail – kliknij w nim link, a potem zaloguj się tutaj.', 'ok');
-      }
-    } catch (err) { authMsg(plAuthError(err.message || String(err))); }
-    finally { $('authSubmit').disabled = false; }
-  });
-  $('authForgot').addEventListener('click', async () => {
-    const email = $('authEmail').value.trim();
-    if (!email) { authMsg('Wpisz najpierw swój e-mail.'); return; }
-    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-    authMsg(error ? plAuthError(error.message) : 'Wysłaliśmy link do ustawienia nowego hasła.', error ? 'error' : 'ok');
-  });
-
-  if (sb) {
-    sb.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setTimeout(async () => {
-          const np = prompt('Wpisz nowe hasło (min. 8 znaków):');
-          if (!np) return;
-          const { error } = await sb.auth.updateUser({ password: np });
-          toast(error ? plAuthError(error.message) : 'Hasło zmienione!', error ? 'error' : 'info');
-        }, 0);
-      }
-    });
-  }
-
-  /* =====================================================================
-   *  13. START
-   * ===================================================================== */
-  function renderAll(resetCounter = false) {
-    const total = totalAt(Date.now());
-    if (resetCounter) { animateCounter(shownTotal, total, 900); lastTickTotal = total; }
-    renderStats(total);
-    renderLadder();
-    renderDreams(total);
-    renderTimeline();
-  }
-
-  state.sim = loadSim();
-  $('simAmount').value = state.sim.amount;
-  buildMine();
-  buildTimelineStatic();
-  syncFreqButtons();
-  renderName();
-  renderCounter(shownTotal);
-  renderAll();
-  renderModeUI();
-
-  async function boot() {
-    const params = new URLSearchParams(location.search);
-    const t = params.get('dziecko');
-    if (t) {
-      lsSet('rb.kidToken', t);
-      params.delete('dziecko');
-      history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash);
-    }
-    if (!cloudReady) { enterLocal(); return; }
-    const token = t || lsGet('rb.kidToken');
-    if (token && /^[0-9a-f-]{36}$/i.test(token)) { await enterKid(token); return; }
-    const { data } = await sb.auth.getSession();
-    if (data && data.session) {
-      try { await enterParent(data.session); }
-      catch (e) { showWelcome('Nie udało się połączyć z bankiem: ' + e.message); }
-      return;
-    }
-    if (lsGet('rb.mode') === 'local') { enterLocal(); return; }
-    showWelcome();
-  }
-  boot();
-
-  // co 10 sekund dopisujemy mikro-odsetki i wypuszczamy monetę
-  setInterval(liveTick, 10000);
-  // co minutę odświeżamy paski marzeń i schody
-  setInterval(() => { const t = totalAt(Date.now()); renderLadder(); renderDreams(t); }, 60000);
-  // pierwsza moneta szybko, żeby od razu było widać efekt
-  setTimeout(liveTick, 2500);
-})();
 </script>
+<script type="module" src="./src/groszaki/app.js"></script>
 </body>
 </html>
