@@ -449,12 +449,23 @@ function viewHistoria() {
       <button class="link" data-go="adjustment">${esc(t('rz.poprawSaldo'))}</button></p>`;
 }
 
+// Suwak z podpisem i bieżącą wartością. Zakres rośnie, gdy obecna wartość
+// jest większa niż domyślne maksimum (np. stara stawka 12%).
+function slider({ name, label, value, min, max, step, unit }) {
+  const top = Math.max(max, Math.ceil(value / step) * step);
+  return `<label class="field slider"><span>${esc(label)} <output data-for="${name}"></output></span>
+    <input type="range" name="${name}" min="${min}" max="${top}" step="${step}" value="${value}" data-unit="${unit}"></label>`;
+}
+
 function tabOprocentowanie() {
   const n = now();
   const r = ratesAt(S().events, n);
   const future = S().events.filter((e) => e.type === 'rate' && e.ts > n).sort((a, b) => a.ts - b.ts);
   const tomorrow = dayToIso(dayOf(n) + 1);
-  return `<div class="card"><h4>${esc(t('st.obecne'))}</h4>
+  const pct = (x) => Math.round(x * 1000) / 10;
+  return `<div class="ks-tip"><img src="${BASE}ksiegowy/wskazuje.webp" alt="" width="72" height="72">
+      <div class="ks-bubble"><p>${esc(t('st.ks.szybciej'))}</p><p>${esc(t('st.ks.wolniej'))}</p><p><b>${esc(t('st.ks.rodzic'))}</b></p></div></div>
+    <div class="card"><h4>${esc(t('st.obecne'))}</h4>
       <p style="margin:2px 0">${esc(t('st.dolnaCzesc', { prog: moneyRound(r.threshold), stawka: fmtPct.format(r.low) }))}</p>
       <p style="margin:2px 0">${esc(t('st.gornaCzesc', { prog: moneyRound(r.threshold), stawka: fmtPct.format(r.high) }))}</p></div>
     ${future.length ? `<div class="card"><h4>${esc(t('st.zaplanowane'))}</h4><div class="list">${future.map((e) => `<div class="item">
@@ -462,17 +473,16 @@ function tabOprocentowanie() {
       <button class="btn light small" data-del="${esc(e.id)}">${esc(t('st.cofnij'))}</button></div>`).join('')}</div></div>` : ''}
     <div class="card"><h4>${esc(t('st.nowe'))}</h4>
       <form id="rateForm">
-        <div class="row">
-          <label class="field"><span>${esc(t('st.niska'))}</span><input name="low" inputmode="decimal" value="${(r.low * 100).toString().replace('.', ',')}" required></label>
-          <label class="field"><span>${esc(t('st.wysoka'))}</span><input name="high" inputmode="decimal" value="${(r.high * 100).toString().replace('.', ',')}" required></label>
-        </div>
-        <div class="row">
-          <label class="field"><span>${esc(t('st.prog'))}</span><input name="prog" inputmode="decimal" value="${r.threshold / 1e6}" required></label>
-          <label class="field"><span>${esc(t('st.od'))}</span><input name="od" type="date" min="${tomorrow}" value="${tomorrow}" required></label>
-        </div>
+        ${slider({ name: 'low', label: t('st.niska'), value: pct(r.low), min: 0, max: 10, step: 0.5, unit: '%' })}
+        ${slider({ name: 'prog', label: t('st.prog'), value: Math.round(r.threshold / 1e6), min: 0, max: 5000, step: 50, unit: 'zł' })}
+        ${slider({ name: 'high', label: t('st.wysoka'), value: pct(r.high), min: 0, max: 10, step: 0.5, unit: '%' })}
+        <p class="rate-preview" id="ratePreview"></p>
+        <label class="field"><span>${esc(t('st.od'))}</span><input name="od" type="date" min="${tomorrow}" value="${tomorrow}" required></label>
         <p class="note">${esc(t('st.podpowiedz'))}</p>
         <button class="btn">${esc(t('op.zapisz'))}</button>
-      </form></div>`;
+      </form></div>
+    <!-- Miejsce na przyszły baner partnera (np. lokata dla rodzica). Pusty i ukryty, dopóki nie ma umowy. -->
+    <aside class="promo-slot" data-slot="oprocentowanie" hidden></aside>`;
 }
 
 function tabRegularne() {
@@ -481,7 +491,7 @@ function tabRegularne() {
     <div class="list">${plans.length ? plans.map((p) => `<div class="item"><span><b>${esc(money(p.amount))}</b> ${esc(t('pl.' + p.every))} · ${esc(t('pl.od'))} ${esc(formatDate(p.startDay))}</span>
       <button class="x" data-delplan="${esc(p.id)}" aria-label="×">×</button></div>`).join('') : `<p class="note">${esc(t('pl.brak'))}</p>`}</div>
     <div class="card"><form id="planForm"><div class="row">
-      <label class="field"><span>${esc(t('op.kwota'))}</span><input name="kwota" inputmode="decimal" required placeholder="10"></label>
+      ${slider({ name: 'kwota', label: t('op.kwota'), value: 10, min: 5, max: 200, step: 5, unit: 'zł' })}
       <label class="field"><span>&nbsp;</span><select name="every">${['week', '2weeks', 'month'].map((k) => `<option value="${k}">${esc(t('pl.' + k))}</option>`).join('')}</select></label>
       <label class="field"><span>${esc(t('pl.od'))}</span><input name="od" type="date" value="${todayIso()}" required></label>
       <button class="btn">${esc(t('pl.dodaj'))}</button></div></form></div>`;
@@ -603,14 +613,36 @@ function bindParent(sec) {
     });
   }
   const rf = sec.querySelector('#rateForm');
+  if (rf) {
+    const fmt1 = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 1 });
+    const showRates = () => {
+      sec.querySelectorAll('input[type="range"]').forEach((i) => {
+        const out = sec.querySelector(`output[data-for="${i.name}"]`);
+        if (out) out.textContent = `${fmt1.format(Number(i.value))} ${i.dataset.unit}`;
+      });
+      // Ile Groszaki zarobią w miesiąc przy obecnym saldzie – tyle rodzic dołoży z własnej kieszeni.
+      const bal = balanceAt(S().events, now());
+      const thr = Number(rf.prog.value) * 1e6;
+      const month = Math.min(bal, thr) * Number(rf.low.value) / 100 + Math.max(0, bal - thr) * Number(rf.high.value) / 100;
+      $('ratePreview').textContent = t('st.podglad', { saldo: moneyRound(bal), kwota: money(month) });
+    };
+    rf.addEventListener('input', showRates);
+    showRates();
+  }
   rf?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const low = Number(rf.low.value.replace(',', '.')) / 100;
-    const high = Number(rf.high.value.replace(',', '.')) / 100;
-    const thr = parseZl(rf.prog.value);
+    const low = Number(rf.low.value) / 100;
+    const high = Number(rf.high.value) / 100;
+    const thr = Math.round(Number(rf.prog.value)) * 1e6;
     run(async () => { await store.setRates(isoToDay(rf.od.value), low, high, thr); afterChange(balanceAt(S().events, now())); toast(t('op.zapisano')); });
   });
   const pf = sec.querySelector('#planForm');
+  if (pf) {
+    const out = pf.querySelector('output[data-for="kwota"]');
+    const show = () => { out.textContent = `${pf.kwota.value} zł`; };
+    pf.kwota.addEventListener('input', show);
+    show();
+  }
   pf?.addEventListener('submit', (e) => {
     e.preventDefault();
     run(async () => {
