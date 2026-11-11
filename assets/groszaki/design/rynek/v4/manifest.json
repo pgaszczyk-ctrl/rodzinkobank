@@ -1,0 +1,665 @@
+{
+  "worldSize": [
+    2000,
+    1116
+  ],
+  "map": "../../../zrodla/mapa-jesien.jpg",
+  "cameras": {
+    "mapa": [
+      0,
+      0,
+      2000,
+      1116
+    ],
+    "rynek": [
+      555,
+      516,
+      370,
+      278
+    ],
+    "stanowisko": [
+      620,
+      706,
+      90,
+      68
+    ],
+    "jablko": [
+      696,
+      650,
+      115,
+      86
+    ]
+  },
+  "units": {
+    "localPosition": "map-px relative to parent origin, or absolute when parentId is null",
+    "pivot": "source-px",
+    "rotation": "degrees",
+    "anchors": "map-px relative to parent origin"
+  },
+  "anchors": {
+    "shoulderRight": {
+      "parentId": "korpus",
+      "offset": [
+        9,
+        -8
+      ]
+    },
+    "grip": {
+      "parentId": "reka-prawa",
+      "offset": [
+        0,
+        10
+      ]
+    }
+  },
+  "parts": [
+    {
+      "id": "cien-sprzedawczyni",
+      "src": "cien-sprzedawczyni.png",
+      "sourceSize": [
+        72,
+        21
+      ],
+      "worldSize": [
+        24,
+        7
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": null,
+      "localPosition": [
+        764,
+        716
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "sprzedawczyni",
+      "src": null,
+      "sourceSize": null,
+      "worldSize": [
+        0,
+        0
+      ],
+      "pivot": null,
+      "parentId": null,
+      "localPosition": [
+        776,
+        720
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "nogi",
+      "src": "nogi.png",
+      "sourceSize": [
+        294,
+        180
+      ],
+      "worldSize": [
+        12,
+        7
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": "sprzedawczyni",
+      "localPosition": [
+        -7,
+        -6
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "tulow",
+      "src": "tulow.png",
+      "sourceSize": [
+        340,
+        376
+      ],
+      "worldSize": [
+        20,
+        22
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": "sprzedawczyni",
+      "localPosition": [
+        -11,
+        -23
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "glowa",
+      "src": "glowa.png",
+      "sourceSize": [
+        329,
+        313
+      ],
+      "worldSize": [
+        17,
+        17
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": "sprzedawczyni",
+      "localPosition": [
+        -10,
+        -36
+      ],
+      "rotation": 0,
+      "scaleX": 1,
+      "alternateSrc": "podziekowanie.png"
+    },
+    {
+      "id": "ramie-pomocnicze",
+      "src": "ramie.png",
+      "sourceSize": [
+        289,
+        299
+      ],
+      "worldSize": [
+        11,
+        10
+      ],
+      "pivot": [
+        78.81818,
+        59.8
+      ],
+      "parentId": "sprzedawczyni",
+      "localPosition": [
+        1,
+        -22
+      ],
+      "rotation": 25,
+      "scaleX": 1
+    },
+    {
+      "id": "koszyk",
+      "src": "koszyk.png",
+      "sourceSize": [
+        305,
+        300
+      ],
+      "worldSize": [
+        14,
+        13
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": "sprzedawczyni",
+      "localPosition": [
+        2,
+        -11
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "ramie-sprzedawczyni",
+      "src": "ramie.png",
+      "sourceSize": [
+        289,
+        299
+      ],
+      "worldSize": [
+        13,
+        13
+      ],
+      "pivot": [
+        66.69231,
+        46.0
+      ],
+      "parentId": "sprzedawczyni",
+      "localPosition": [
+        -5,
+        -22
+      ],
+      "rotation": -77,
+      "scaleX": -1
+    },
+    {
+      "id": "jablko",
+      "src": "jablko.png",
+      "sourceSize": [
+        186,
+        210
+      ],
+      "worldSize": [
+        5,
+        5
+      ],
+      "pivot": [
+        93.0,
+        105.0
+      ],
+      "parentId": null,
+      "localPosition": [
+        778.494,
+        709.993
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "cien-skrzynka",
+      "src": "cien-skrzynka.png",
+      "sourceSize": [
+        87,
+        24
+      ],
+      "worldSize": [
+        29,
+        8
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": null,
+      "localPosition": [
+        659.5,
+        757
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "skrzynka",
+      "src": "skrzynka.png",
+      "sourceSize": [
+        55,
+        45
+      ],
+      "worldSize": [
+        33,
+        26
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": null,
+      "localPosition": [
+        658,
+        735
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "deska",
+      "src": "deska.png",
+      "sourceSize": [
+        337,
+        230
+      ],
+      "worldSize": [
+        22,
+        9
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": null,
+      "localPosition": [
+        659,
+        749
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "cien-groszak",
+      "src": "cien-groszak.png",
+      "sourceSize": [
+        78,
+        24
+      ],
+      "worldSize": [
+        26,
+        8
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": null,
+      "localPosition": [
+        632,
+        762
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "groszak",
+      "src": null,
+      "sourceSize": null,
+      "worldSize": [
+        0,
+        0
+      ],
+      "pivot": null,
+      "parentId": null,
+      "localPosition": [
+        645,
+        765
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "noga-lewa",
+      "src": "../../../miedziany/nozka.webp",
+      "sourceSize": [
+        86,
+        226
+      ],
+      "worldSize": [
+        4,
+        9
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": "groszak",
+      "localPosition": [
+        -7,
+        -8
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "noga-prawa",
+      "src": "../../../miedziany/nozka.webp",
+      "sourceSize": [
+        86,
+        226
+      ],
+      "worldSize": [
+        4,
+        9
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": "groszak",
+      "localPosition": [
+        2,
+        -8
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "korpus",
+      "src": null,
+      "sourceSize": null,
+      "worldSize": [
+        0,
+        0
+      ],
+      "pivot": null,
+      "parentId": "groszak",
+      "localPosition": [
+        0,
+        -7
+      ],
+      "rotation": 1,
+      "scaleX": 1
+    },
+    {
+      "id": "reka-lewa",
+      "src": "../../../miedziany/raczka.webp",
+      "sourceSize": [
+        75,
+        205
+      ],
+      "worldSize": [
+        4.5,
+        11
+      ],
+      "pivot": [
+        33.33333,
+        18.63636
+      ],
+      "parentId": "korpus",
+      "localPosition": [
+        -11,
+        -9
+      ],
+      "rotation": 24,
+      "scaleX": 1
+    },
+    {
+      "id": "moneta",
+      "src": "../../../miedziany/korpus.webp",
+      "sourceSize": [
+        419,
+        419
+      ],
+      "worldSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": "korpus",
+      "localPosition": [
+        -12,
+        -22
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "buzia",
+      "src": "../../../miedziany/buzia-usmiech.webp",
+      "sourceSize": [
+        191,
+        160
+      ],
+      "worldSize": [
+        12,
+        10
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": "korpus",
+      "localPosition": [
+        -6,
+        -13
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "reka-prawa",
+      "src": "../../../miedziany/raczka.webp",
+      "sourceSize": [
+        75,
+        205
+      ],
+      "worldSize": [
+        4.5,
+        12
+      ],
+      "pivot": [
+        36.66667,
+        0.0
+      ],
+      "parentId": "korpus",
+      "localPosition": [
+        9,
+        -8
+      ],
+      "rotation": -35,
+      "scaleX": 1
+    },
+    {
+      "id": "mlotek",
+      "src": "mlotek.png",
+      "sourceSize": [
+        29,
+        29
+      ],
+      "worldSize": [
+        15,
+        15
+      ],
+      "pivot": [
+        5.046,
+        22.69733
+      ],
+      "parentId": "reka-prawa",
+      "localPosition": [
+        0,
+        10
+      ],
+      "rotation": 0,
+      "scaleX": 1
+    },
+    {
+      "id": "przeslona-straganu",
+      "src": "przeslona-straganu.png",
+      "sourceSize": [
+        130,
+        55
+      ],
+      "worldSize": [
+        34,
+        14
+      ],
+      "pivot": [
+        0.0,
+        0.0
+      ],
+      "parentId": null,
+      "localPosition": [
+        0,
+        0
+      ],
+      "rotation": 0,
+      "scaleX": 1,
+      "visible": false
+    }
+  ],
+  "repair": {
+    "durationMs": 1320,
+    "contactMs": 700,
+    "releaseMs": 920,
+    "contactPosition": [
+      663.13,
+      752.17
+    ],
+    "keyframes": [
+      {
+        "pose": "przygotowanie",
+        "ms": 0,
+        "arm": -35,
+        "body": 1
+      },
+      {
+        "pose": "zamach",
+        "ms": 560,
+        "arm": -151,
+        "body": -8
+      },
+      {
+        "pose": "uderzenie",
+        "ms": 700,
+        "arm": 0,
+        "body": 0
+      },
+      {
+        "pose": "pauza",
+        "ms": 920,
+        "arm": 0,
+        "body": 0
+      },
+      {
+        "pose": "powrot",
+        "ms": 1320,
+        "arm": -35,
+        "body": 1
+      }
+    ]
+  },
+  "seller": {
+    "durationMs": 2550,
+    "keyframes": [
+      {
+        "ms": 0,
+        "angle": -77,
+        "head": 0
+      },
+      {
+        "ms": 500,
+        "angle": -77,
+        "head": 0
+      },
+      {
+        "ms": 1250,
+        "angle": 41,
+        "head": 0
+      },
+      {
+        "ms": 1450,
+        "angle": 41,
+        "head": 0
+      },
+      {
+        "ms": 1840,
+        "angle": 12,
+        "head": 1
+      },
+      {
+        "ms": 2080,
+        "angle": -23,
+        "head": 1
+      },
+      {
+        "ms": 2350,
+        "angle": 12,
+        "head": 1
+      },
+      {
+        "ms": 2550,
+        "angle": 12,
+        "head": 1
+      }
+    ],
+    "pickupMs": 500,
+    "dropMs": 1250,
+    "grip": {
+      "parentId": "ramie-sprzedawczyni",
+      "offset": [
+        -10,
+        10
+      ]
+    }
+  }
+}

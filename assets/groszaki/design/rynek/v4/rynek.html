@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Groszaki · ruch na rynku</title>
+<style>
+body{margin:0;background:#f8eedb;color:#4c3023;font:16px/1.5 system-ui,sans-serif}
+main{max-width:390px;margin:auto}
+h1,div,p{margin:12px}
+h1{font: bold 25px Georgia,serif}
+svg{display:block;width:100%;height:auto;background:#f4d78f}
+button,select{font:inherit;color:inherit;margin:2px;padding:5px 9px}
+</style>
+<main>
+<h1>Groszaki · ruch na rynku</h1>
+<div><label>Kadr <select id="camera"></select></label></div>
+<svg id="scene" role="img" aria-label="Sprzedawczyni i Groszak przy straganie"></svg>
+<div>
+<button id="play">Odtwórz</button>
+<label><input type="checkbox" id="reduce"> Ogranicz ruch</label>
+</div>
+<div><label>Moment sceny <select id="pose"></select></label></div>
+<p id="status" role="status"></p>
+</main>
+<script type="module">
+const select = id => document.getElementById(id);
+const scene = select('scene');
+const camera = select('camera');
+const pose = select('pose');
+const play = select('play');
+const reduce = select('reduce');
+const status = select('status');
+
+async function start() {
+  const response = await fetch('./manifest.json');
+  if (!response.ok) throw new Error('Nie udało się wczytać manifestu.');
+  const manifest = await response.json();
+  const nodes = new Map();
+  const images = new Map();
+
+  function svg(tag, attrs, parent) {
+    const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+    parent.append(node);
+    return node;
+  }
+  const [width, height] = manifest.worldSize;
+  svg('image', {href: manifest.map, width, height}, scene);
+  for (const part of manifest.parts) {
+    if (part.visible === false) continue;
+    const parent = part.parentId ? nodes.get(part.parentId) : scene;
+    const group = svg('g', {'data-part':part.id}, parent);
+    nodes.set(part.id, group);
+    if (part.src) {
+      const [w, h] = part.worldSize;
+      const [sw, sh] = part.sourceSize;
+      const [px, py] = part.pivot;
+      const img = svg('image', {href:part.src,x:-px*w/sw,y:-py*h/sh,width:w,height:h,preserveAspectRatio:'none'}, group);
+      images.set(part.id,img);
+      if (part.id === 'mlotek') img.style.filter = 'contrast(1.22) saturate(.83)';
+    }
+  }
+
+  const parts = new Map(manifest.parts.map(part => [part.id,part]));
+  function transform(id, angle, position) {
+    const part = parts.get(id);
+    const [x,y] = position ?? part.localPosition;
+    nodes.get(id).setAttribute('transform', 'translate('+x+' '+y+') rotate('+(angle ?? part.rotation)+') scale('+part.scaleX+' 1)');
+  }
+  for (const id of nodes.keys()) transform(id);
+  const {repair, seller} = manifest;
+  const [cx,cy] = repair.contactPosition;
+  svg('circle',{cx,cy,r:.8,fill:'#56362c'},scene);
+
+  function sample(cycle, time, easing) {
+    const frames = cycle.keyframes;
+    const index = frames.findIndex((frame,i) => i > 0 && time < frame.ms) - 1;
+    const a = frames[index < 0 ? frames.length - 1 : index];
+    const b = frames[index < 0 ? frames.length - 1 : index + 1];
+    const fraction = a === b ? 0 : easing((time-a.ms)/(b.ms-a.ms), index);
+    return [a,b,fraction];
+  }
+  const smooth = t => t*t*(3-2*t);
+  const mix = (a,b,t) => a+(b-a)*t;
+  function grip(angle) {
+    const part = parts.get(seller.grip.parentId);
+    const [x,y] = parts.get(part.parentId).localPosition;
+    const [armX,armY] = part.localPosition;
+    const [dx,dy] = seller.grip.offset;
+    const rad = angle * Math.PI/180;
+    return [x+armX+dx*Math.cos(rad)-dy*Math.sin(rad),y+armY+dx*Math.sin(rad)+dy*Math.cos(rad)];
+  }
+  function render(time, held = false) {
+    const repairTime = held ? Math.min(time,repair.durationMs) : time % repair.durationMs;
+    const sellerTime = held ? Math.min(time,seller.durationMs) : time % seller.durationMs;
+    const [ra,rb,rt] = sample(repair,repairTime,(t,i) => i === 1 ? t*t : smooth(t));
+    transform('korpus',mix(ra.body,rb.body,rt));
+    transform('reka-prawa',mix(ra.arm,rb.arm,rt));
+    const [sa,sb,st] = sample(seller,sellerTime,smooth);
+    const angle = mix(sa.angle,sb.angle,st);
+    transform('ramie-sprzedawczyni',angle);
+    const head = parts.get('glowa');
+    images.get('glowa').setAttribute('href',sa.head ? head.alternateSrc : head.src);
+    const grasp = seller.keyframes.find(frame => frame.ms === seller.pickupMs);
+    const drop = seller.keyframes.find(frame => frame.ms === seller.dropMs);
+    transform('jablko',0,grip(sellerTime < seller.pickupMs ? grasp.angle : sellerTime > seller.dropMs ? drop.angle : angle));
+  }
+
+  const cameraNames = {mapa:'Cała mapa',rynek:'Rynek',stanowisko:'Zbliżenie naprawy',jablko:'Zbliżenie sprzedawczyni'};
+  for (const key of Object.keys(manifest.cameras)) camera.add(new Option(cameraNames[key],key));
+  camera.value = 'rynek';
+  function updateCamera() {
+    scene.setAttribute('viewBox',manifest.cameras[camera.value].join(' '));
+  }
+  camera.onchange = updateCamera;
+  updateCamera();
+  for (const [label,time] of [['Przygotowanie',0],['Zamach',560],['Uderzenie',700],['Pauza',920],['Jabłko na straganie',1250],['Podziękowanie',2080]]) {
+    pose.add(new Option(label,time));
+  }
+  const preference = matchMedia('(prefers-reduced-motion: reduce)');
+  let frame = null;
+  function stop() {
+    if (frame !== null) cancelAnimationFrame(frame);
+    frame = null;
+    play.textContent = 'Odtwórz';
+  }
+  function setReduced(value) {
+    reduce.checked = value;
+    play.disabled = value;
+    if (value) stop();
+  }
+  preference.addEventListener('change',event => setReduced(event.matches));
+  reduce.onchange = () => setReduced(reduce.checked);
+  setReduced(preference.matches);
+  pose.onchange = () => {stop();render(Number(pose.value),true)};
+  play.onclick = () => {
+    if (frame !== null) {stop();return;}
+    if (reduce.checked) return;
+    const initial = performance.now();
+    play.textContent = 'Zatrzymaj';
+    function tick(now) {
+      render(now-initial);
+      frame = requestAnimationFrame(tick);
+    }
+    frame = requestAnimationFrame(tick);
+  };
+  render(0);
+}
+start().catch(error => {
+  status.textContent = 'Uruchom podgląd przez lokalny serwer HTTP zgodnie z README.';
+  console.error(error);
+});
+</script>
+</html>

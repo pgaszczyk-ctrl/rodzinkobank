@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groszaki · próba sceny Canvas</title>
+<style>body{margin:0;background:#fff7e6;color:#573c2a;font:16px/1.5 system-ui}main{max-width:780px;margin:auto;padding:16px}h1{font:700 26px Georgia}canvas{display:block;width:100%;height:auto;border-radius:12px}.view{max-width:390px}button,select{font:inherit;padding:8px;margin:4px 0}label{display:inline-block;margin:6px 12px 6px 0}input[type=range]{width:100%}output{font-variant-numeric:tabular-nums}</style>
+<main><h1>Rynek · próba animacji</h1><p>Materiały robocze v4. Ten podgląd nie zmienia głównej aplikacji ani danych rodziny.</p>
+<label>Kadr <select id="camera"><option value="rynek">Rynek</option><option value="stanowisko">Naprawa</option><option value="jablko">Sprzedawczyni</option><option value="mapa">Cała mapa</option></select></label>
+<div class="view"><canvas id="scene" role="img" aria-label="Groszak naprawia skrzynkę, sprzedawczyni przekłada jabłko"></canvas></div>
+<button id="play" disabled>Odtwórz</button> <label><input type="checkbox" id="reduce"> Ogranicz ruch</label>
+<label for="time">Moment sceny: <output id="moment">0</output> ms</label><input id="time" type="range" min="0" max="2550" value="0" step="10">
+<p id="status" role="status">Wczytywanie materiałów…</p>
+</main><script type="module">
+import {CanvasScene} from './src/groszaki/scena.js';
+const $=id=>document.getElementById(id);
+try {
+ const scene=await CanvasScene.load('./assets/groszaki/design/rynek/v4/manifest.json');
+ const canvas=$('scene'),ctx=canvas.getContext('2d');
+ const preference=matchMedia('(prefers-reduced-motion: reduce)');
+ let raf=null,time=0,held=true,last=0;
+ function draw(){
+  const camera=scene.manifest.cameras[$('camera').value];
+  const width=canvas.parentElement.clientWidth,height=width*camera[3]/camera[2],dpr=Math.min(devicePixelRatio||1,2);
+  if(canvas.width!==Math.round(width*dpr) || canvas.height!==Math.round(height*dpr)){canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);}
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  scene.draw(ctx,time,{held,camera,width,height});$('moment').value=Math.round(time);
+ }
+ function stop(){if(raf!==null)cancelAnimationFrame(raf);raf=null;$('play').textContent='Odtwórz';}
+ function frame(now){time+=now-last;last=now;draw();raf=requestAnimationFrame(frame);}
+ $('play').onclick=()=>{if(raf!==null){stop();return;}held=false;last=performance.now();$('play').textContent='Zatrzymaj';raf=requestAnimationFrame(frame);};
+ function reduce(value){$('reduce').checked=value;$('play').disabled=value;if(value){stop();held=true;time=Number($('time').value);draw();}}
+ $('reduce').onchange=()=>reduce($('reduce').checked);preference.addEventListener('change',e=>reduce(e.matches));
+ $('time').oninput=()=>{stop();held=true;time=Number($('time').value);draw();};
+ $('camera').onchange=draw;new ResizeObserver(draw).observe(canvas.parentElement);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
+ reduce(preference.matches);draw();$('status').textContent='Wczytano. Animacja korzysta z manifestu grafika i renderera Canvas.';
+} catch(error){$('status').textContent='Nie udało się wczytać sceny: '+error.message;console.error(error);}
+</script></html>
