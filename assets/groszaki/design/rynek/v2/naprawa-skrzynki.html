@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Groszaki · naprawa skrzynki</title>
+<style>
+body{margin:0;background:#f8eedb;color:#4c3023;font:16px/1.5 system-ui,sans-serif}
+main{max-width:880px;margin:auto;padding:16px}
+h1,h2{font-family:Georgia,serif;margin:.4em 0}
+h1{font-size:30px}
+h2{font-size:21px}
+svg{display:block;width:100%;height:auto;background:#f4d78f;border-radius:8px}
+.phone{width:min(100%,390px)}
+@media(max-width:422px){.phone{width:min(calc(100% + 32px),390px);margin-left:max(-16px,calc((100% - 390px)/2))}.phone figcaption{padding-inline:16px}}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+button{padding:6px 10px;border:1px solid #9c7256;border-radius:6px;background:#fff8ea;color:inherit;font:inherit;cursor:pointer}
+button[aria-pressed=true]{background:#653e2a;color:#fff}
+figcaption{margin-top:4px}
+figure{margin:0}
+</style>
+<main>
+<h1>Groszaki · naprawa skrzynki</h1>
+<h2>Jesienna mapa</h2>
+<figure><svg id="map" viewBox="0 0 2000 1116" role="img" aria-label="Cała jesienna mapa z Groszakiem przy rynku">
+<image href="../../../zrodla/mapa-jesien.jpg" width="2000" height="1116"/>
+<use href="#market"/>
+</svg></figure>
+<h2>Kamera rozgrywki</h2>
+<figure class="phone">
+<svg id="phone" viewBox="555 516 370 278" role="img" aria-label="Groszak naprawia skrzynkę obok straganu">
+<image href="../../../zrodla/mapa-jesien.jpg" width="2000" height="1116"/>
+<g id="market">
+<ellipse cx="805" cy="732" rx="12" ry="3" fill="#744725" opacity=".22"/>
+<image href="sprzedawczyni.png" x="793" y="696" width="25" height="37"/>
+<ellipse cx="674" cy="765" rx="12" ry="3" fill="#744725" opacity=".24"/>
+<image href="skrzynka.png" x="661" y="743" width="27" height="22"/>
+<ellipse cx="645" cy="766" rx="13" ry="3" fill="#744725" opacity=".24"/>
+<g transform="translate(645 765)">
+<image href="../../../miedziany/nozka.webp" x="-7" y="-8" width="4" height="9"/>
+<image href="../../../miedziany/nozka.webp" x="2" y="-8" width="4" height="9"/>
+<g id="body">
+<image href="../../../miedziany/raczka.webp" x="-13" y="-17" width="4.5" height="11" transform="rotate(24 -11 -16)"/>
+<image href="../../../miedziany/korpus.webp" x="-12" y="-29" width="24" height="24"/>
+<image href="../../../miedziany/buzia-usmiech.webp" x="-6" y="-20" width="12" height="10"/>
+</g>
+<g id="arm">
+<image href="../../../miedziany/raczka.webp" x="-2.2" y="0" width="4.5" height="12"/>
+<g transform="translate(0 10) rotate(57)">
+<image href="mlotek.png" x="-5" y="-13" width="12" height="14"/>
+</g>
+</g>
+</g>
+</g>
+</svg>
+<figcaption>390 CSS px przy dostępnej szerokości ekranu · kadr 370 × 278 px mapy</figcaption>
+</figure>
+<div class="controls" aria-label="Sterowanie animacją">
+<button id="play" type="button">Odtwórz</button>
+<button type="button" data-pose="0">Przygotowanie</button>
+<button type="button" data-pose="1">Zamach</button>
+<button type="button" data-pose="2">Uderzenie</button>
+<button type="button" data-pose="3">Pauza</button>
+</div>
+<h2>Proporcje Groszaka</h2>
+<figure class="phone">
+<svg viewBox="0 0 390 160" role="img" aria-label="Porównanie poprzedniego Groszaka z wersją z zatwierdzonych części">
+<image href="groszak-v1.png" x="38" y="12" width="110" height="110"/>
+<image href="../../../miedziany/nozka.webp" x="260" y="91" width="12" height="29"/>
+<image href="../../../miedziany/nozka.webp" x="287" y="91" width="12" height="29"/>
+<image href="../../../miedziany/raczka.webp" x="240" y="66" width="12" height="35" transform="rotate(23 246 68)"/>
+<image href="../../../miedziany/raczka.webp" x="306" y="66" width="12" height="35" transform="rotate(-23 311 68)"/>
+<image href="../../../miedziany/korpus.webp" x="238" y="14" width="84" height="84"/>
+<image href="../../../miedziany/buzia-usmiech.webp" x="258" y="45" width="44" height="36"/>
+<text x="94" y="143" text-anchor="middle">Poprzednia wersja</text>
+<text x="280" y="143" text-anchor="middle">Części z repozytorium</text>
+</svg>
+</figure>
+</main>
+<script>
+const poses = [
+  {angle:-56, lean:4, duration:400},
+  {angle:-145, lean:-8, duration:280},
+  {angle:-98, lean:12, duration:130},
+  {angle:-64, lean:2, duration:620},
+];
+const arm = document.querySelector('#arm');
+const body = document.querySelector('#body');
+const play = document.querySelector('#play');
+const buttons = [...document.querySelectorAll('[data-pose]')];
+let selected = 0;
+let playing = false;
+let timer;
+function show(index) {
+  selected = index;
+  const {angle, lean} = poses[index];
+  body.setAttribute('transform', 'rotate(' + lean + ' 0 -7)');
+  arm.setAttribute('transform', 'translate(9 -15) rotate(' + angle + ')');
+  buttons.forEach((button, i) => button.setAttribute('aria-pressed', i === index));
+}
+function stop() {
+  playing = false;
+  clearTimeout(timer);
+  play.textContent = 'Odtwórz';
+}
+function queue() {
+  timer = setTimeout(() => {
+    show((selected + 1) % poses.length);
+    queue();
+  }, poses[selected].duration);
+}
+buttons.forEach((button, i) => button.addEventListener('click', () => {
+  stop();
+  show(i);
+}));
+play.addEventListener('click', () => {
+  if (playing) {
+    stop();
+    return;
+  }
+  playing = true;
+  play.textContent = 'Zatrzymaj';
+  show(0);
+  queue();
+});
+show(0);
+</script>
+</html>
