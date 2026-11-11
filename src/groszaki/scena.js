@@ -68,7 +68,11 @@ export function sampleCycle(cycle, time, {held = false, repair = false} = {}) {
   const fraction=(ms-a.ms)/(b.ms-a.ms);
   const t=repair && end===2 ? fraction*fraction : smooth(fraction);
   const result={...a};
-  for(const key of Object.keys(a)) if(typeof a[key]==='number' && typeof b[key]==='number' && key!=='head') result[key]=a[key]+(b[key]-a[key])*t;
+  for(const key of new Set([...Object.keys(a),...Object.keys(b)])) {
+    if(key==='head' || key==='ms') continue;
+    const av=a[key] ?? 0, bv=b[key] ?? 0;
+    if(typeof av==='number' && typeof bv==='number') result[key]=av+(bv-av)*t;
+  }
   return result;
 }
 
@@ -83,12 +87,22 @@ export function scenePose(manifest, time, held = false) {
     const s=sampleCycle(cycle,time,{held});
     overrides[cycle.grip.parentId]={rotation:s.angle};
     const head=manifest.parts.find(p=>p.id==='glowa');
-    overrides.glowa={src:s.head ? head.alternateSrc : head.src};
+    overrides.glowa={src:s.head ? head.alternateSrc : head.src,rotation:s.headTilt ?? 0};
     const ms=held ? Math.min(Math.max(time,0),cycle.durationMs) : ((time%cycle.durationMs)+cycle.durationMs)%cycle.durationMs;
-    const gripTime=Math.max(cycle.pickupMs,Math.min(ms,cycle.dropMs));
+    const onCounter=ms>=cycle.dropMs;
+    const gripTime=cycle.appleReset && onCounter ? cycle.pickupMs : Math.max(cycle.pickupMs,Math.min(ms,cycle.dropMs));
     const gripPose=sampleCycle(cycle,gripTime,{held:true});
     const matrices=worldMatrices(manifest,{...overrides,[cycle.grip.parentId]:{rotation:gripPose.angle}});
-    overrides.jablko={localPosition:transformPoint(matrices.get(cycle.grip.parentId),cycle.grip.offset)};
+    const position=transformPoint(matrices.get(cycle.grip.parentId),cycle.grip.offset);
+    overrides.jablko={localPosition:position};
+    if(cycle.appleReset) {
+      const reset=cycle.appleReset;
+      const fade=smooth(Math.max(0,Math.min(1,(ms-reset.startMs)/(reset.endMs-reset.startMs))));
+      const dropPose=sampleCycle(cycle,cycle.dropMs,{held:true});
+      const dropMatrices=worldMatrices(manifest,{...overrides,[cycle.grip.parentId]:{rotation:dropPose.angle}});
+      overrides[reset.basketId]={localPosition:position,opacity:onCounter ? fade : 1};
+      overrides[reset.counterId]={localPosition:transformPoint(dropMatrices.get(cycle.grip.parentId),cycle.grip.offset),opacity:onCounter ? 1-fade : 0};
+    }
   }
   return overrides;
 }
@@ -112,7 +126,7 @@ export class CanvasScene {
     return new CanvasScene(manifest, images);
   }
   constructor(manifest,images) { this.manifest=manifest;this.images=images; }
-  draw(ctx,time,{held=false,camera=this.manifest.cameras.rynek,width,height}={}) {
+  draw(ctx,time,{held=false,camera=this.manifest.cameras.rynek,width,height,showOccluder=true}={}) {
     const [x,y,w,h]=camera;
     ctx.save();ctx.clearRect(0,0,width,height);ctx.scale(width/w,height/h);ctx.translate(-x,-y);
     ctx.drawImage(this.images.get(this.manifest.map),0,0,...this.manifest.worldSize);
@@ -120,11 +134,11 @@ export class CanvasScene {
     const matrices=worldMatrices(this.manifest,pose);
     const hidden=new Set();
     for(const part of this.manifest.parts) {
-      if(part.visible===false || hidden.has(part.parentId)) {hidden.add(part.id);continue;}
+      if(part.visible===false || hidden.has(part.parentId) || (!showOccluder && part.id===this.manifest.stall?.occluder)) {hidden.add(part.id);continue;}
       const src=pose[part.id]?.src ?? part.src;
       if(!src) continue;
       const [sw,sh]=part.sourceSize,[pw,ph]=part.worldSize,[px,py]=part.pivot;
-      ctx.save();ctx.transform(...matrices.get(part.id));
+      ctx.save();ctx.transform(...matrices.get(part.id));ctx.globalAlpha *= pose[part.id]?.opacity ?? part.opacity ?? 1;
       ctx.drawImage(this.images.get(src),-px*pw/sw,-py*ph/sh,pw,ph);ctx.restore();
     }
     ctx.restore();

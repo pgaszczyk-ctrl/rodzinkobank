@@ -31,3 +31,20 @@ test('jabłko podąża za dłonią z uwzględnieniem odbicia i zostaje po odło�
  }
  assert.deepEqual(scenePose(manifest,1450,true).jablko.localPosition,scenePose(manifest,2080,true).jablko.localPosition);
 });
+
+const v5=JSON.parse(readFileSync(new URL('../assets/groszaki/design/rynek/v5/manifest.json',import.meta.url)));
+test('v5: ręka, głowa i oba jabłka wracają do tego samego stanu na granicy pętli',()=>{
+ validateScene(v5);
+ const start=scenePose(v5,0,true),end=scenePose(v5,v5.seller.durationMs,true);
+ for(const id of [v5.seller.grip.parentId,'glowa','jablko','jablko-na-ladzie']) assert.deepEqual(end[id],start[id]);
+});
+test('v5: odłożone jabłko zanika dopiero podczas wymiany i pojawia się następne',()=>{
+ const opacity=t=>['jablko','jablko-na-ladzie'].map(id=>scenePose(v5,t,true)[id].opacity);
+ assert.deepEqual(opacity(500),[1,0]);assert.deepEqual(opacity(1250),[0,1]);assert.deepEqual(opacity(2830),[0,1]);assert.deepEqual(opacity(3010),[0.5,0.5]);assert.deepEqual(opacity(3190),[1,0]);
+});
+test('v5: przechył głowy interpoluje również z klatek bez pola headTilt',()=>{
+ assert.equal(scenePose(v5,2350,true).glowa.rotation,0);
+ const tilt=scenePose(v5,2470,true).glowa.rotation;
+ assert.ok(tilt>0 && tilt<8);
+ assert.equal(scenePose(v5,2590,true).glowa.rotation,8);
+});
