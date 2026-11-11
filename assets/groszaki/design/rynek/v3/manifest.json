@@ -1,0 +1,304 @@
+{
+  "worldSize": [
+    2000,
+    1116
+  ],
+  "camera": [
+    555,
+    516,
+    370,
+    278
+  ],
+  "positionUnit": "map-px",
+  "pivotUnit": "source-px",
+  "groszak": {
+    "id": "groszak",
+    "position": [
+      645,
+      765
+    ]
+  },
+  "anchors": {
+    "shoulderRight": {
+      "parentId": "korpus",
+      "offset": [
+        9,
+        -8
+      ]
+    },
+    "grip": {
+      "parentId": "reka-prawa",
+      "offset": [
+        0,
+        10
+      ]
+    }
+  },
+  "parts": [
+    {
+      "id": "korpus",
+      "src": "../../../miedziany/korpus.webp",
+      "sourceSize": [
+        419,
+        419
+      ],
+      "worldSize": [
+        24,
+        24
+      ],
+      "pivot": [
+        209.5,
+        384
+      ],
+      "parentId": "groszak"
+    },
+    {
+      "id": "buzia",
+      "src": "../../../miedziany/buzia-usmiech.webp",
+      "sourceSize": [
+        191,
+        160
+      ],
+      "worldSize": [
+        12,
+        10
+      ],
+      "pivot": [
+        95.5,
+        80
+      ],
+      "parentId": "korpus"
+    },
+    {
+      "id": "reka-lewa",
+      "src": "../../../miedziany/raczka.webp",
+      "sourceSize": [
+        75,
+        205
+      ],
+      "worldSize": [
+        4.5,
+        11
+      ],
+      "pivot": [
+        37.5,
+        0
+      ],
+      "parentId": "korpus"
+    },
+    {
+      "id": "reka-prawa",
+      "src": "../../../miedziany/raczka.webp",
+      "sourceSize": [
+        75,
+        205
+      ],
+      "worldSize": [
+        4.5,
+        12
+      ],
+      "pivot": [
+        37.5,
+        0
+      ],
+      "parentId": "korpus"
+    },
+    {
+      "id": "mlotek",
+      "src": "mlotek.png",
+      "sourceSize": [
+        29,
+        29
+      ],
+      "worldSize": [
+        15,
+        15
+      ],
+      "pivot": [
+        4,
+        18
+      ],
+      "parentId": "reka-prawa"
+    },
+    {
+      "id": "noga-lewa",
+      "src": "../../../miedziany/nozka.webp",
+      "sourceSize": [
+        86,
+        226
+      ],
+      "worldSize": [
+        4,
+        9
+      ],
+      "pivot": [
+        43,
+        0
+      ],
+      "parentId": "groszak"
+    },
+    {
+      "id": "noga-prawa",
+      "src": "../../../miedziany/nozka.webp",
+      "sourceSize": [
+        86,
+        226
+      ],
+      "worldSize": [
+        4,
+        9
+      ],
+      "pivot": [
+        43,
+        0
+      ],
+      "parentId": "groszak"
+    },
+    {
+      "id": "skrzynka",
+      "src": "skrzynka.png",
+      "sourceSize": [
+        55,
+        45
+      ],
+      "worldSize": [
+        33,
+        26
+      ],
+      "pivot": [
+        28,
+        44
+      ],
+      "parentId": null,
+      "position": [
+        674,
+        761
+      ]
+    },
+    {
+      "id": "sprzedawczyni",
+      "src": "sprzedawczyni.png",
+      "sourceSize": [
+        70,
+        91
+      ],
+      "worldSize": [
+        25,
+        37
+      ],
+      "pivot": [
+        36,
+        91
+      ],
+      "parentId": null,
+      "position": [
+        805,
+        733
+      ]
+    },
+    {
+      "id": "cien-groszak",
+      "src": "cien-groszak.png",
+      "sourceSize": [
+        78,
+        24
+      ],
+      "worldSize": [
+        26,
+        8
+      ],
+      "pivot": [
+        39.0,
+        12.0
+      ],
+      "parentId": null,
+      "position": [
+        645,
+        766
+      ]
+    },
+    {
+      "id": "cien-skrzynka",
+      "src": "cien-skrzynka.png",
+      "sourceSize": [
+        87,
+        24
+      ],
+      "worldSize": [
+        29,
+        8
+      ],
+      "pivot": [
+        43.5,
+        12.0
+      ],
+      "parentId": null,
+      "position": [
+        674,
+        761
+      ]
+    },
+    {
+      "id": "cien-sprzedawczyni",
+      "src": "cien-sprzedawczyni.png",
+      "sourceSize": [
+        72,
+        21
+      ],
+      "worldSize": [
+        24,
+        7
+      ],
+      "pivot": [
+        36.0,
+        10.5
+      ],
+      "parentId": null,
+      "position": [
+        805,
+        732
+      ]
+    }
+  ],
+  "cycle": {
+    "durationMs": 1320,
+    "contactMs": 700,
+    "releaseMs": 920,
+    "contactPosition": [
+      663.13,
+      752.17
+    ],
+    "keyframes": [
+      {
+        "pose": "przygotowanie",
+        "ms": 0,
+        "arm": -35,
+        "body": 1
+      },
+      {
+        "pose": "zamach",
+        "ms": 560,
+        "arm": -151,
+        "body": -8
+      },
+      {
+        "pose": "uderzenie",
+        "ms": 700,
+        "arm": 0,
+        "body": 0
+      },
+      {
+        "pose": "pauza",
+        "ms": 920,
+        "arm": 0,
+        "body": 0
+      },
+      {
+        "pose": "powrot",
+        "ms": 1320,
+        "arm": -35,
+        "body": 1
+      }
+    ]
+  }
+}
