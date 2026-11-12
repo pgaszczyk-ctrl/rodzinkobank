@@ -42,3 +42,7 @@ Dostawa v8 zawiera spłaszczony kadr i dwa eksporty pętli. Do podpięcia
 v8 do renderera sceny potrzebne są czyste tło, osobne części postaci
 z dłonią i rekwizytami, przednia przesłona straganu, skrzynka i cienie,
 oraz współrzędne mapy, punkty chwytu i kolejność rysowania.
+
+Korekta zachowuje twarze z zaakceptowanego kadru w każdej klatce.
+Ruch ograniczono do stanowiska Groszaka. Sprzedawczyni pozostaje statyczna
+do czasu przygotowania oddzielnych warstw dłoni i jabłka.

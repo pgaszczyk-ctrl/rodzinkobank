@@ -17,7 +17,7 @@
   <div id="view">
     <img id="scene" width="1448" height="1086"
          src="assets/groszaki/design/rynek/v8/rynek-groszakow-v8.png"
-         alt="Sprzedawczyni przekłada jabłko przy straganie, a Groszak naprawia skrzynkę na placu.">
+         alt="Sprzedawczyni trzyma jabłko przy straganie, a Groszak naprawia skrzynkę na placu.">
   </div>
   <button id="play" type="button" disabled>Odtwórz pętlę</button>
   <label><input id="mobile" type="checkbox"> Podgląd 390 px</label>
@@ -33,7 +33,7 @@
   const status = document.getElementById('status');
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
   const still = scene.src;
-  const animation = new URL('assets/groszaki/design/rynek/v8/rynek-groszakow-animacja.webp', document.baseURI).href;
+  const animation = new URL('assets/groszaki/design/rynek/v8/rynek-groszakow-animacja-korekta.webp', document.baseURI).href;
   let playing = false;
 
   function showAnimation(enabled) {
