@@ -30,3 +30,15 @@ Aktualne materiały w `assets/groszaki/design/rynek/v5/` skopiowano bez zmian z 
 - Kolejność rysowania pochodzi z manifestu. Integracja z trasami i przesłonami całego miasteczka nastąpi po otrzymaniu finalnych warstw.
 
 Nie należy włączać tej sceny automatycznie na produkcji przed zamknięciem powyższych punktów.
+
+## Ocena ruchu v8
+
+Po uruchomieniu tego samego lokalnego serwera otwórz `/rynek-v8-podglad.html`.
+Podgląd pokazuje zatwierdzoną ilustrację i ręcznie uruchamianą pętlę WebP
+z commita `1122f87`. Przełącznik 390 px pozwala ocenić czytelność całego kadru
+w skali telefonu. Zatrzymanie pętli przywraca zatwierdzony kadr statyczny.
+
+Dostawa v8 zawiera spłaszczony kadr i dwa eksporty pętli. Do podpięcia
+v8 do renderera sceny potrzebne są czyste tło, osobne części postaci
+z dłonią i rekwizytami, przednia przesłona straganu, skrzynka i cienie,
+oraz współrzędne mapy, punkty chwytu i kolejność rysowania.
