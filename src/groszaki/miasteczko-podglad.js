@@ -1,11 +1,14 @@
 import { buildGraph, findPath, makeRoute, routePosition } from './trasy.js';
 import { prepareOccluders, drawGroszakiWithDepth } from './przeslony.js';
+import { TownSim } from './symulacja.js';
+import { TICK_MS, zl } from './finanse.js';
 
 const canvas = document.querySelector('#town');
 const context = canvas.getContext('2d');
 const play = document.querySelector('#play');
 const view = document.querySelector('#view');
 const status = document.querySelector('#status');
+const delivery = document.querySelector('#delivery');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const root = new URL('../../assets/groszaki/', import.meta.url);
 
@@ -54,13 +57,6 @@ const journeys = [
   ['keeper', 'drzwi', 's0', 5100, 31, 0.42],
   ['farmer', 'dynie', 'podworze', 2000, 24, 0.51],
   ['farmer', 'stodola', 'dynie', 8300, 25, 0.70],
-  ['carrier', 'piekarnia', 'stragan-c', 3600, 33, 0.64],
-  ['carrier', 'mlyn', 'srodek', 10500, 30, 0.73],
-  ['carrier', 'podworze', 'l2', 12700, 34, 0.59],
-  ['carrier', 'stodola', 'h2', 15300, 36, 0.63],
-  ['carrier', 'dynie', 'fi2', 6700, 32, 0.58],
-  ['coin', 's0', 'drzwi', 8300, 34, 0.62],
-  ['coin', 'p3', 'e6', 6800, 33, 0.48],
 ];
 
 const windmillWalk = [[288, 271], [318, 285], [290, 306], [255, 324], [246, 339], [272, 356], [317, 365]];
@@ -92,10 +88,18 @@ function walk(actor, time) {
   const route = returning ? actor.inward : actor.outward;
   const leg = elapsed % span;
   const progress = Math.min(1, leg / actor.duration);
-  const distance = route.length * progress;
+  const ramp = Math.min(0.15, 14 / route.length);
+  const eased = progress < ramp ? progress * progress / (2 * ramp * (1 - ramp))
+    : progress > 1 - ramp ? 1 - (1 - progress) ** 2 / (2 * ramp * (1 - ramp))
+    : (progress - ramp / 2) / (1 - ramp);
+  const distance = route.length * eased;
   const position = routePosition(route, distance, actor.lane * Math.min(1, 12 * progress, 12 * (1 - progress)));
   const pose = progress === 1 ? 1 : Math.floor(distance / (actor.kind === 'carrier' ? 6 : 7)) % 4;
-  return { ...position, kind: actor.kind, pose, left: position.dirX < 0 };
+  const ahead = routePosition(route, distance + 10);
+  const behind = routePosition(route, distance - 10);
+  const dx = ahead.x - behind.x;
+  if (Math.abs(dx) > 3) actor.left = dx < 0;
+  return { ...position, kind: actor.kind, pose, left: actor.left };
 }
 
 function drawable(actor, images) {
@@ -117,21 +121,74 @@ function drawable(actor, images) {
       ctx.fill();
       if (actor.left) ctx.scale(-1, 1);
       ctx.drawImage(img, left, top, w, h, -ax * scale, -ay * scale, w * scale, h * scale);
+      if (actor.carry) crumb(ctx, 8, -14, 4.6);
       ctx.restore();
     },
   };
 }
 
+function crumb(ctx, x, y, size) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(size, size);
+  ctx.fillStyle = '#ffc65c';
+  ctx.strokeStyle = '#814720';
+  ctx.lineWidth = 0.23;
+  ctx.beginPath();
+  ctx.moveTo(-1, -0.05);
+  ctx.lineTo(-0.55, -0.85);
+  ctx.lineTo(0.55, -1);
+  ctx.lineTo(1, -0.45);
+  ctx.lineTo(0.9, 0.55);
+  ctx.lineTo(0.1, 0.92);
+  ctx.lineTo(-0.8, 0.65);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function showDeposits(effects, elapsed) {
+  for (const effect of effects) {
+    const t = (elapsed - effect.t0) / effect.dur;
+    if (t < 0 || t >= 1) continue;
+    if (effect.type === 'crumb') {
+      crumb(context, effect.x0 + (effect.x1 - effect.x0) * t,
+        effect.y0 + (effect.y1 - effect.y0) * t - 14 * Math.sin(Math.PI * t), 4.4);
+    } else if (effect.type === 'sparkle') {
+      context.save();
+      context.globalAlpha = 1 - t;
+      crumb(context, effect.x, effect.y, 5 + 9 * t);
+      context.restore();
+    }
+  }
+}
+
 try {
   const art = 'design/rynek/v8/';
-  const [map, peopleImage, tradesImage, coinImage, sellerImage, data, occ] = await Promise.all([
-    loadImage('zrodla/mapa-jesien.jpg'), loadImage(art + 'mieszkancy.png'),
+  const [artwork, peopleImage, tradesImage, coinImage, sellerImage, data, occ, geometry] = await Promise.all([
+    loadImage(art + 'miasteczko-jesien.png'), loadImage(art + 'mieszkancy.png'),
     loadImage(art + 'mieszkancy-miasteczka.png'), loadImage(art + 'groszak.png'),
-    loadImage(art + 'sprzedawczyni.png'), readJson('trasy.json'), readJson('przeslony.json'),
+    loadImage(art + 'sprzedawczyni.png'), readJson('trasy.json'), readJson('przeslony.json'), readJson(art + 'miasteczko-jesien-geometria.json'),
   ]);
   const images = { people: peopleImage, trades: tradesImage, coins: coinImage, seller: sellerImage };
-  const graph = buildGraph(data);
-  const occluders = prepareOccluders(occ.przeslony);
+  // Existing graph coordinates stay in the 2000 × 1116 world. Artwork-specific
+  // corrections are recorded in native illustration pixels.
+  const map = document.createElement('canvas');
+  map.width = 2000;
+  map.height = 1116;
+  map.getContext('2d').drawImage(artwork, 0, 0, map.width, map.height);
+  const sx = map.width / artwork.width;
+  const sy = map.height / artwork.height;
+  const graph = buildGraph({ ...data, punkty: data.punkty.map(node => {
+    const point = geometry.nodes[node.id];
+    return point ? { ...node, x: point[0] * sx, y: point[1] * sy } : node;
+  }) });
+  const occluders = prepareOccluders(occ.przeslony.map(mask => {
+    const correction = geometry.masks[mask.id];
+    return correction ? { ...mask, base: correction.base * sy,
+      poly: correction.poly.map(([x, y]) => [x * sx, y * sy]) } : mask;
+  }));
   const actors = journeys.map(([kind, from, to, phase, speed, lane]) => {
     const path = findPath(graph, from, to, () => 0, 0);
     if (!path || path.length < 2) throw new Error(from + ' → ' + to);
@@ -139,12 +196,45 @@ try {
   });
   const north = windmillWalk.map(([x, y]) => ({ x, y, s: 11 }));
   actors.push(makeJourney('miller', north, graph, 1500, 20, 0));
-  actors.push(makeJourney('carrier', north, graph, 5600, 21, 0));
+  let seed = 125;
+  const rand = () => ((seed = (Math.imul(1664525, seed) + 1013904223) >>> 0) / 2 ** 32);
+  const sim = new TownSim({ graph, rand, makePuppet: options => ({ ...options }) });
+  sim.setBalance(zl(100), zl(60), 0, 'init');
+  sim.update(0, 0);
+  const positions = new WeakMap();
+  let nextDeposit = TICK_MS;
+  let deposited = 0;
+  let lastCounter = '';
+
+  function helpers(dt) {
+    return sim.entities.map(e => {
+      const g = e.g;
+      const moving = g.action === 'walk';
+      const pos = positions.get(g) || { x: g.x, y: g.y, left: g.dir < 0, stride: 0 };
+      const follow = dt === 0 ? 0 : 1 - Math.exp(-dt * 15);
+      const dx = (g.x - pos.x) * follow;
+      const dy = (g.y - pos.y) * follow;
+      pos.x += dx;
+      pos.y += dy;
+      if (moving) {
+        pos.stride += Math.hypot(dx, dy);
+        if (Math.abs(g.x - pos.x) > 1.4) pos.left = g.x < pos.x;
+      }
+      positions.set(g, pos);
+      const working = e.state === 'working';
+      const repair = working && g.job?.action === 'hammer';
+      const carry = g.carry && (e.state === 'toVault' || e.state === 'queue');
+      const pose = moving ? Math.floor(pos.stride / 6) % 4
+        : repair ? Math.floor((elapsed + e.id * 90) / 220) % 4
+        : working ? 1 + Math.floor((elapsed + e.id * 200) / 420) % 2 : 1;
+      return { ...pos, pose, carry, kind: repair ? 'repair' : working && g.job?.action === 'sack' ? 'carrier' : 'coin' };
+    });
+  }
   let elapsed = 0;
   let previous;
   let request = null;
 
-  function draw() {
+  function draw(dt = 0) {
     const [x, y, w, h] = cameras[view.value];
     const outputWidth = Math.min(2000, w * 2);
     const outputHeight = Math.round(outputWidth * h / w);
@@ -157,12 +247,18 @@ try {
     const phase = elapsed % 4800;
     const working = [
       { x: 678, y: 739, kind: 'seller', pose: phase < 1500 ? 0 : phase < 2050 ? 1 : phase < 2530 ? 2 : 3 },
-      { x: 742, y: 739, kind: 'repair', pose: phase < 1900 ? 0 : phase < 2310 ? 1 : phase < 2420 ? 2 : phase < 2800 ? 3 : 0 },
     ];
-    const visible = [...actors.map(actor => walk(actor, elapsed)), ...working]
+    const visible = [...actors.map(actor => walk(actor, elapsed)), ...helpers(dt), ...working]
       .filter(a => a.x >= x - 55 && a.x <= x + w + 55 && a.y >= y && a.y <= y + h + 65)
       .map(actor => drawable(actor, images));
     drawGroszakiWithDepth(context, [{ img: map, alpha: 1 }], [], occluders, elapsed, 1, false, visible);
+    showDeposits(sim.effects, elapsed);
+    const carrying = sim.entities.filter(e => e.g.carry).length;
+    const counter = 'Z okruszkiem: ' + carrying + ' · Oddane do Skarbca: ' + deposited;
+    if (counter !== lastCounter) {
+      delivery.textContent = counter;
+      lastCounter = counter;
+    }
   }
 
   function stop() {
@@ -174,9 +270,15 @@ try {
 
   function tick(now) {
     previous ??= now;
-    elapsed += Math.min(100, now - previous);
+    const dt = Math.min(0.1, (now - previous) / 1000);
+    elapsed += dt * 1000;
     previous = now;
-    draw();
+    sim.update(elapsed, dt);
+    if (elapsed >= nextDeposit) {
+      deposited += sim.tick(elapsed);
+      nextDeposit += TICK_MS;
+    }
+    draw(dt);
     request = requestAnimationFrame(tick);
   }
 
@@ -191,7 +293,7 @@ try {
     play.textContent = 'Zatrzymaj';
     request = requestAnimationFrame(tick);
   });
-  view.addEventListener('change', draw);
+  view.addEventListener('change', () => draw());
   reduced.addEventListener('change', preferenceChanged);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
   preferenceChanged();

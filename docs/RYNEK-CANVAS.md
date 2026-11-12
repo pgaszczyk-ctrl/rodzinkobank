@@ -64,8 +64,13 @@ młotkiem i jabłkiem w każdej pozie.
 
 ## Panorama jesienna
 
-`/miasteczko-podglad.html` pokazuje niezależną próbę całej mapy z 18 postaciami.
+`/miasteczko-podglad.html` pokazuje przerysowaną panoramę jesienną z 19 postaciami.
 Wybór kadru obejmuje panoramę, rynek, młyny, Skarbiec, farmę i mosty.
-Mieszkańcy i Groszaki korzystają z istniejącej sieci dróg i przesłon mapy.
-Lokalny spacer przy wiatraku, poza siecią, należy wyłącznie do podglądu.
-Rozkłady zajęć są demonstracyjne. Podgląd działa z jesienną panoramą.
+Korekty dróg i przesłon dla nowej ilustracji są zapisane w
+`assets/groszaki/design/rynek/v8/miasteczko-jesien-geometria.json` w pikselach źródła.
+Lokalny spacer przy wiatraku należy wyłącznie do podglądu.
+
+Groszaki korzystają z `TownSim`. Po pracy wracają z widocznym okruszkiem,
+czekają przy Skarbcu i oddają go przy najbliższym tyknięciu co 10 sekund.
+Licznik dotyczy demonstracyjnego salda podglądu. Podgląd działa niezależnie
+od głównej aplikacji i danych rodziny.
