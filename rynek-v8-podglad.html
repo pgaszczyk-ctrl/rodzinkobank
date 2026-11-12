@@ -7,7 +7,9 @@
   body { margin: 0; background: #fff7e6; color: #573c2a; font: 16px/1.5 system-ui; }
   main { max-width: 780px; margin: auto; padding: 16px; }
   h1 { font: 700 26px Georgia, serif; }
-  img { display: block; width: 100%; height: auto; border-radius: 12px; }
+  img, canvas { display: block; width: 100%; height: auto; border-radius: 12px; }
+  [hidden] { display: none; }
+  button { font: inherit; padding: 8px; }
   .mobile { max-width: 390px; }
   label { display: inline-block; margin: 6px 12px 6px 0; }
 </style>
@@ -17,7 +19,10 @@
     <img id="scene" width="1448" height="1086"
          src="assets/groszaki/design/rynek/v8/rynek-groszakow-v8.png"
          alt="Sprzedawczyni trzyma jabłko przy straganie, a Groszak naprawia skrzynkę na placu.">
+    <canvas id="scene" width="1448" height="1086" hidden aria-label="Groszak idzie do skrzynki i uderza młotkiem. Sprzedawczyni odkłada jabłko."></canvas>
   </div>
+  <button id="play" disabled>Odtwórz próbę</button>
+  <p id="status" role="status"></p>
   <label><input id="mobile" type="checkbox"> Podgląd 390 px</label>
 </main>
 <script type="module">
@@ -25,4 +30,5 @@
   const view = document.getElementById('view');
   mobile.addEventListener('change', () => view.classList.toggle('mobile', mobile.checked));
 </script>
+<script type="module" src="./src/groszaki/rynek-v8.js"></script>
 </html>
