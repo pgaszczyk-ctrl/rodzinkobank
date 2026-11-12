@@ -38,7 +38,10 @@ Podgląd zaczyna od zatwierdzonego kadru. „Odtwórz próbę” pokazuje osobne
 i klatki postaci w Canvas. Groszak podchodzi do skrzynki, uderza młotkiem
 i wraca, a sprzedawczyni odkłada jabłko. To próba ruchu w kadrze 1448 × 1086,
 z opcją szerokości 390 px i bez automatycznego odtwarzania. Klatki są nowymi
-rysunkami opartymi na v8. Współrzędne trasy są lokalne dla kadru.
+rysunkami opartymi na v8. Współrzędne tras są lokalne dla kadru. W rozszerzonej próbie piekarz niesie
+pieczywo, klientka idzie z koszykiem, a dwa Groszaki transportują skrzynki.
+Trasy mają różne przesunięcia w czasie i postoje. Canvas sortuje postacie
+według położenia stóp. Cały pokaz trwa 19,2 s.
 
 Do odtworzenia kadru w Canvas potrzebne są eksporty z jednej kompozycji,
 w natywnej skali 1448 × 1086, z kompletnym podłożem pod postaciami i skrzynką:
