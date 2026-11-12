@@ -48,6 +48,7 @@ const apple = [[637, 426], [639, 415], [648, 405], [661, 402], [657, 393],
 const crateFront = [[440, 858], [537, 899], [691, 856], [691, 954], [534, 997], [440, 946]];
 
 const cycle = 19200;
+const characterScale = 1.12;
 const routes = [
   { row: 0, scale: 1.13, phase: 0, path: [[136, 387], [368, 489], [419, 542]] },
   { row: 1, scale: 1.10, phase: 2400, path: [[1250, 641], [1090, 662], [954, 633]] },
@@ -57,16 +58,16 @@ const routes = [
 const stops = [0, 4800, 6900, 9400, 11500, 16300, cycle];
 
 const travelerAnchors = [
-  [[188, 354], [170, 354], [163, 357], [148, 354]],
-  [[185, 358], [178, 359], [163, 361], [158, 359]],
-  [[178, 316], [170, 316], [164, 316], [152, 316]],
+  [[188, 355], [171, 354], [164, 356], [147, 351]],
+  [[185, 359], [177, 358], [163, 359], [155, 357]],
+  [[178, 316], [170, 315], [165, 316], [155, 316]],
 ];
-const sellerAnchors = [[252, 650], [251, 650], [250, 650], [252, 650]];
+const sellerAnchors = [[252, 650], [252, 650], [252, 650], [253, 650]];
 const coinWalkScale = 0.78;
 const coinRepairScale = 0.80;
 const repairAnchors = [
   [220, 375], [221, 377], [221, 376], [222, 377],
-  [196, 363], [196, 363], [196, 363], [196, 363],
+  [196, 363], [193, 361], [196, 363], [198, 365],
 ];
 
 function easeOut(t) {
@@ -97,19 +98,20 @@ function traveler(route, time, atlas) {
   const segment = Math.hypot(x1 - x0, y1 - y0);
   const previous = end === 2 || end === 5
     ? Math.hypot(path[end - 1][0] - path[end - 2][0], path[end - 1][1] - path[end - 2][1]) : 0;
-  const stride = 15 * route.scale;
+  const stride = 12 * route.scale;
   const pose = moving ? (1 + Math.floor((previous + segment * progress) / stride)) % 4 : 1;
   const facingLeft = moving ? x1 < x0 : end === 3
     ? route.path[2][0] < route.path[1][0] : route.path[0][0] < route.path[1][0];
   const anchor = travelerAnchors[route.row][pose];
+  const scale = route.scale * characterScale;
   return { y, paint() {
-    shadow(x, y - 2, 50 * route.scale, 13 * route.scale);
+    shadow(x, y - 2, 50 * scale, 13 * scale);
     context.save();
     if (facingLeft) {
       context.translate(x * 2, 0);
       context.scale(-1, 1);
     }
-    frame(atlas, 4, 3, route.row * 4 + pose, anchor, route.scale, x, y);
+    frame(atlas, 4, 3, route.row * 4 + pose, anchor, scale, x, y);
     context.restore();
   } };
 }
@@ -129,17 +131,17 @@ try {
     function drawSeller() {
       const pose = time < 3300 ? 0 : time < 3770 ? 1 : time < 4060 ? 2 : 3;
       shadow(565, 645, 70, 15);
-      frame(seller, 4, 1, pose, sellerAnchors[pose], 0.625, 553, 656);
+      frame(seller, 4, 1, pose, sellerAnchors[pose], 0.625 * characterScale, 543, 656);
       if (time >= 3770) {
         const fall = Math.min(1, (time - 3770) / 250);
-        clippedImage(still, apple, 33 + 5 * fall, 6 + 26 * fall * fall);
+        clippedImage(still, apple, 40 - 2 * fall, -20 + 52 * fall * fall);
       }
     }
 
     const approach = smoothStep(Math.min(1, time / 2200));
     const retreat = smoothStep(Math.max(0, (time - 4560) / 1840));
     const moving = approach < 1 || retreat > 0;
-    const x = 248 + 151 * approach - 151 * retreat;
+    const x = 248 + 137 * approach - 137 * retreat;
     const y = 835 + 47 * approach - 47 * retreat;
     actors.push({ y, paint: drawRepair });
 
@@ -150,9 +152,9 @@ try {
         context.translate(2 * x, 0);
         context.scale(-1, 1);
       }
-      const pose = moving ? (1 + Math.floor(151 * (retreat > 0 ? retreat : approach) / 14)) % 4
+      const pose = moving ? (1 + Math.floor(137 * (retreat > 0 ? retreat : approach) / 11)) % 4
         : time < 2780 ? 4 : time < 3120 ? 5 : time < 3230 ? 6 : time < 3490 ? 7 : 4;
-      frame(coin, 4, 2, pose, repairAnchors[pose], moving ? coinWalkScale : coinRepairScale, x, y);
+      frame(coin, 4, 2, pose, repairAnchors[pose], (moving ? coinWalkScale : coinRepairScale) * characterScale, x, y);
       context.restore();
     }
 
