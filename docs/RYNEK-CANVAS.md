@@ -31,18 +31,26 @@ Aktualne materiały w `assets/groszaki/design/rynek/v5/` skopiowano bez zmian z 
 
 Nie należy włączać tej sceny automatycznie na produkcji przed zamknięciem powyższych punktów.
 
-## Ocena ruchu v8
+## Kadr v8 i źródła do animacji
 
-Po uruchomieniu tego samego lokalnego serwera otwórz `/rynek-v8-podglad.html`.
-Podgląd pokazuje zatwierdzoną ilustrację i ręcznie uruchamianą pętlę WebP
-z commita `1122f87`. Przełącznik 390 px pozwala ocenić czytelność całego kadru
-w skali telefonu. Zatrzymanie pętli przywraca zatwierdzony kadr statyczny.
+Po uruchomieniu lokalnego serwera otwórz `/rynek-v8-podglad.html`.
+Podgląd pokazuje zatwierdzony kadr z opcją szerokości 390 px.
 
-Dostawa v8 zawiera spłaszczony kadr i dwa eksporty pętli. Do podpięcia
-v8 do renderera sceny potrzebne są czyste tło, osobne części postaci
-z dłonią i rekwizytami, przednia przesłona straganu, skrzynka i cienie,
-oraz współrzędne mapy, punkty chwytu i kolejność rysowania.
+Do odtworzenia kadru w Canvas potrzebne są eksporty z jednej kompozycji,
+w natywnej skali 1448 × 1086, z kompletnym podłożem pod postaciami i skrzynką:
 
-Korekta zachowuje twarze z zaakceptowanego kadru w każdej klatce.
-Ruch ograniczono do stanowiska Groszaka. Sprzedawczyni pozostaje statyczna
-do czasu przygotowania oddzielnych warstw dłoni i jabłka.
+- Tło z piekarnią, placem i roślinnością, tył straganu oraz osobna przednia
+  przesłona z ladą i słupkami. Kolejność musi uwzględniać stronę, po której
+  znajduje się postać.
+- Pełne klatki sylwetki Groszaka dla chodu, postoju i naprawy. Punkt stóp
+  wspólny dla wszystkich klatek pozwala przemieszczać go po trasie mapy.
+  Naprawa zaczyna się przy skrzynce, a młotek jest częścią klatek naprawy.
+- Pełne klatki gestu sprzedawczyni, od chwytu do odłożenia jabłka.
+  Do odłożenia owoc należy do klatki gestu, a po nim jest rysowany w skrzynce.
+- Skrzynka i osobne cienie kontaktowe. W manifeście potrzebne są punkty
+  stóp, położenie stanowisk, punkt odłożenia jabłka i kolejność przesłaniania.
+
+Przed animacją należy złożyć pozę spoczynkową w tym samym kadrze i porównać
+ją z zatwierdzoną ilustracją. Przy ocenie chodu i obu czynności w 390 px
+sprawdzamy kontur, paletę, kontakt stóp z ziemią oraz kontakt dłoni z
+młotkiem i jabłkiem w każdej pozie.

@@ -9,7 +9,6 @@
   h1 { font: 700 26px Georgia, serif; }
   img { display: block; width: 100%; height: auto; border-radius: 12px; }
   .mobile { max-width: 390px; }
-  button { font: inherit; padding: 8px; margin: 8px 0; }
   label { display: inline-block; margin: 6px 12px 6px 0; }
 </style>
 <main>
@@ -19,50 +18,11 @@
          src="assets/groszaki/design/rynek/v8/rynek-groszakow-v8.png"
          alt="Sprzedawczyni trzyma jabłko przy straganie, a Groszak naprawia skrzynkę na placu.">
   </div>
-  <button id="play" type="button" disabled>Odtwórz pętlę</button>
   <label><input id="mobile" type="checkbox"> Podgląd 390 px</label>
-  <label><input id="reduce" type="checkbox"> Ogranicz ruch</label>
-  <p id="status" role="status"></p>
 </main>
 <script type="module">
-  const scene = document.getElementById('scene');
-  const view = document.getElementById('view');
-  const play = document.getElementById('play');
   const mobile = document.getElementById('mobile');
-  const reduce = document.getElementById('reduce');
-  const status = document.getElementById('status');
-  const preference = matchMedia('(prefers-reduced-motion: reduce)');
-  const still = scene.src;
-  const animation = new URL('assets/groszaki/design/rynek/v8/rynek-groszakow-animacja-korekta.webp', document.baseURI).href;
-  let playing = false;
-
-  function showAnimation(enabled) {
-    playing = enabled;
-    scene.src = enabled ? animation : still;
-    play.textContent = enabled ? 'Zatrzymaj pętlę' : 'Odtwórz pętlę';
-  }
-
-  function setReducedMotion(enabled) {
-    reduce.checked = enabled;
-    play.disabled = enabled;
-    if (enabled && playing) showAnimation(false);
-  }
-
-  play.addEventListener('click', () => {
-    status.textContent = '';
-    showAnimation(!playing);
-  });
+  const view = document.getElementById('view');
   mobile.addEventListener('change', () => view.classList.toggle('mobile', mobile.checked));
-  reduce.addEventListener('change', () => setReducedMotion(reduce.checked));
-  preference.addEventListener('change', event => setReducedMotion(event.matches));
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && playing) showAnimation(false);
-  });
-  scene.addEventListener('error', () => {
-    status.textContent = playing ? 'Nie udało się wczytać animacji.' : 'Nie udało się wczytać kadru.';
-    if (playing) showAnimation(false);
-  });
-
-  setReducedMotion(preference.matches);
 </script>
 </html>
