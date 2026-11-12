@@ -42,7 +42,8 @@ export function drawGroszakiWithDepth(ctx, layers, groszaki, occluders, now, sca
     ctx.clip(o.path);
     for (const l of layers) {
       ctx.globalAlpha = l.alpha;
-      ctx.drawImage(l.img, bx, by, bw, bh, bx, by, bw, bh);
+      const sx = l.sourceScaleX ?? 1, sy = l.sourceScaleY ?? 1;
+      ctx.drawImage(l.img, bx * sx, by * sy, bw * sx, bh * sy, bx, by, bw, bh);
     }
     ctx.restore();
   }
