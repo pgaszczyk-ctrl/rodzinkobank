@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Miasteczko Groszaków · jesień</title>
+<style>
+  body { margin: 0; background: #fff7e6; color: #573c2a; font: 16px/1.5 system-ui; }
+  main { max-width: 1180px; margin: auto; padding: 16px; }
+  h1 { margin: 0 0 12px; font: 700 28px Georgia, serif; }
+  canvas { display: block; width: 100%; height: auto; border-radius: 12px; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
+  button, select { font: inherit; padding: 7px 10px; }
+  #status:empty { display: none; }
+</style>
+<main>
+  <h1>Miasteczko Groszaków · jesień</h1>
+  <div class="controls">
+    <button id="play" type="button" disabled>Odtwórz</button>
+    <label>Kadr <select id="view">
+      <option value="panorama">Całe miasteczko</option>
+      <option value="market">Rynek i piekarnia</option>
+      <option value="mill">Młyny</option>
+      <option value="vault">Skarbiec</option>
+      <option value="farm">Farma</option>
+      <option value="bridges">Mosty</option>
+    </select></label>
+  </div>
+  <canvas id="town" width="2000" height="1116" role="img"
+    aria-label="Jesienna panorama z mieszkańcami i Groszakami poruszającymi się między rynkiem, Skarbcem, młynami i farmą."></canvas>
+  <p id="status" role="status">Wczytywanie miasteczka…</p>
+</main>
+<script type="module" src="./src/groszaki/miasteczko-podglad.js"></script>
+</html>

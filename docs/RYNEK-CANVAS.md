@@ -61,3 +61,11 @@ Przed animacją należy złożyć pozę spoczynkową w tym samym kadrze i porów
 ją z zatwierdzoną ilustracją. Przy ocenie chodu i obu czynności w 390 px
 sprawdzamy kontur, paletę, kontakt stóp z ziemią oraz kontakt dłoni z
 młotkiem i jabłkiem w każdej pozie.
+
+## Panorama jesienna
+
+`/miasteczko-podglad.html` pokazuje niezależną próbę całej mapy z 18 postaciami.
+Wybór kadru obejmuje panoramę, rynek, młyny, Skarbiec, farmę i mosty.
+Mieszkańcy i Groszaki korzystają z istniejącej sieci dróg i przesłon mapy.
+Lokalny spacer przy wiatraku, poza siecią, należy wyłącznie do podglądu.
+Rozkłady zajęć są demonstracyjne. Podgląd działa z jesienną panoramą.
