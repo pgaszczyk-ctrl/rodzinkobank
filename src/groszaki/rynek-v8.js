@@ -49,10 +49,10 @@ const crateFront = [[440, 858], [537, 899], [691, 856], [691, 954], [534, 997], 
 
 const cycle = 19200;
 const routes = [
-  { row: 0, scale: 0.86, phase: 0, path: [[136, 387], [368, 489], [419, 542]] },
-  { row: 1, scale: 0.83, phase: 2400, path: [[1250, 641], [1090, 662], [954, 633]] },
-  { row: 2, scale: 0.70, phase: 5600, path: [[1060, 802], [866, 758], [789, 724]] },
-  { row: 2, scale: 0.62, phase: 11600, path: [[236, 679], [354, 625], [411, 601]] },
+  { row: 0, scale: 1.13, phase: 0, path: [[136, 387], [368, 489], [419, 542]] },
+  { row: 1, scale: 1.10, phase: 2400, path: [[1250, 641], [1090, 662], [954, 633]] },
+  { row: 2, scale: 1.00, phase: 5600, path: [[1060, 802], [866, 758], [789, 724]] },
+  { row: 2, scale: 1.00, phase: 11600, path: [[236, 679], [354, 625], [411, 601]] },
 ];
 const stops = [0, 4800, 6900, 9400, 11500, 16300, cycle];
 
@@ -62,6 +62,8 @@ const travelerAnchors = [
   [[178, 316], [170, 316], [164, 316], [152, 316]],
 ];
 const sellerAnchors = [[252, 650], [251, 650], [250, 650], [252, 650]];
+const coinWalkScale = 0.78;
+const coinRepairScale = 0.80;
 const repairAnchors = [
   [220, 375], [221, 377], [221, 376], [222, 377],
   [196, 363], [196, 363], [196, 363], [196, 363],
@@ -150,7 +152,7 @@ try {
       }
       const pose = moving ? (1 + Math.floor(151 * (retreat > 0 ? retreat : approach) / 14)) % 4
         : time < 2780 ? 4 : time < 3120 ? 5 : time < 3230 ? 6 : time < 3490 ? 7 : 4;
-      frame(coin, 4, 2, pose, repairAnchors[pose], 0.8, x, y);
+      frame(coin, 4, 2, pose, repairAnchors[pose], moving ? coinWalkScale : coinRepairScale, x, y);
       context.restore();
     }
 
