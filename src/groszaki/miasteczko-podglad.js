@@ -31,6 +31,11 @@ const trades = [
   [[188, 360], [175, 361], [169, 359], [164, 360]],
   [[186, 342], [175, 344], [164, 342], [156, 343]],
 ];
+const neighbors = [
+  [[184, 360], [178, 360], [178, 359], [177, 360]],
+  [[184, 358], [178, 357], [179, 357], [178, 357]],
+  [[182, 349], [180, 349], [182, 349], [181, 348]],
+];
 const coins = [
   [[220, 375], [221, 377], [221, 376], [222, 377]],
   [[196, 363], [193, 361], [196, 363], [198, 365]],
@@ -38,6 +43,9 @@ const coins = [
 const sellerAnchors = [[[252, 650], [252, 650], [252, 650], [253, 650]]];
 
 const sprites = {
+  florist: ['neighbors', neighbors, 0, 0.126],
+  grower: ['neighbors', neighbors, 1, 0.128],
+  apprentice: ['neighbors', neighbors, 2, 0.132],
   baker: ['people', people, 0, 0.132],
   shopper: ['people', people, 1, 0.125],
   carrier: ['people', people, 2, 0.114],
@@ -51,12 +59,12 @@ const sprites = {
 
 const journeys = [
   ['baker', 'piekarnia', 'stragan-a', 1600, 29, 0.34],
-  ['shopper', 'stragan-b', 'r5', 4200, 24, 0.72],
-  ['shopper', 'p2', 'stragan-c', 7600, 23, 0.54],
+  ['shopper', 'w2', 'r5', 4200, 24, 0.25],
+  ['florist', 'p2', 'stragan-c', 7600, 23, 0.54],
   ['miller', 'mlyn', 'stragan-b', 2900, 26, 0.61],
   ['keeper', 'drzwi', 's0', 5100, 31, 0.42],
   ['farmer', 'dynie', 'podworze', 2000, 24, 0.51],
-  ['farmer', 'stodola', 'dynie', 8300, 25, 0.70],
+  ['grower', 'stodola', 'dynie', 8300, 25, 0.70],
 ];
 
 const windmillWalk = [[288, 271], [318, 285], [290, 306], [255, 324], [246, 339], [272, 356], [317, 365]];
@@ -191,12 +199,12 @@ function showDeposits(effects, elapsed) {
 
 try {
   const art = 'design/rynek/v8/';
-  const [artwork, peopleImage, tradesImage, coinImage, sellerImage, data, occ, geometry] = await Promise.all([
+  const [artwork, peopleImage, tradesImage, neighborsImage, coinImage, sellerImage, data, occ, geometry] = await Promise.all([
     loadImage(art + 'miasteczko-jesien.png'), loadImage(art + 'mieszkancy.png'),
-    loadImage(art + 'mieszkancy-miasteczka.png'), loadImage(art + 'groszak.png'),
+    loadImage(art + 'mieszkancy-miasteczka.png'), loadImage(art + 'mieszkancy-rozni.png'), loadImage(art + 'groszak.png'),
     loadImage(art + 'sprzedawczyni.png'), readJson('trasy.json'), readJson('przeslony.json'), readJson(art + 'miasteczko-jesien-geometria.json'),
   ]);
-  const images = { people: peopleImage, trades: tradesImage, coins: coinImage, seller: sellerImage };
+  const images = { people: peopleImage, trades: tradesImage, neighbors: neighborsImage, coins: coinImage, seller: sellerImage };
   // Existing graph coordinates stay in the 2000 × 1116 world. Artwork-specific
   // corrections are recorded in native illustration pixels.
   const sx = 2000 / artwork.width;
@@ -218,7 +226,7 @@ try {
     return makeJourney(kind, path, graph, phase, speed, lane);
   });
   const north = windmillWalk.map(([x, y]) => ({ x, y, s: 11 }));
-  actors.push(makeJourney('miller', north, graph, 1500, 20, 0));
+  actors.push(makeJourney('apprentice', north, graph, 1500, 20, 0));
   let seed = 125;
   const rand = () => ((seed = (Math.imul(1664525, seed) + 1013904223) >>> 0) / 2 ** 32);
   const sim = new TownSim({ graph, rand, makePuppet: options => ({ ...options }) });
