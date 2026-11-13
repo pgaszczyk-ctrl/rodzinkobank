@@ -42,3 +42,74 @@ export function drawLandscape(ctx, now, angle, season, still) {
   }
   ctx.restore();
 }
+
+const AUTUMN_ART = 'design/rynek/v8/';
+
+export async function loadAutumnRotor(root) {
+  const rotor = new Image();
+  rotor.src = new URL(AUTUMN_ART + 'wiatrak-wirnik.png', root).href;
+  await rotor.decode();
+  return rotor;
+}
+
+const autumnLeaves = Array.from({ length: 38 }, (_, i) => ({
+  x: (i * 307 + 289) % 1679,
+  phase: (i * 0.618034) % 1,
+  period: 7 + i % 6,
+  size: 5 + i % 5,
+  color: ['#e56b25', '#f49b27', '#d74e28'][i % 3],
+}));
+
+export function drawAutumnLandscape(ctx, rotor, time, still) {
+  const t = still ? 0 : time / 1000;
+  // Ruch pochodzący od tego samego podmuchu, bez skoków przy zmianach prędkości.
+  const drift = 22 * t + 22 * (1 - Math.cos(t * 0.85));
+  ctx.save();
+  ctx.scale(2000 / 1679, 1116 / 937);
+  ctx.save();
+  ctx.translate(208, 131);
+  ctx.rotate(t * 0.58 + 0.26 * Math.sin(t * 0.85));
+  ctx.drawImage(rotor, -60, -59);
+  ctx.restore();
+
+  if (!still) {
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 11; i++) {
+      const phase = (t / 3.6 + i * 0.38197) % 1;
+      const x = (i * 463 + 85) % 1620 + phase * 155;
+      const y = 60 + (i * 71) % 425;
+      ctx.strokeStyle = 'rgba(255,247,215,' + (0.48 * Math.sin(Math.PI * phase) ** 2) + ')';
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.bezierCurveTo(x + 22, y - 9, x + 49, y + 6, x + 74, y - 5);
+      ctx.stroke();
+    }
+  }
+
+  for (const leaf of autumnLeaves) {
+    const fall = (t / leaf.period + leaf.phase) % 1;
+    const x = (leaf.x + drift + Math.sin(t * 2 + leaf.x) * 13 + 1719) % 1719 - 20;
+    const y = -18 + fall * 520;
+    ctx.save();
+    ctx.globalAlpha *= Math.min(1, fall * 15, (1 - fall) * 9);
+    ctx.translate(x, y);
+    ctx.rotate(t * 1.6 + leaf.x + Math.sin(t * 2.6 + leaf.x) * 0.6);
+    ctx.scale(leaf.size, leaf.size * (0.30 + 0.36 * Math.abs(Math.cos(t * 2.2 + leaf.x))));
+    ctx.fillStyle = leaf.color;
+    ctx.strokeStyle = '#9c451e';
+    ctx.lineWidth = 0.16;
+    ctx.beginPath();
+    ctx.moveTo(-1, 0);
+    ctx.quadraticCurveTo(-0.1, -1.42, 1, 0);
+    ctx.quadraticCurveTo(0.08, 1.22, -1, 0);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-1.22, 0.10);
+    ctx.quadraticCurveTo(-0.28, 0.01, 0.68, -0.11);
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}

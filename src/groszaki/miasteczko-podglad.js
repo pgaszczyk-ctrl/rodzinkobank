@@ -1,3 +1,4 @@
+import { drawAutumnLandscape, loadAutumnRotor } from './wiatr.js';
 import { autumnGeometry, autumnResidents, crumb, drawable, loadTownSprites, townResidents } from './miasteczko-jesien.js';
 import { buildGraph } from './trasy.js';
 import { prepareOccluders, drawGroszakiWithDepth } from './przeslony.js';
@@ -16,7 +17,7 @@ const root = new URL('../../assets/groszaki/', import.meta.url);
 const cameras = {
   panorama: [0, 0, 2000, 1116],
   market: [365, 425, 675, 465],
-  mill: [105, 175, 485, 740],
+  mill: [105, 48, 535, 740],
   vault: [790, 135, 445, 540],
   farm: [1445, 370, 555, 540],
   bridges: [1120, 380, 565, 565],
@@ -77,8 +78,8 @@ function showDeposits(effects, elapsed) {
 
 try {
   const art = 'design/rynek/v8/';
-  const [artwork, images, data, occ, geometry] = await Promise.all([
-    loadImage(art + 'miasteczko-jesien.png'), loadTownSprites(root),
+  const [artwork, images, rotor, data, occ, geometry] = await Promise.all([
+    loadImage(art + 'miasteczko-jesien-tlo.png'), loadTownSprites(root), loadAutumnRotor(root),
     readJson('trasy.json'), readJson('przeslony.json'), readJson(art + 'miasteczko-jesien-geometria.json'),
   ]);
   const plate = sharpenArtwork(artwork);
@@ -137,6 +138,7 @@ try {
     context.setTransform(outputWidth / w, 0, 0, outputHeight / h, -x * outputWidth / w, -y * outputHeight / h);
     context.imageSmoothingQuality = 'high';
     context.drawImage(plate, 0, 0, 2000, 1116);
+    drawAutumnLandscape(context, rotor, elapsed, reduced.matches);
     const visible = [...autumnResidents(actors, elapsed, false), ...helpers(dt)]
       .filter(a => a.x >= x - 55 && a.x <= x + w + 55 && a.y >= y && a.y <= y + h + 65)
       .map(actor => drawable(actor, images));
@@ -172,22 +174,27 @@ try {
   }
 
   function preferenceChanged() {
-    if (reduced.matches) stop();
+    if (reduced.matches) {
+      stop();
+      draw();
+    }
     play.disabled = reduced.matches;
     status.textContent = reduced.matches ? 'Ruch ograniczony zgodnie z ustawieniami systemu.' : '';
   }
 
-  play.addEventListener('click', () => {
-    if (request !== null) return stop();
+  function start() {
     play.textContent = 'Zatrzymaj';
     request = requestAnimationFrame(tick);
-  });
+  }
+
+  play.addEventListener('click', () => request === null ? start() : stop());
   view.addEventListener('change', () => draw());
   new ResizeObserver(() => draw()).observe(canvas.parentElement);
   reduced.addEventListener('change', preferenceChanged);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
   preferenceChanged();
   draw();
+  if (!reduced.matches && !document.hidden) start();
 } catch (error) {
   status.textContent = 'Nie udało się wczytać podglądu miasteczka.';
   console.error(error);

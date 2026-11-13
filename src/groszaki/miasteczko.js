@@ -10,7 +10,7 @@ import { TownSim } from './symulacja.js';
 import { seasonOfMonth } from './kalendarz.js';
 import { t } from './teksty.js';
 import { TownLife } from './zycie.js';
-import { drawLandscape, windAt } from './wiatr.js';
+import { drawAutumnLandscape, drawLandscape, loadAutumnRotor, windAt } from './wiatr.js';
 
 export const MAP_W = 2000;
 export const MAP_H = 1116;
@@ -29,7 +29,7 @@ function loadImage(src) {
 
 export class Miasteczko {
   /**
-   * wrap – element z <canvas> w środku (ma stały rozmiar, touch-action: none).
+   * wrap – element z <canvas> w środku (ma stały rozmiar).
    * opts: { base: 'assets/groszaki/', material: 'miedziany', formatMoney, season, still }
    */
   constructor(wrap, opts = {}) {
@@ -68,8 +68,7 @@ export class Miasteczko {
     this.occData = occ;
     this.occluders = prepareOccluders(occ.przeslony);
     this.material = await loadMaterial(this.base, manifest, this.materialId);
-    this.mapImg = await this.loadMap(this.season);
-    await this.prepareSeason(this.season, this.mapImg);
+    this.mapImg = await this.prepareSeason(this.season);
     this.sim = new TownSim({
       graph: buildGraph(this.activeRoutes),
       makePuppet: (o) => createGroszak(this.material, o),
@@ -89,38 +88,53 @@ export class Miasteczko {
     return this;
   }
 
-  async prepareSeason(season, image) {
+  async prepareSeason(season) {
     this.activeRoutes = this.routesData;
-    let masks = this.occData.przeslony;
+    const masks = this.occData.przeslony;
     if (season === 'autumn') {
-      const root = new URL(this.base, document.baseURI);
-      this.autumnAssets ??= Promise.all([
-        loadTownSprites(root),
-        fetch(new URL('design/rynek/v8/miasteczko-jesien-geometria.json', root)).then(response => {
-          if (!response.ok) throw new Error('Nie można wczytać geometrii jesiennej mapy.');
-          return response.json();
-        }),
-      ]);
-      const [images, geometry] = await this.autumnAssets;
-      this.autumnImages = images;
-      const adjusted = autumnGeometry(this.routesData, masks, geometry, image);
-      this.activeRoutes = adjusted.routes;
-      masks = adjusted.masks;
+      try {
+        const root = new URL(this.base, document.baseURI);
+        this.autumnAssets ??= Promise.all([
+          this.loadMap(season),
+          loadTownSprites(root),
+          loadAutumnRotor(root),
+          fetch(new URL('design/rynek/v8/miasteczko-jesien-geometria.json', root)).then(response => {
+            if (!response.ok) throw new Error('Nie można wczytać geometrii jesiennej mapy.');
+            return response.json();
+          }),
+        ]);
+        const [image, sprites, rotor, geometry] = await this.autumnAssets;
+        const adjusted = autumnGeometry(this.routesData, masks, geometry, image);
+        this.occluders = prepareOccluders(adjusted.masks);
+        this.activeRoutes = adjusted.routes;
+        this.autumnImages = sprites;
+        this.autumnRotor = rotor;
+        return image;
+      } catch (error) {
+        this.autumnAssets = undefined;
+        console.warn('Nie udało się wczytać ilustrowanej jesieni. Używam poprzedniej mapy.', error);
+      }
     }
+    const image = await this.loadMap(season, false);
+    this.autumnImages = undefined;
     this.occluders = prepareOccluders(masks);
+    return image;
   }
 
-  loadMap(season) {
-    if (!this.maps[season]) this.maps[season] = loadImage(this.base + (season === 'autumn'
-      ? 'design/rynek/v8/miasteczko-jesien.png' : 'zrodla/' + SEASON_FILE[season]));
-    return this.maps[season];
+  loadMap(season, illustrated = true) {
+    const file = season === 'autumn' && illustrated
+      ? 'design/rynek/v8/miasteczko-jesien-tlo.png' : 'zrodla/' + SEASON_FILE[season];
+    this.maps[file] ??= loadImage(this.base + file).catch(error => {
+      delete this.maps[file];
+      throw error;
+    });
+    return this.maps[file];
   }
 
   /** Zmiana pory roku z płynnym przenikaniem map. */
   async setSeason(season) {
     if (season === this.season) return;
-    const img = await this.loadMap(season);
-    await this.prepareSeason(season, img);
+    const img = await this.prepareSeason(season);
     this.sim.setGraph(buildGraph(this.activeRoutes));
     this.prevMap = this.mapImg;
     this.mapImg = img;
@@ -196,7 +210,7 @@ export class Miasteczko {
   bindInput() {
     const w = this.wrap;
     w.addEventListener('pointerdown', (e) => {
-      if (this.editor?.capture?.(e)) return;
+      if (e.pointerType === 'touch' || this.editor?.capture?.(e)) return;
       w.setPointerCapture(e.pointerId);
       this.pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
       this.moved = 0;
@@ -230,6 +244,38 @@ export class Miasteczko {
     };
     w.addEventListener('pointerup', up);
     w.addEventListener('pointercancel', (e) => { this.pointers.delete(e.pointerId); this.pinch = null; });
+    let touchPinch;
+    let hadPinch = false;
+    const touchPoint = (touch) => {
+      const rect = w.getBoundingClientRect();
+      return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+    };
+    w.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) hadPinch = false;
+      if (e.touches.length !== 2) return;
+      const [a, b] = Array.from(e.touches, touchPoint);
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      touchPinch = { distance: Math.max(1, distance), zoom: this.cam.z };
+      hadPinch = true;
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+    w.addEventListener('touchmove', (e) => {
+      if (e.touches.length !== 2 || !touchPinch || !e.cancelable) return;
+      e.preventDefault();
+      const [a, b] = Array.from(e.touches, touchPoint);
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      this.zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, touchPinch.zoom * distance / touchPinch.distance);
+    }, { passive: false });
+    const endTouch = (e) => {
+      if (e.touches.length < 2) touchPinch = undefined;
+    };
+    w.addEventListener('touchend', endTouch);
+    w.addEventListener('touchcancel', endTouch);
+    w.addEventListener('click', (e) => {
+      if (e.pointerType !== 'touch' || hadPinch) return;
+      const { x, y } = touchPoint(e);
+      this.tap(x, y);
+    });
     w.addEventListener('wheel', (e) => {
       e.preventDefault();
       this.zoomAt(e.offsetX, e.offsetY, this.cam.z * Math.exp(-e.deltaY * 0.0015));
@@ -242,7 +288,7 @@ export class Miasteczko {
     // najbliższy widzowi (największe y) Groszak pod palcem
     const hit = this.sim.puppets.filter((g) => hitTest(g, p.x, p.y)).sort((a, b) => b.y - a.y)[0];
     if (!hit) {
-      const resident = (this.season === 'autumn' ? [] : this.life.residents).filter(r => hitTest(r, p.x, p.y)).sort((a, b) => b.y - a.y)[0];
+      const resident = (this.autumnImages ? [] : this.life.residents).filter(r => hitTest(r, p.x, p.y)).sort((a, b) => b.y - a.y)[0];
       if (resident) this.say = { text: resident.helping
         ? `Dziękuję! Groszaki pomagają mi w pracy. — ${resident.job.role}`
         : `Tu pracuję. Razem z Groszakami dbamy o miasteczko. — ${resident.job.role}`,
@@ -378,10 +424,11 @@ export class Miasteczko {
     for (const l of layers) { l.sourceScaleX = l.img.width / MAP_W; l.sourceScaleY = l.img.height / MAP_H; ctx.globalAlpha = l.alpha; ctx.drawImage(l.img, 0, 0, MAP_W, MAP_H); }
     ctx.globalAlpha = 1;
     if (!this.still) this.windAngle += dt * (0.11 + windAt(now) * 0.025);
-    if (this.season !== 'autumn') drawLandscape(ctx, now, this.windAngle, this.season, this.still);
+    if (this.autumnImages) drawAutumnLandscape(ctx, this.autumnRotor, now, this.still);
+    else drawLandscape(ctx, now, this.windAngle, this.season, this.still);
     if (this.life.graph !== this.sim.graph) this.life.setGraph(this.sim.graph);
     const zs = this.cam.z * this.dpr;
-    if (this.season === 'autumn') {
+    if (this.autumnImages) {
       if (this.autumnGraph !== this.sim.graph) {
         this.autumnGraph = this.sim.graph;
         this.autumnActors = townResidents(this.autumnGraph);

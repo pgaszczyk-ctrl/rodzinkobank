@@ -2,12 +2,12 @@
 //
 // Tło to jedna zapętlona panorama roku (assets/groszaki/droga/rok.jpg), u góry jest „dziś”.
 // Wydarzenia to obrazki postawione obok drogi przy swoich datach, cele – znaczniki
-// z obrazkiem celu. Na drodze nie ma napisów: nazwa, data i prognoza pokazują się
-// po dotknięciu. Groszak idzie drogą: trzyma się środka ekranu, a droga przesuwa się pod nim.
+// z nazwą i obrazkiem celu. Data i prognoza wydarzenia pokazują się po dotknięciu. Groszak idzie drogą: trzyma się środka ekranu, a droga przesuwa się pod nim.
 // Układ (gdzie co stoi) liczy layoutRoad() w droga.js; tu tylko DOM i animacja.
 
-import { layoutRoad, roadXAt } from './droga.js';
+import { layoutRoad, roadXAt, yearPos } from './droga.js';
 import { createGroszak, drawGroszak } from './kukielka.js';
+import { dateOfDay } from './czas.js';
 import { t, plural } from './teksty.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -25,6 +25,9 @@ const BOX_SVG = `<svg class="gr-road-box" viewBox="0 0 100 100" aria-hidden="tru
 </svg>`;
 // Mrugające tło za pudełkiem celu: poświata i iskierki.
 const GLOW = `<span class="gr-road-glow" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>`;
+const monthName = new Intl.DateTimeFormat('pl-PL', { month: 'long', timeZone: 'UTC' });
+const calendarDate = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const asDate = (day) => new Date(day * 86400000);
 const WALKER = 0.12;         // wielkość Groszaka (ułamek szerokości drogi)
 const VIEW_Y = 0.55;         // na jakiej wysokości ekranu idzie Groszak
 
@@ -55,13 +58,24 @@ export class DrogaWidok {
   render(road, opts = {}) {
     this.road = road;
     this.opts = opts;
-    const L = this.L = layoutRoad(road, this.data, { sizes: this.sizes });
+    const L = this.L = layoutRoad(road, this.data, { sizes: this.sizes, goalW: 0.27 });
     const span = L.y1 - L.y0;
     const ty = (y) => pct((y - L.y0) / span);
     const tiles = Math.ceil(L.y1);
     const parts = [];
     parts.push(`<div class="gr-road-bg" style="top:${pct(-L.y0 / span)};height:${pct(tiles / span)};
       background-image:url('${this.base}${this.data.plik}');background-size:100% ${pct(1 / tiles)}"></div>`);
+    const baseYearPos = yearPos(road.today, this.data.miesiace) - L.yToday;
+    const { year, month } = dateOfDay(road.today);
+    this.dayPositions = [];
+    for (let day = road.today; day <= road.end; day++) {
+      const y = yearPos(day, this.data.miesiace) - baseYearPos;
+      this.dayPositions.push(y);
+      if (day === road.today || dateOfDay(day).day === 1) {
+        const side = (dateOfDay(day).month - month + 12 * (dateOfDay(day).year - year)) % 2;
+        parts.push(`<span class="gr-road-month ${side ? 'right' : ''}" style="top:${ty(y)}">${monthName.format(asDate(day))}</span>`);
+      }
+    }
     L.items.forEach((it, i) => {
       if (it.type === 'wp') {
         const o = this.objects[it.decor];
@@ -72,16 +86,18 @@ export class DrogaWidok {
         const g = it.flag;
         parts.push(`<button class="gr-road-goal${g.reachedNow ? ' done' : ''}" data-goal="${esc(g.goal.id)}"
           style="left:${pct(it.x)};top:${ty(it.y)};width:${pct(it.wFrac)}" aria-label="${esc(g.goal.nazwa)}">
-          ${GLOW}${BOX_SVG}<span class="gr-road-sticker">${esc(g.goal.ikona || '⭐')}</span>${g.reachedNow ? '<span class="gr-road-ok">✓</span>' : ''}</button>`);
+          ${GLOW}${BOX_SVG}<span class="gr-road-banner">${esc(g.goal.nazwa)}</span><span class="gr-road-sticker">${esc(g.goal.ikona || '⭐')}</span>${g.reachedNow ? '<span class="gr-road-ok">✓</span>' : ''}</button>`);
       }
     });
-    parts.push('<div class="gr-road-fade"></div><canvas class="gr-road-walker" aria-hidden="true"></canvas><div class="gr-road-tip" hidden></div>');
+    parts.push('<div class="gr-road-fade"></div><canvas class="gr-road-walker" aria-hidden="true"></canvas><time class="gr-road-calendar"></time><div class="gr-road-tip" hidden></div>');
     this.el.className = 'gr-road';
     this.el.style.aspectRatio = `1 / ${(span * L.aspect).toFixed(4)}`;
     this.el.setAttribute('role', 'region');
     this.el.setAttribute('aria-label', t('droga.tytul'));
     this.el.innerHTML = parts.join('');
     this.canvas = this.el.querySelector('.gr-road-walker');
+    this.calendar = this.el.querySelector('.gr-road-calendar');
+    this.calendarDay = null;
     this.tip = this.el.querySelector('.gr-road-tip');
     this.el.querySelectorAll('.gr-road-obj').forEach((b) => b.addEventListener('click', () => this.showTip(L.items[+b.dataset.i], b)));
     this.el.querySelectorAll('.gr-road-goal').forEach((b) => b.addEventListener('click', () => {
@@ -123,7 +139,7 @@ export class DrogaWidok {
 
   frame(now) {
     this.raf = 0;
-    if (!this.visible || !this.L || !this.g) return;
+    if (!this.visible || !this.L) return;
     const L = this.L, r = this.el.getBoundingClientRect();
     const span = L.y1 - L.y0;
     const pxOf = (y) => (y - L.y0) / span * r.height;
@@ -135,6 +151,23 @@ export class DrogaWidok {
     else this.walkY += (target - this.walkY) * Math.min(1, dt * 6);
     const moving = Math.abs(target - this.walkY) > 1 || now - this.lastScroll < 220;
     const y = yOfPx(this.walkY);
+    const positions = this.dayPositions;
+    let lo = 0, hi = positions.length - 1;
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      if (positions[mid] <= y) lo = mid;
+      else hi = mid - 1;
+    }
+    const day = this.road.today + lo;
+    if (day !== this.calendarDay) {
+      this.calendarDay = day;
+      const date = asDate(day);
+      this.calendar.dateTime = date.toISOString().slice(0, 10);
+      this.calendar.textContent = calendarDate.format(date);
+    }
+    this.calendar.style.top = Math.max(36, this.walkY) + 'px';
+    this.raf = requestAnimationFrame((n) => this.frame(n));
+    if (!this.g) return;
     const x = roadXAt(this.data, y) * r.width;
     const dx = (roadXAt(this.data, y + 0.004) - roadXAt(this.data, y - 0.004)) * r.width;
     const g = this.g;
@@ -154,7 +187,6 @@ export class DrogaWidok {
     ctx.clearRect(0, 0, cw, ch);
     Object.assign(g, { x: cw / 2, y: ch * 0.9, size: D });
     drawGroszak(ctx, g, now, dpr, this.still);
-    this.raf = requestAnimationFrame((n) => this.frame(n));
   }
 }
 
@@ -167,7 +199,16 @@ export const DROGA_CSS = `
 .gr-road-obj img { display: block; width: 100%; height: auto; filter: drop-shadow(0 3px 3px rgba(60,30,10,.25)); transition: transform .15s; }
 .gr-road-obj:active img { transform: scale(.94); }
 .gr-road-badge { position: absolute; left: 50%; top: 24%; transform: translateX(-50%); font-size: clamp(10px, 3vw, 18px); }
-.gr-road-goal { aspect-ratio: 1; container-type: inline-size; }
+.gr-road-goal { aspect-ratio: 1; container-type: inline-size; z-index: 1; }
+.gr-road-banner { position: absolute; left: 0; right: 0; top: 8%; padding: 3px 5px; border: 1px solid #ffdb92;
+  border-radius: 6px; background: #713a21; color: #fff5dc; font: 800 clamp(10px, 11cqw, 17px)/1.15 system-ui;
+  overflow-wrap: anywhere; transform: translateY(-50%); box-shadow: 0 2px 4px #49291055; }
+.gr-road-month, .gr-road-calendar { position: absolute; padding: 3px 6px; border: 1px solid #ad8050;
+  color: #532e1c; font: 800 clamp(10px, 2.5vw, 13px)/1.2 system-ui; pointer-events: none; }
+.gr-road-month { left: 0; border-radius: 0 6px 6px 0; background: #fff3cf; }
+.gr-road-month.right { left: auto; right: 0; border-radius: 6px 0 0 6px; }
+.gr-road-calendar { right: 5px; z-index: 2; transform: translateY(-100%); border-radius: 6px;
+  border-top: 5px solid #9b4c2b; background: #fffdf5; box-shadow: 0 2px 4px #49291033; }
 .gr-road-glow { position: absolute; left: -45%; top: -50%; width: 190%; height: 190%; pointer-events: none;
   background: radial-gradient(closest-side, rgba(255,214,90,1), rgba(255,170,40,.6) 45%, rgba(255,170,40,0));
   animation: grGlow 1.8s ease-in-out infinite; }

@@ -131,7 +131,7 @@ function renderTop() {
     : '';
   tabs.querySelectorAll('[data-kid]').forEach((b) => b.addEventListener('click', () => run(() => switchKid(b.dataset.kid))));
   $('modeNote').innerHTML = mode === 'local'
-    ? esc(t('app.trybProbny')) + (cloudReady ? ` · <a href="#" id="modeLogin">${esc(t('app.zaloguj'))}</a>` : '')
+    ? esc(t('app.trybProbny')) + (cloudReady ? ` <button type="button" class="btn" id="modeLogin">${esc(t('app.zaloguj'))}</button>` : '')
     : '';
   $('modeLogin')?.addEventListener('click', (e) => { e.preventDefault(); openAuth('login'); });
   $('parentBtn').hidden = mode === 'kid';
@@ -203,10 +203,16 @@ async function ensureTown() {
   if (town) return;
   const style = document.createElement('style');
   style.textContent = MIASTECZKO_CSS + CELE_CSS + DROGA_CSS;
-  document.head.appendChild(style);
-  town = new Miasteczko($('mapWrap'), { base: BASE, formatMoney: moneyRound });
+  const nextTown = new Miasteczko($('mapWrap'), { base: BASE, formatMoney: moneyRound });
   const roadData = fetch(BASE + 'droga-rok.json').then((r) => r.json()).catch(() => null);
-  await town.load();
+  document.head.appendChild(style);
+  try {
+    await nextTown.load();
+  } catch (error) {
+    style.remove();
+    throw error;
+  }
+  town = nextTown;
   ksiegowy = new Ksiegowy(BASE, town.manifest);
   const data = await roadData;
   if (data) drogaWidok = new DrogaWidok($('road'), { base: BASE, manifest: town.manifest, data, material: town.material });
