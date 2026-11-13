@@ -1,3 +1,4 @@
+import { autumnGeometry, autumnHelper, autumnResidents, drawable, loadTownSprites, townResidents } from './miasteczko-jesien.js';
 // Miasteczko Groszaków na <canvas>: mapa pory roku z przesuwaniem i
 // przybliżaniem, Groszaki z planami (przesłony), okruszki lecące do Skarbca,
 // delikatne efekty pór roku i dymki po dotknięciu.
@@ -68,12 +69,14 @@ export class Miasteczko {
     this.occluders = prepareOccluders(occ.przeslony);
     this.material = await loadMaterial(this.base, manifest, this.materialId);
     this.mapImg = await this.loadMap(this.season);
+    await this.prepareSeason(this.season, this.mapImg);
     this.sim = new TownSim({
-      graph: buildGraph(routes),
+      graph: buildGraph(this.activeRoutes),
       makePuppet: (o) => createGroszak(this.material, o),
       formatMoney: this.formatMoney,
     });
     this.life = new TownLife(this.sim.graph);
+    this.spriteMotion = new WeakMap();
     this.windAngle = 0;
     this.buildDom();
     this.bindInput();
@@ -86,8 +89,30 @@ export class Miasteczko {
     return this;
   }
 
+  async prepareSeason(season, image) {
+    this.activeRoutes = this.routesData;
+    let masks = this.occData.przeslony;
+    if (season === 'autumn') {
+      const root = new URL(this.base, document.baseURI);
+      this.autumnAssets ??= Promise.all([
+        loadTownSprites(root),
+        fetch(new URL('design/rynek/v8/miasteczko-jesien-geometria.json', root)).then(response => {
+          if (!response.ok) throw new Error('Nie można wczytać geometrii jesiennej mapy.');
+          return response.json();
+        }),
+      ]);
+      const [images, geometry] = await this.autumnAssets;
+      this.autumnImages = images;
+      const adjusted = autumnGeometry(this.routesData, masks, geometry, image);
+      this.activeRoutes = adjusted.routes;
+      masks = adjusted.masks;
+    }
+    this.occluders = prepareOccluders(masks);
+  }
+
   loadMap(season) {
-    if (!this.maps[season]) this.maps[season] = loadImage(this.base + 'zrodla/' + SEASON_FILE[season]);
+    if (!this.maps[season]) this.maps[season] = loadImage(this.base + (season === 'autumn'
+      ? 'design/rynek/v8/miasteczko-jesien.png' : 'zrodla/' + SEASON_FILE[season]));
     return this.maps[season];
   }
 
@@ -95,6 +120,8 @@ export class Miasteczko {
   async setSeason(season) {
     if (season === this.season) return;
     const img = await this.loadMap(season);
+    await this.prepareSeason(season, img);
+    this.sim.setGraph(buildGraph(this.activeRoutes));
     this.prevMap = this.mapImg;
     this.mapImg = img;
     this.fadeStart = performance.now();
@@ -215,7 +242,7 @@ export class Miasteczko {
     // najbliższy widzowi (największe y) Groszak pod palcem
     const hit = this.sim.puppets.filter((g) => hitTest(g, p.x, p.y)).sort((a, b) => b.y - a.y)[0];
     if (!hit) {
-      const resident = this.life.residents.filter(r => hitTest(r, p.x, p.y)).sort((a, b) => b.y - a.y)[0];
+      const resident = (this.season === 'autumn' ? [] : this.life.residents).filter(r => hitTest(r, p.x, p.y)).sort((a, b) => b.y - a.y)[0];
       if (resident) this.say = { text: resident.helping
         ? `Dziękuję! Groszaki pomagają mi w pracy. — ${resident.job.role}`
         : `Tu pracuję. Razem z Groszakami dbamy o miasteczko. — ${resident.job.role}`,
@@ -348,13 +375,38 @@ export class Miasteczko {
       const k = (now - this.fadeStart) / 1500;
       if (k >= 1) this.prevMap = null; else layers.push({ img: this.prevMap, alpha: 1 - k });
     }
-    for (const l of layers) { ctx.globalAlpha = l.alpha; ctx.drawImage(l.img, 0, 0, MAP_W, MAP_H); }
+    for (const l of layers) { l.sourceScaleX = l.img.width / MAP_W; l.sourceScaleY = l.img.height / MAP_H; ctx.globalAlpha = l.alpha; ctx.drawImage(l.img, 0, 0, MAP_W, MAP_H); }
     ctx.globalAlpha = 1;
     if (!this.still) this.windAngle += dt * (0.11 + windAt(now) * 0.025);
-    drawLandscape(ctx, now, this.windAngle, this.season, this.still);
+    if (this.season !== 'autumn') drawLandscape(ctx, now, this.windAngle, this.season, this.still);
     if (this.life.graph !== this.sim.graph) this.life.setGraph(this.sim.graph);
     const zs = this.cam.z * this.dpr;
-    drawGroszakiWithDepth(ctx, layers, this.sim.puppets, this.occluders, now, zs, this.still, this.life.items(now, this.sim.entities, this.still));
+    if (this.season === 'autumn') {
+      if (this.autumnGraph !== this.sim.graph) {
+        this.autumnGraph = this.sim.graph;
+        this.autumnActors = townResidents(this.autumnGraph);
+      }
+      const sprites = autumnResidents(this.autumnActors, now, this.still);
+      const procedural = [];
+      for (const entity of this.sim.entities) {
+        const g = entity.g;
+        if (['leaving', 'waking'].includes(entity.state) || g.action === 'wave' || g.waveUntil > now) {
+          procedural.push(g);
+          continue;
+        }
+        const motion = this.spriteMotion.get(g) ?? { x: g.x, y: g.y, distance: 0 };
+        motion.distance += Math.hypot(g.x - motion.x, g.y - motion.y);
+        motion.x = g.x;
+        motion.y = g.y;
+        this.spriteMotion.set(g, motion);
+        sprites.push(autumnHelper(entity, now, this.still, motion.distance));
+      }
+      if (this.sim.sleeper) procedural.push(this.sim.sleeper.g);
+      drawGroszakiWithDepth(ctx, layers, procedural, this.occluders, now, zs, this.still,
+        sprites.map(actor => drawable(actor, this.autumnImages)));
+    } else {
+      drawGroszakiWithDepth(ctx, layers, this.sim.puppets, this.occluders, now, zs, this.still, this.life.items(now, this.sim.entities, this.still));
+    }
     this.drawEffects(ctx, now);
     if (!this.still) this.drawParticles(ctx);
     this.editor?.draw?.(ctx, now);

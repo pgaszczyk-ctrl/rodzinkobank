@@ -1,4 +1,5 @@
-import { buildGraph, findPath, makeRoute, routePosition } from './trasy.js';
+import { autumnGeometry, autumnResidents, crumb, drawable, loadTownSprites, townResidents } from './miasteczko-jesien.js';
+import { buildGraph } from './trasy.js';
 import { prepareOccluders, drawGroszakiWithDepth } from './przeslony.js';
 import { TownSim } from './symulacja.js';
 import { TICK_MS, zl } from './finanse.js';
@@ -20,54 +21,6 @@ const cameras = {
   farm: [1445, 370, 555, 540],
   bridges: [1120, 380, 565, 565],
 };
-
-const people = [
-  [[188, 355], [171, 354], [164, 356], [147, 351]],
-  [[185, 359], [177, 358], [163, 359], [155, 357]],
-  [[178, 316], [170, 315], [165, 316], [155, 316]],
-];
-const trades = [
-  [[188, 358], [170, 358], [168, 358], [150, 358]],
-  [[188, 360], [175, 361], [169, 359], [164, 360]],
-  [[186, 342], [175, 344], [164, 342], [156, 343]],
-];
-const neighbors = [
-  [[184, 360], [178, 360], [178, 359], [177, 360]],
-  [[184, 358], [178, 357], [179, 357], [178, 357]],
-  [[182, 349], [180, 349], [182, 349], [181, 348]],
-];
-const coins = [
-  [[220, 375], [221, 377], [221, 376], [222, 377]],
-  [[196, 363], [193, 361], [196, 363], [198, 365]],
-];
-const sellerAnchors = [[[252, 650], [252, 650], [252, 650], [253, 650]]];
-
-const sprites = {
-  florist: ['neighbors', neighbors, 0, 0.126],
-  grower: ['neighbors', neighbors, 1, 0.128],
-  apprentice: ['neighbors', neighbors, 2, 0.132],
-  baker: ['people', people, 0, 0.132],
-  shopper: ['people', people, 1, 0.125],
-  carrier: ['people', people, 2, 0.114],
-  farmer: ['trades', trades, 0, 0.130],
-  miller: ['trades', trades, 1, 0.128],
-  keeper: ['trades', trades, 2, 0.134],
-  coin: ['coins', coins, 0, 0.087],
-  repair: ['coins', coins, 1, 0.089],
-  seller: ['seller', sellerAnchors, 0, 0.071],
-};
-
-const journeys = [
-  ['baker', 'piekarnia', 'stragan-a', 1600, 29, 0.34],
-  ['shopper', 'w2', 'r5', 4200, 24, 0.25],
-  ['florist', 'p2', 'stragan-c', 7600, 23, 0.54],
-  ['miller', 'mlyn', 'stragan-b', 2900, 26, 0.61],
-  ['keeper', 'drzwi', 's0', 5100, 31, 0.42],
-  ['farmer', 'dynie', 'podworze', 2000, 24, 0.51],
-  ['grower', 'stodola', 'dynie', 8300, 25, 0.70],
-];
-
-const windmillWalk = [[288, 271], [318, 285], [290, 306], [255, 324], [246, 339], [272, 356], [317, 365]];
 
 function loadImage(file) {
   const image = new Image();
@@ -106,81 +59,6 @@ function readJson(file) {
   });
 }
 
-function makeJourney(kind, points, graph, phase, speed, lane) {
-  const outward = makeRoute(graph, points);
-  const inward = makeRoute(graph, [...points].reverse());
-  return { kind, outward, inward, phase, speed, lane, duration: 1000 * outward.length / speed };
-}
-
-function walk(actor, time) {
-  const pause = 1700;
-  const span = actor.duration + pause;
-  const elapsed = (time + actor.phase) % (2 * span);
-  const returning = elapsed >= span;
-  const route = returning ? actor.inward : actor.outward;
-  const leg = elapsed % span;
-  const progress = Math.min(1, leg / actor.duration);
-  const ramp = Math.min(0.15, 14 / route.length);
-  const eased = progress < ramp ? progress * progress / (2 * ramp * (1 - ramp))
-    : progress > 1 - ramp ? 1 - (1 - progress) ** 2 / (2 * ramp * (1 - ramp))
-    : (progress - ramp / 2) / (1 - ramp);
-  const distance = route.length * eased;
-  const position = routePosition(route, distance, actor.lane * Math.min(1, 12 * progress, 12 * (1 - progress)));
-  const pose = progress === 1 ? 1 : Math.floor(distance / (actor.kind === 'carrier' ? 6 : 7)) % 4;
-  const ahead = routePosition(route, distance + 10);
-  const behind = routePosition(route, distance - 10);
-  const dx = ahead.x - behind.x;
-  if (Math.abs(dx) > 3) actor.left = dx < 0;
-  return { ...position, kind: actor.kind, pose, left: actor.left };
-}
-
-function drawable(actor, images) {
-  const [atlas, anchors, row, baseScale] = sprites[actor.kind];
-  const scale = baseScale * (atlas === 'coins' || actor.kind === 'carrier' ? 1.23 : 1.40);
-  const img = images[atlas];
-  const [ax, ay] = anchors[row][actor.pose];
-  const left = Math.round(actor.pose * img.width / 4);
-  const top = Math.round(row * img.height / anchors.length);
-  const w = Math.round((actor.pose + 1) * img.width / 4) - left;
-  const h = Math.round((row + 1) * img.height / anchors.length) - top;
-  return {
-    ...actor, size: h * scale,
-    draw(ctx) {
-      ctx.save();
-      ctx.translate(actor.x, actor.y);
-      ctx.fillStyle = '#733e232a';
-      ctx.beginPath();
-      ctx.ellipse(0, -1, h * scale * 0.22, 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-      if (actor.left) ctx.scale(-1, 1);
-      ctx.drawImage(img, left, top, w, h, -ax * scale, -ay * scale, w * scale, h * scale);
-      if (actor.carry) crumb(ctx, 8, -14, 4.6);
-      ctx.restore();
-    },
-  };
-}
-
-function crumb(ctx, x, y, size) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(size, size);
-  ctx.fillStyle = '#ffc65c';
-  ctx.strokeStyle = '#814720';
-  ctx.lineWidth = 0.23;
-  ctx.beginPath();
-  ctx.moveTo(-1, -0.05);
-  ctx.lineTo(-0.55, -0.85);
-  ctx.lineTo(0.55, -1);
-  ctx.lineTo(1, -0.45);
-  ctx.lineTo(0.9, 0.55);
-  ctx.lineTo(0.1, 0.92);
-  ctx.lineTo(-0.8, 0.65);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
-}
-
 function showDeposits(effects, elapsed) {
   for (const effect of effects) {
     const t = (elapsed - effect.t0) / effect.dur;
@@ -199,34 +77,16 @@ function showDeposits(effects, elapsed) {
 
 try {
   const art = 'design/rynek/v8/';
-  const [artwork, peopleImage, tradesImage, neighborsImage, coinImage, sellerImage, data, occ, geometry] = await Promise.all([
-    loadImage(art + 'miasteczko-jesien.png'), loadImage(art + 'mieszkancy.png'),
-    loadImage(art + 'mieszkancy-miasteczka.png'), loadImage(art + 'mieszkancy-rozni.png'), loadImage(art + 'groszak.png'),
-    loadImage(art + 'sprzedawczyni.png'), readJson('trasy.json'), readJson('przeslony.json'), readJson(art + 'miasteczko-jesien-geometria.json'),
+  const [artwork, images, data, occ, geometry] = await Promise.all([
+    loadImage(art + 'miasteczko-jesien.png'), loadTownSprites(root),
+    readJson('trasy.json'), readJson('przeslony.json'), readJson(art + 'miasteczko-jesien-geometria.json'),
   ]);
-  const images = { people: peopleImage, trades: tradesImage, neighbors: neighborsImage, coins: coinImage, seller: sellerImage };
-  // Existing graph coordinates stay in the 2000 × 1116 world. Artwork-specific
-  // corrections are recorded in native illustration pixels.
-  const sx = 2000 / artwork.width;
-  const sy = 1116 / artwork.height;
   const plate = sharpenArtwork(artwork);
-  const map = [{ img: plate, alpha: 1, sourceScaleX: 1 / sx, sourceScaleY: 1 / sy }];
-  const graph = buildGraph({ ...data, punkty: data.punkty.map(node => {
-    const point = geometry.nodes[node.id];
-    return point ? { ...node, x: point[0] * sx, y: point[1] * sy } : node;
-  }) });
-  const occluders = prepareOccluders(occ.przeslony.map(mask => {
-    const correction = geometry.masks[mask.id];
-    return correction ? { ...mask, base: correction.base * sy,
-      poly: correction.poly.map(([x, y]) => [x * sx, y * sy]) } : mask;
-  }));
-  const actors = journeys.map(([kind, from, to, phase, speed, lane]) => {
-    const path = findPath(graph, from, to, () => 0, 0);
-    if (!path || path.length < 2) throw new Error(from + ' → ' + to);
-    return makeJourney(kind, path, graph, phase, speed, lane);
-  });
-  const north = windmillWalk.map(([x, y]) => ({ x, y, s: 11 }));
-  actors.push(makeJourney('apprentice', north, graph, 1500, 20, 0));
+  const map = [{ img: plate, alpha: 1, sourceScaleX: artwork.width / 2000, sourceScaleY: artwork.height / 1116 }];
+  const adjusted = autumnGeometry(data, occ.przeslony, geometry, artwork);
+  const graph = buildGraph(adjusted.routes);
+  const occluders = prepareOccluders(adjusted.masks);
+  const actors = townResidents(graph);
   let seed = 125;
   const rand = () => ((seed = (Math.imul(1664525, seed) + 1013904223) >>> 0) / 2 ** 32);
   const sim = new TownSim({ graph, rand, makePuppet: options => ({ ...options }) });
@@ -277,11 +137,7 @@ try {
     context.setTransform(outputWidth / w, 0, 0, outputHeight / h, -x * outputWidth / w, -y * outputHeight / h);
     context.imageSmoothingQuality = 'high';
     context.drawImage(plate, 0, 0, 2000, 1116);
-    const phase = elapsed % 4800;
-    const working = [
-      { x: 660, y: 763, kind: 'seller', pose: phase < 1500 ? 0 : phase < 2050 ? 1 : phase < 2530 ? 2 : 3 },
-    ];
-    const visible = [...actors.map(actor => walk(actor, elapsed)), ...helpers(dt), ...working]
+    const visible = [...autumnResidents(actors, elapsed, false), ...helpers(dt)]
       .filter(a => a.x >= x - 55 && a.x <= x + w + 55 && a.y >= y && a.y <= y + h + 65)
       .map(actor => drawable(actor, images));
     drawGroszakiWithDepth(context, map, [], occluders, elapsed, 1, false, visible);
