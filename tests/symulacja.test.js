@@ -150,3 +150,22 @@ test('worki są niesione do pracy, a nie podczas odejścia po marzenie', () => {
   assert.equal(e.g.load, false);
   assert.equal(e.g.pack, true);
 });
+
+test('kolejka przy Skarbcu rusza także bez tyknięcia salda', () => {
+  const sim = makeSim();
+  sim.setBalance(zl(10), T, 0, 'init');
+  const [groszak] = sim.entities;
+  let now = 0;
+  while (groszak.state !== 'queue' && now < 120000) {
+    now += 50;
+    sim.update(now, 0.05);
+  }
+  assert.equal(groszak.state, 'queue');
+  sim.update(now + 9999, 0);
+  assert.equal(groszak.state, 'queue');
+  sim.update(now + 10000, 0);
+  assert.equal(groszak.state, 'deliver');
+  assert.equal(groszak.g.carry, false);
+  sim.update(now + 10600, 0);
+  assert.equal(groszak.state, 'toWork');
+});

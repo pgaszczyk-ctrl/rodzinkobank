@@ -59,6 +59,33 @@ const friendly = (e) => {
   return m;
 };
 let busy = false;
+async function parentSessionForNewKid() {
+  const hasPin = family.has_pin;
+  const dialog = $('parentPinDialog');
+  const input = $('parentPin');
+  $('parentPinLabel').textContent = hasPin
+    ? 'Wpisz PIN rodzica'
+    : 'Ustaw PIN rodzica (4–8 cyfr)';
+  dialog.returnValue = '';
+  dialog.showModal();
+  await new Promise(resolve => dialog.addEventListener('close', resolve, { once: true }));
+  const pin = input.value;
+  input.value = '';
+  if (dialog.returnValue !== 'confirm') return null;
+  const { data, error } = hasPin
+    ? await sb.rpc('verify_pin', { p_pin: pin })
+    : await sb.rpc('set_pin', { p_pin: pin, p_session: null });
+  if (error) throw error;
+  if (!hasPin) {
+    family.has_pin = true;
+    return data;
+  }
+  if (data?.ok && data.token) return data.token;
+  throw new Error(data?.locked_until
+    ? 'PIN jest chwilowo zablokowany. Spróbuj ponownie za kilka minut.'
+    : 'Nieprawidłowy PIN rodzica.');
+}
+
 async function run(fn) {
   if (busy) return;
   busy = true; document.body.style.cursor = 'progress';
@@ -151,6 +178,7 @@ function renderKidView(reason = 'tick') {
 function scheduleTick() {
   clearTimeout(tickTimer);
   tickTimer = setTimeout(() => {
+    scheduleTick();
     if (store) {
       const b = balanceAt(S().events, tickTime(now()));
       if (crossedFullGrosz(shown, b) && b > shown) {
@@ -161,7 +189,6 @@ function scheduleTick() {
       town.setBalance(b, threshold(), 'tick');
       renderSaldo(b);
     }
-    scheduleTick();
   }, TICK_MS - (now() % TICK_MS) + 5);
 }
 
@@ -657,7 +684,9 @@ function bindParent(sec) {
     const n = prompt(t('rz.imieDziecka'));
     if (!n || !n.trim()) return;
     run(async () => {
-      const { data, error } = await sb.rpc('add_kid', { p_name: n.trim().slice(0, 30) });
+      const session = await parentSessionForNewKid();
+      if (!session) return;
+      const { data, error } = await sb.rpc('add_kid', { p_session: session, p_name: n.trim().slice(0, 30) });
       if (error) throw error;
       family = data;
       await switchKid(family.kids[family.kids.length - 1].id);

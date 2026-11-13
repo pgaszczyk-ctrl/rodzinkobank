@@ -8,6 +8,7 @@
 import { findPath, makeRoute, routePosition, nearestNode } from './trasy.js';
 import { groszakiCrew } from './liczenie.js';
 import { t } from './teksty.js';
+import { TICK_MS } from './finanse.js';
 import { jobFor } from './zycie.js';
 
 const WALK = 34;          // px mapy na sekundę przy rozmiarze 22
@@ -243,7 +244,9 @@ export class TownSim {
       if (this.alive().length < this.crew.count) this.spawnFromVault(now);
     }
     this.effects = this.effects.filter((f) => now < f.t0 + f.dur);
+    if (!still && this.queue.length && now >= this.queue[0].queuedAt + TICK_MS) this.tick(now);
     if (still) {
+      this.queue.length = 0;
       // bez animacji: odchodzący znikają od razu, nowi stoją już przy pracy
       for (const e of this.entities) {
         if (e.state === 'leaving') e.gone = true;
@@ -278,7 +281,12 @@ export class TownSim {
         this.walk(e, dt, stopAt);
         if (e.d >= stopAt - 0.01) {
           if (e.state === 'toWork') this.startWork(e, now);
-          else if (e.state === 'toVault') { e.state = 'queue'; this.queue.push(e); g.action = 'idle'; }
+          else if (e.state === 'toVault') {
+            e.state = 'queue';
+            e.queuedAt = now;
+            this.queue.push(e);
+            g.action = 'idle';
+          }
           else {
             // wyjście z mapy: znika powoli
             e.fade = (e.fade ?? 1) - dt * 1.4;

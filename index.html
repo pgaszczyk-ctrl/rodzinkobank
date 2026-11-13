@@ -203,6 +203,18 @@
 </div>
 
 <!-- Logowanie -->
+<dialog id="parentPinDialog">
+  <form class="dlg" method="dialog">
+    <label class="field"><span id="parentPinLabel"></span>
+      <input id="parentPin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8" required autocomplete="off" />
+    </label>
+    <div class="row">
+      <button class="btn" value="confirm">Potwierdź</button>
+      <button class="btn light" value="cancel" formnovalidate>Anuluj</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="authDialog">
   <form class="dlg" id="authForm">
     <div class="tabs2">
