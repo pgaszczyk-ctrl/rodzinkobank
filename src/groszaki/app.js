@@ -424,6 +424,7 @@ function viewHome() {
     <div class="menu">${SETTINGS.map((k) => `<button class="menu-row" data-go="${k}">
       <span><b>${esc(t(k === 'rodzina' && mode !== 'parent' ? 'rz.m.konto' : 'rz.m.' + k))}</b><small>${esc(menuHint(k))}</small></span>
       <span class="chev" aria-hidden="true">›</span></button>`).join('')}</div>
+    ${viewOffers()}
     <div class="row foot">
       ${mode === 'parent' ? `<button class="btn light small" data-act="addKid">${esc(t('rz.dodajDziecko'))}</button>` : ''}
       <button class="btn light small" data-act="rename">${esc(t('rz.zmienImie'))}</button>
@@ -431,6 +432,20 @@ function viewHome() {
     ${mode === 'parent' ? `<div class="row account">
       <span class="note">${esc(t('rd.zalogowano', { email: userEmail }))}</span>
       <button class="btn light small" data-act="logout">${esc(t('rd.wyloguj'))}</button></div>` : ''}`;
+}
+
+// Polecane produkty (linki partnerskie) – tylko w strefie rodzica, zawsze oznaczone jako reklama.
+// Lista w window.GROSZAKI_CONFIG.polecane; pozycja bez adresu https:// się nie pokazuje.
+const OFFERS = (Array.isArray(cfg.polecane) ? cfg.polecane : [])
+  .filter((o) => o && o.nazwa && /^https:\/\//.test(o.url || ''));
+
+function viewOffers() {
+  if (!OFFERS.length) return '';
+  return `<h4 class="lbl">${esc(t('rz.polecane'))}</h4>
+    <div class="menu offers">${OFFERS.map((o) => `<a class="menu-row" href="${esc(o.url)}" target="_blank" rel="sponsored noopener noreferrer">
+      <span><b>${esc(o.nazwa)}</b>${o.opis ? `<small>${esc(o.opis)}</small>` : ''}</span>
+      <span class="chev" aria-hidden="true">↗</span></a>`).join('')}</div>
+    <p class="note offers-note">${esc(t('rz.polecaneInfo'))}</p>`;
 }
 
 function viewMoney() {

@@ -128,6 +128,8 @@
   .menu-row > span:first-child { flex: 1; min-width: 0; display: grid; }
   .menu-row small { font-size: 13px; opacity: .65; }
   .chev { font-size: 24px; opacity: .45; }
+  a.menu-row { color: inherit; text-decoration: none; }
+  .offers-note { margin: 6px 2px 0; }
   .foot { margin-top: 16px; justify-content: center; }
   .account { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); justify-content: space-between; align-items: center; flex-wrap: nowrap; }
   .account .note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -277,6 +279,14 @@
   window.GROSZAKI_CONFIG = {
     supabaseUrl: 'https://kjvwvgvwsdtlfogliizz.supabase.co',
     supabaseKey: 'sb_publishable_1PE_924lLY417qyhUExM3w_NJAzfloC',
+    // Polecane w strefie rodzica (linki partnerskie). Pozycja bez adresu https:// jest ukryta.
+    polecane: [
+      {
+        nazwa: 'Konto Przekorzystne dla młodych – Bank Pekao',
+        opis: 'Konto z aplikacją PeoPay i kartą, z bonusami na start.',
+        url: '', // ← wklej tu swój link afiliacyjny z systemu partnerskiego
+      },
+    ],
   };
 </script>
 <script type="module" src="./src/groszaki/app.js"></script>
