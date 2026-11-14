@@ -130,6 +130,19 @@
   .chev { font-size: 24px; opacity: .45; }
   a.menu-row { color: inherit; text-decoration: none; }
   .offers-note { margin: 6px 2px 0; }
+  .ad-banner { display: block; width: fit-content; max-width: 100%; margin: 0 auto; border-radius: 6px; overflow: hidden; }
+  .ad-banner img { display: block; max-width: 100%; height: auto; }
+  .pside { display: none; }
+  /* komputer: pionowy baner obok strefy rodzica zamiast banera na dole */
+  @media (min-width: 900px) {
+    #parentDialog.has-side { max-width: 860px; }
+    #parentDialog.has-side[open] { display: grid; grid-template-columns: minmax(0, 1fr) 200px; align-items: start; }
+    #parentDialog.has-side .pside { display: block; align-self: stretch; border-left: 1px solid var(--line); }
+    .pside-in { position: sticky; top: 0; padding: 14px 20px 20px; text-align: center; }
+    .pside-in .lbl { margin: 0 0 8px; }
+    .pside-in .note { margin: 8px 0 0; }
+    #parentDialog.has-side .ad-inline { display: none; }
+  }
   .foot { margin-top: 16px; justify-content: center; }
   .account { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); justify-content: space-between; align-items: center; flex-wrap: nowrap; }
   .account .note { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -263,12 +276,15 @@
 
 <!-- Strefa rodzica -->
 <dialog id="parentDialog">
+  <div class="pmain">
   <div class="head">
     <button class="iconbtn" id="parentBack" data-t-label="rz.wstecz" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     <h3 id="parentTitle" data-t="rz.tytul"></h3>
     <button class="iconbtn" id="parentClose" data-t-label="rz.zamknij">✕</button>
   </div>
   <div class="psec" id="psec"></div>
+  </div>
+  <aside class="pside" id="pside"></aside>
 </dialog>
 
 <div id="toast" hidden></div>
@@ -280,10 +296,14 @@
     supabaseUrl: 'https://kjvwvgvwsdtlfogliizz.supabase.co',
     supabaseKey: 'sb_publishable_1PE_924lLY417qyhUExM3w_NJAzfloC',
     // Polecane w strefie rodzica (linki partnerskie). Pozycja bez adresu https:// jest ukryta.
+    // waznyDo: ostatni dzień promocji z banera; potem pozycja sama znika.
     polecane: [
       {
-        nazwa: 'Konto Przekorzystne dla młodych – Bank Pekao',
-        opis: 'Konto z aplikacją PeoPay i kartą, z bonusami na start.',
+        nazwa: 'Konto Przekorzystne – Bank Pekao',
+        opis: 'Załóż konto sobie i dziecku – promocja „Rodzice polecają Konto Przekorzystne dzieciom”.',
+        alt: 'Bank Pekao: Załóż konto sobie i dziecku. 300 zł dla dziecka po spełnieniu warunków promocji. Sprawdź.',
+        banery: { pion: './assets/groszaki/reklama/pekao-160x600.png', poziom: './assets/groszaki/reklama/pekao-300x250.png' },
+        waznyDo: '2026-09-30',
         url: 'https://pgaszczyk.produktyfinansowe.pl/e/lead/1857/label=Groszaki?source=lt',
       },
     ],

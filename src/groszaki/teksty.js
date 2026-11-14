@@ -113,6 +113,8 @@ export const TEKSTY = {
     'rz.calaHistoria': 'Cała historia ›',
     'rz.ustawienia': 'Ustawienia',
     'rz.polecane': 'Polecane · reklama',
+    'rz.reklama': 'Reklama',
+    'rz.polecaneKrotko': 'Link partnerski. Dziecko go nie widzi.',
     'rz.polecaneInfo': 'To linki partnerskie: jeśli z nich skorzystasz, możemy dostać prowizję. Dziecko ich nie widzi.',
     'rz.m.oprocentowanie': 'Oprocentowanie',
     'rz.m.regularne': 'Regularne wpłaty',

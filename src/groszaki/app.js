@@ -312,6 +312,7 @@ function openParent() {
   pz.open = true;
   pz.view = 'home';
   pz.kidBalances = null;
+  renderSideAd();
   $('parentDialog').showModal();
   renderParent();
   if (mode === 'parent' && family.kids.length > 1) loadKidBalances();
@@ -435,17 +436,37 @@ function viewHome() {
 }
 
 // Polecane produkty (linki partnerskie) – tylko w strefie rodzica, zawsze oznaczone jako reklama.
-// Lista w window.GROSZAKI_CONFIG.polecane; pozycja bez adresu https:// się nie pokazuje.
+// Lista w window.GROSZAKI_CONFIG.polecane; pozycja bez adresu https:// się nie pokazuje,
+// a pozycja z waznyDo (RRRR-MM-DD) znika po tym dniu – baner nie obiecuje skończonej promocji.
+// Banery: pion (160×600) stoi obok strefy rodzica na szerokim ekranie, poziom (300×250) –
+// na dole ekranu głównego na telefonie. Bez banerów zostaje zwykły link tekstowy.
 const OFFERS = (Array.isArray(cfg.polecane) ? cfg.polecane : [])
   .filter((o) => o && o.nazwa && /^https:\/\//.test(o.url || ''));
+const activeOffers = () => OFFERS.filter((o) => !o.waznyDo || todayIso() <= o.waznyDo);
+const offerLink = (o, inner, cls = '') =>
+  `<a class="${cls}" href="${esc(o.url)}" target="_blank" rel="sponsored noopener noreferrer">${inner}</a>`;
+const bannerImg = (o, src, w, h) =>
+  `<img src="${esc(src)}" width="${w}" height="${h}" alt="${esc(o.alt || o.nazwa)}" loading="lazy" decoding="async">`;
 
 function viewOffers() {
-  if (!OFFERS.length) return '';
-  return `<h4 class="lbl">${esc(t('rz.polecane'))}</h4>
-    <div class="menu offers">${OFFERS.map((o) => `<a class="menu-row" href="${esc(o.url)}" target="_blank" rel="sponsored noopener noreferrer">
-      <span><b>${esc(o.nazwa)}</b>${o.opis ? `<small>${esc(o.opis)}</small>` : ''}</span>
-      <span class="chev" aria-hidden="true">↗</span></a>`).join('')}</div>
-    <p class="note offers-note">${esc(t('rz.polecaneInfo'))}</p>`;
+  const list = activeOffers();
+  if (!list.length) return '';
+  return `<h4 class="lbl ad-inline">${esc(t('rz.polecane'))}</h4>
+    <div class="ad-inline">${list.map((o) => o.banery?.poziom
+      ? offerLink(o, bannerImg(o, o.banery.poziom, 300, 250), 'ad-banner')
+      : `<div class="menu">${offerLink(o, `<span><b>${esc(o.nazwa)}</b>${o.opis ? `<small>${esc(o.opis)}</small>` : ''}</span>
+          <span class="chev" aria-hidden="true">↗</span>`, 'menu-row')}</div>`).join('')}</div>
+    <p class="note offers-note ad-inline">${esc(t('rz.polecaneInfo'))}</p>`;
+}
+
+/** Pionowy baner obok strefy rodzica (widoczny tylko na szerokim ekranie – CSS). */
+function renderSideAd() {
+  const o = activeOffers().find((x) => x.banery?.pion);
+  const side = $('pside');
+  $('parentDialog').classList.toggle('has-side', !!o);
+  side.innerHTML = o ? `<div class="pside-in"><div class="lbl">${esc(t('rz.reklama'))}</div>
+    ${offerLink(o, bannerImg(o, o.banery.pion, 160, 600), 'ad-banner')}
+    <p class="note">${esc(t('rz.polecaneKrotko'))}</p></div>` : '';
 }
 
 function viewMoney() {
