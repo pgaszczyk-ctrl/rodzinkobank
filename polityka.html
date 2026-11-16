@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Polityka prywatności – Groszaki</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg: #fbf3e4; --card: #fffaf0; --ink: #4a2c1a; --line: #ead9bb; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 500 16px/1.6 Nunito, system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1, h2 { font-family: "Baloo 2", system-ui, sans-serif; line-height: 1.15; }
+  h1 { font-size: 34px; margin: 10px 0 4px; }
+  h2 { font-size: 22px; margin: 34px 0 6px; }
+  a { color: inherit; font-weight: 800; }
+  .meta { opacity: .7; margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 6px; border-top: 1px solid var(--line); }
+  th { font-weight: 800; }
+  .wrap { overflow-x: auto; }
+  .btn { display: inline-block; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font: 800 15px Nunito, system-ui, sans-serif; padding: 11px 18px; cursor: pointer; }
+  .btn.light { background: none; color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+  .back { display: inline-block; margin-bottom: 6px; }
+  /* okienko zgody – te same zasady co w aplikacji */
+  #consent { position: fixed; inset: auto 0 0 0; z-index: 60; display: flex; justify-content: center; padding: 0 10px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
+  .consent-box { pointer-events: auto; width: min(560px, 100%); max-height: 85dvh; overflow-y: auto; background: var(--card); border-radius: 20px; padding: 16px 18px; box-shadow: 0 10px 40px rgba(0,0,0,.3); border: 1px solid var(--line); }
+  .consent-box h3 { margin: 0 0 6px; font-size: 18px; }
+  .consent-box p { margin: 0; font-size: 14px; }
+  .consent-details { display: grid; gap: 10px; margin-top: 12px; }
+  .consent-details label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+  .consent-details input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+  .consent-details span { display: grid; }
+  .consent-details small { opacity: .7; font-size: 13px; }
+  .consent-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .consent-actions .btn.light { grid-column: 1 / -1; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">‹ Wróć do Groszaków</a>
+  <h1>Polityka prywatności i cookies</h1>
+  <p class="meta">Obowiązuje od 16 listopada 2026 r.</p>
+
+  <div class="card">
+    <p><b>W skrócie.</b> Groszaki to ewidencja rodzinnego kieszonkowego. Nie obsługują prawdziwych pieniędzy.
+    Przechowujemy tylko to, co jest potrzebne do działania konta rodzica i skarbców dzieci.
+    Statystyki odwiedzin i reklamy partnerskie włączamy wyłącznie za zgodą rodzica,
+    a na ekranie dziecka nie działają nigdy.</p>
+    <p><button type="button" class="btn" id="zmienZgody">Zmień ustawienia cookies</button></p>
+  </div>
+
+  <h2>1. Administrator danych</h2>
+  <p>Administratorem danych osobowych jest <b id="admNazwa">[[ADMINISTRATOR – imię i nazwisko albo nazwa firmy, adres]]</b>.
+  Kontakt w sprawach danych osobowych: <b id="admKontakt">[[ADRES E-MAIL DO KONTAKTU]]</b>.</p>
+
+  <h2>2. Jakie dane przetwarzamy i po co</h2>
+  <div class="wrap"><table>
+    <tr><th>Dane</th><th>Cel</th><th>Podstawa (RODO)</th></tr>
+    <tr><td>Konto rodzica: adres e-mail, hasło (przechowywane w postaci skrótu), data założenia</td>
+      <td>Logowanie, odzyskiwanie hasła, łączenie rodziców w rodzinę</td><td>art. 6 ust. 1 lit. b – umowa o korzystanie z serwisu</td></tr>
+    <tr><td>Dane wpisane przez rodzica: imię dziecka, wpłaty, wypłaty, cele, kalendarz, oprocentowanie</td>
+      <td>Prowadzenie skarbca i naliczanie odsetek w aplikacji</td><td>art. 6 ust. 1 lit. b – umowa</td></tr>
+    <tr><td>Link dziecka (losowy identyfikator)</td><td>Podgląd skarbca przez dziecko bez zakładania konta</td><td>art. 6 ust. 1 lit. b – umowa</td></tr>
+    <tr><td>Adres IP i dane techniczne przeglądarki</td><td>Dostarczenie strony, bezpieczeństwo, ochrona przed nadużyciami</td><td>art. 6 ust. 1 lit. f – prawnie uzasadniony interes</td></tr>
+    <tr><td>Statystyki korzystania (np. które ekrany są otwierane)</td><td>Ulepszanie aplikacji</td><td>art. 6 ust. 1 lit. a – zgoda</td></tr>
+    <tr><td>Wyświetlenia i kliknięcia banerów partnerów</td><td>Rozliczanie reklam partnerskich w strefie rodzica</td><td>art. 6 ust. 1 lit. a – zgoda</td></tr>
+  </table></div>
+  <p>W trybie próbnym wszystkie dane zostają tylko w Twojej przeglądarce i nie trafiają na nasze serwery.
+  Do statystyk nie wysyłamy kwot, imion ani adresów e-mail.</p>
+
+  <h2>3. Dzieci</h2>
+  <p>Konto zakłada i prowadzi rodzic. Dziecko ogląda swój skarbiec przez link od rodzica i nie podaje nam żadnych danych.
+  Na ekranie dziecka nie ładujemy statystyk ani reklam i nie pytamy dziecka o zgodę.</p>
+
+  <h2>4. Komu przekazujemy dane</h2>
+  <ul>
+    <li><b>Supabase Inc.</b> – baza danych i logowanie (podmiot przetwarzający na nasze zlecenie).</li>
+    <li><b>GitHub Inc.</b> (GitHub Pages) – hosting strony; widzi adres IP przy pobieraniu strony.</li>
+    <li><b>Dostawcy bibliotek i czcionek</b> – Google Fonts, jsDelivr, cdnjs (Cloudflare), Tailwind CSS;
+      przeglądarka pobiera od nich pliki, więc widzą adres IP.</li>
+    <li><b>Dostawca wysyłki e-maili</b> – maile z potwierdzeniem konta i resetem hasła.</li>
+    <li><b>Google Ireland Ltd.</b> (Google Analytics) – tylko po zgodzie na cookies analityczne.
+      Wyłączyliśmy sygnały reklamowe Google i personalizację reklam.</li>
+    <li><b>Operator systemu partnerskiego comperialead.pl</b> i reklamodawcy, których banery wyświetla –
+      tylko po zgodzie na cookies marketingowe i tylko w strefie rodzica.</li>
+  </ul>
+  <p>Część tych firm ma siedzibę lub serwery w USA. Przekazanie odbywa się na podstawie decyzji Komisji Europejskiej
+  w sprawie EU-US Data Privacy Framework albo standardowych klauzul umownych.</p>
+
+  <h2>5. Jak długo</h2>
+  <p>Dane konta i skarbców – do usunięcia konta przez rodzica. Dane techniczne serwerów – zgodnie z zasadami dostawców,
+  zwykle do kilkudziesięciu dni. Statystyki Google Analytics – 14 miesięcy. Dane w Twojej przeglądarce – do czasu,
+  aż je usuniesz.</p>
+
+  <h2>6. Twoje prawa</h2>
+  <p>Masz prawo do dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przeniesienia,
+  sprzeciwu oraz do wycofania zgody w dowolnym momencie (bez wpływu na wcześniejsze przetwarzanie).
+  Napisz na adres z punktu 1. Możesz też złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych (uodo.gov.pl).</p>
+
+  <h2>7. Cookies i dane w przeglądarce</h2>
+  <div class="wrap"><table>
+    <tr><th>Nazwa</th><th>Kategoria</th><th>Do czego</th><th>Jak długo</th></tr>
+    <tr><td>sb-…-auth-token (localStorage)</td><td>Niezbędne</td><td>Sesja zalogowanego rodzica</td><td>Do wylogowania</td></tr>
+    <tr><td>gr.kidToken, gr.kidId, gr.mode</td><td>Niezbędne</td><td>Link dziecka, wybrane dziecko, tryb próbny</td><td>Do usunięcia</td></tr>
+    <tr><td>groszaki.v1</td><td>Niezbędne</td><td>Dane trybu próbnego</td><td>Do usunięcia</td></tr>
+    <tr><td>gr.zgody</td><td>Niezbędne</td><td>Zapamiętanie Twojego wyboru zgód</td><td>Do zmiany lub usunięcia</td></tr>
+    <tr><td>_ga, _ga_…</td><td>Analityczne</td><td>Google Analytics – rozróżnianie odwiedzin</td><td>do 2 lat</td></tr>
+    <tr><td>Cookies systemu comperialead.pl i reklamodawców</td><td>Marketingowe</td><td>Wyświetlanie banerów, przypisanie kliknięcia i wniosku do partnera</td><td>Zgodnie z zasadami tych firm</td></tr>
+  </table></div>
+  <p>Zgodę zmienisz przyciskiem „Zmień ustawienia cookies” na tej stronie albo „Ustawienia cookies” na dole aplikacji.
+  Możesz też usunąć dane strony w ustawieniach przeglądarki.</p>
+
+  <h2>8. Zmiany</h2>
+  <p>O istotnych zmianach tej polityki poinformujemy w aplikacji. Aktualna wersja jest zawsze pod tym adresem.</p>
+</main>
+<script type="module">
+  import { openConsent } from './src/groszaki/zgody.js';
+  document.getElementById('zmienZgody').addEventListener('click', () => openConsent(true));
+</script>
+</body>
+</html>

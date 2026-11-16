@@ -51,6 +51,21 @@
   .map-wrap canvas { display: block; width: 100%; height: 100%; }
   h2.sec { font: 800 20px/1.2 "Baloo 2", system-ui, sans-serif; margin: 22px 0 8px; }
   footer { text-align: center; font-size: 12px; opacity: .55; margin-top: 30px; }
+  footer .legal { display: flex; gap: 14px; justify-content: center; margin-top: 4px; }
+  footer .legal a, footer .legal .link { color: inherit; font-weight: 700; padding: 6px 0; font-size: 12px; }
+  /* okienko zgody na cookies */
+  #consent { position: fixed; inset: auto 0 0 0; z-index: 60; display: flex; justify-content: center; padding: 0 10px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
+  .consent-box { pointer-events: auto; width: min(560px, 100%); max-height: 85dvh; overflow-y: auto; background: var(--card); color: var(--ink); border-radius: 20px; padding: 16px 18px; box-shadow: 0 10px 40px rgba(0,0,0,.3); border: 1px solid var(--line); }
+  .consent-box h3 { margin: 0 0 6px; font-size: 18px; }
+  .consent-box p { margin: 0; font-size: 14px; }
+  .consent-box a { color: inherit; font-weight: 800; }
+  .consent-details { display: grid; gap: 10px; margin-top: 12px; }
+  .consent-details label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+  .consent-details input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+  .consent-details span { display: grid; }
+  .consent-details small { opacity: .7; font-size: 13px; }
+  .consent-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .consent-actions .btn.light { grid-column: 1 / -1; }
 
   /* okna */
   dialog { border: 0; padding: 0; border-radius: 20px; background: var(--card); color: var(--ink); max-width: min(560px, calc(100vw - 24px)); width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
@@ -203,7 +218,9 @@
   <h2 class="sec" id="roadTitle" data-t="droga.tytul"></h2>
   <div id="road"></div>
 
-  <footer data-t="app.tytul"></footer>
+  <footer><span data-t="app.tytul"></span>
+    <span class="legal"><a href="./polityka.html" data-t="zg.polityka"></a><button type="button" class="link" id="cookieBtn" data-t="zg.zmien" hidden></button></span>
+  </footer>
 </main>
 
 <!-- Ekran powitalny -->
@@ -303,6 +320,9 @@
     supabaseKey: 'sb_publishable_1PE_924lLY417qyhUExM3w_NJAzfloC',
     // Reklamy w strefie rodzica: kody banerów z panelu partnerskiego (comperialead.pl).
     // etykieta trafia do statystyk zamiast $_ETYKIETA_; r= i d= dokleja aplikacja.
+    // Google Analytics 4: identyfikator pomiaru (G-XXXXXXX). Pusty = brak analityki.
+    // Ładuje się tylko po zgodzie na cookies analityczne i nigdy na ekranie dziecka.
+    analityka: { ga4: '' },
     reklamy: {
       etykieta: 'Groszaki',
       pion: { id: 'ads_1471677', src: 'https://www.comperialead.pl/getbanner.php?b=c19cabe3ee6669ce3c&c=js&p=371706&ref=1fn7Ga' },

@@ -11,6 +11,7 @@ import {
 } from './finanse.js';
 import { dayOf, dateOfDay, dayStart } from './czas.js';
 import { t, TEKSTY } from './teksty.js';
+import { askIfNeeded, allows, onConsent, openConsent, startAnalytics, track } from './zgody.js';
 
 const cfg = window.GROSZAKI_CONFIG || {};
 const cloudReady = !!(window.supabase && cfg.supabaseKey);
@@ -315,11 +316,13 @@ function openParent() {
   $('parentDialog').showModal();
   renderParent();
   setupAds();
+  track('strefa_rodzica', { tryb: mode });
   if (mode === 'parent' && family.kids.length > 1) loadKidBalances();
 }
 
 function goParent(view) {
   pz.view = view;
+  track('strefa_rodzica_widok', { widok: view });
   if (view === 'adjustment') pz.sign = 1;
   renderParent();
   $('parentDialog').scrollTop = 0;
@@ -466,6 +469,7 @@ function loadAd(kind) {
 
 /** Wstawia stałe miejsca na banery (raz) i ładuje ten, który pasuje do szerokości ekranu. */
 function setupAds() {
+  if (mode === 'kid' || !allows('marketing')) return;
   const dlg = $('parentDialog');
   if (!dlg.dataset.ads) {
     dlg.dataset.ads = '1';
@@ -925,5 +929,21 @@ async function boot() {
   if (lsGet('gr.mode') === 'local' || lsGet('rb.mode') === 'local') { await enterLocal(); return; }
   showWelcome();
 }
-boot().catch((e) => { console.error(e); showWelcome(friendly(e)); });
+boot().catch((e) => { console.error(e); showWelcome(friendly(e)); }).finally(startPrivacy);
+
+// ---------------------------------------------------------------- zgody, analityka
+// Ekran dziecka nie pyta o zgodę i niczego nie śledzi – zgodę daje rodzic na swoim ekranie.
+function startPrivacy() {
+  const legal = $('cookieBtn');
+  legal.hidden = mode === 'kid';
+  legal.addEventListener('click', () => openConsent(true));
+  if (mode === 'kid') return;
+  startAnalytics(cfg.analityka?.ga4);
+  askIfNeeded();
+  onConsent(() => {
+    if (mode === 'kid') return;
+    startAnalytics(cfg.analityka?.ga4);
+    if (pz.open) setupAds();
+  });
+}
 window.groszaki = { get store() { return store; }, get town() { return town; }, TEKSTY };
