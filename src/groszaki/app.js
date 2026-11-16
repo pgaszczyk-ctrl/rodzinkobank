@@ -312,9 +312,9 @@ function openParent() {
   pz.open = true;
   pz.view = 'home';
   pz.kidBalances = null;
-  renderSideAd();
   $('parentDialog').showModal();
   renderParent();
+  setupAds();
   if (mode === 'parent' && family.kids.length > 1) loadKidBalances();
 }
 
@@ -350,6 +350,7 @@ function renderParent() {
   $('parentBack').hidden = v === 'home';
   const sec = $('psec');
   const perKid = ['oprocentowanie', 'regularne', 'kalendarz'].includes(v) && mode === 'parent' && family.kids.length > 1;
+  $('parentDialog').dataset.view = v;
   sec.innerHTML = (perKid ? `<p class="note" style="margin:0 0 4px">${esc(t('rz.dotyczy', { imie: S().kid.name }))}</p>` : '') + VIEWS[v]();
   bindParent(sec);
 }
@@ -425,7 +426,6 @@ function viewHome() {
     <div class="menu">${SETTINGS.map((k) => `<button class="menu-row" data-go="${k}">
       <span><b>${esc(t(k === 'rodzina' && mode !== 'parent' ? 'rz.m.konto' : 'rz.m.' + k))}</b><small>${esc(menuHint(k))}</small></span>
       <span class="chev" aria-hidden="true">›</span></button>`).join('')}</div>
-    ${viewOffers()}
     <div class="row foot">
       ${mode === 'parent' ? `<button class="btn light small" data-act="addKid">${esc(t('rz.dodajDziecko'))}</button>` : ''}
       <button class="btn light small" data-act="rename">${esc(t('rz.zmienImie'))}</button>
@@ -435,38 +435,49 @@ function viewHome() {
       <button class="btn light small" data-act="logout">${esc(t('rd.wyloguj'))}</button></div>` : ''}`;
 }
 
-// Polecane produkty (linki partnerskie) – tylko w strefie rodzica, zawsze oznaczone jako reklama.
-// Lista w window.GROSZAKI_CONFIG.polecane; pozycja bez adresu https:// się nie pokazuje,
-// a pozycja z waznyDo (RRRR-MM-DD) znika po tym dniu – baner nie obiecuje skończonej promocji.
-// Banery: pion (160×600) stoi obok strefy rodzica na szerokim ekranie, poziom (300×250) –
-// na dole ekranu głównego na telefonie. Bez banerów zostaje zwykły link tekstowy.
-const OFFERS = (Array.isArray(cfg.polecane) ? cfg.polecane : [])
-  .filter((o) => o && o.nazwa && /^https:\/\//.test(o.url || ''));
-const activeOffers = () => OFFERS.filter((o) => !o.waznyDo || todayIso() <= o.waznyDo);
-const offerLink = (o, inner, cls = '') =>
-  `<a class="${cls}" href="${esc(o.url)}" target="_blank" rel="sponsored noopener noreferrer">${inner}</a>`;
-const bannerImg = (o, src, w, h) =>
-  `<img src="${esc(src)}" width="${w}" height="${h}" alt="${esc(o.alt || o.nazwa)}" loading="lazy" decoding="async">`;
+// Reklamy (kody banerów sieci partnerskiej) – tylko w strefie rodzica, zawsze z podpisem „Reklama”.
+// Konfiguracja: window.GROSZAKI_CONFIG.reklamy = { etykieta, pion: {id, src}, poziom: {id, src} }.
+// Skrypt sieci wpisuje baner do elementu o podanym id. Ładujemy go dopiero po otwarciu strefy rodzica
+// i tylko w wersji, która jest widoczna (pion na komputerze, poziom na telefonie), żeby nie liczyć
+// wyświetleń banera, którego nikt nie widzi. Dziecko nigdy nie ładuje tych skryptów.
+const ADS = cfg.reklamy || {};
+const WIDE = window.matchMedia('(min-width: 900px)');
+const adLoaded = new Set();
 
-function viewOffers() {
-  const list = activeOffers();
-  if (!list.length) return '';
-  return `<h4 class="lbl ad-inline">${esc(t('rz.polecane'))}</h4>
-    <div class="ad-inline">${list.map((o) => o.banery?.poziom
-      ? offerLink(o, bannerImg(o, o.banery.poziom, 300, 250), 'ad-banner')
-      : `<div class="menu">${offerLink(o, `<span><b>${esc(o.nazwa)}</b>${o.opis ? `<small>${esc(o.opis)}</small>` : ''}</span>
-          <span class="chev" aria-hidden="true">↗</span>`, 'menu-row')}</div>`).join('')}</div>
-    <p class="note offers-note ad-inline">${esc(t('rz.polecaneInfo'))}</p>`;
+function adSlot(kind) {
+  const ad = ADS[kind];
+  if (!ad || !/^ads_\d+$/.test(ad.id || '') || !/^https:\/\/www\.comperialead\.pl\//.test(ad.src || '')) return null;
+  return ad;
 }
 
-/** Pionowy baner obok strefy rodzica (widoczny tylko na szerokim ekranie – CSS). */
-function renderSideAd() {
-  const o = activeOffers().find((x) => x.banery?.pion);
-  const side = $('pside');
-  $('parentDialog').classList.toggle('has-side', !!o);
-  side.innerHTML = o ? `<div class="pside-in"><div class="lbl">${esc(t('rz.reklama'))}</div>
-    ${offerLink(o, bannerImg(o, o.banery.pion, 160, 600), 'ad-banner')}
-    <p class="note">${esc(t('rz.polecaneKrotko'))}</p></div>` : '';
+function loadAd(kind) {
+  const ad = adSlot(kind);
+  if (!ad || adLoaded.has(kind)) return;
+  adLoaded.add(kind);
+  const url = new URL(ad.src);
+  url.searchParams.set('label', ADS.etykieta || 'Groszaki');
+  url.searchParams.set('r', window.location.hostname);
+  url.searchParams.set('d', ad.id.slice(4));
+  const s = document.createElement('script');
+  s.src = url.href;
+  s.async = true;
+  document.getElementById(ad.id).appendChild(s);
+}
+
+/** Wstawia stałe miejsca na banery (raz) i ładuje ten, który pasuje do szerokości ekranu. */
+function setupAds() {
+  const dlg = $('parentDialog');
+  if (!dlg.dataset.ads) {
+    dlg.dataset.ads = '1';
+    const pion = adSlot('pion'), poziom = adSlot('poziom');
+    dlg.classList.toggle('has-side', !!pion);
+    if (pion) $('pside').innerHTML = `<div class="pside-in"><div class="lbl">${esc(t('rz.reklama'))}</div>
+      <div class="ad-slot" id="${pion.id}"></div><p class="note">${esc(t('rz.reklamaInfo'))}</p></div>`;
+    if (poziom) $('pbottom').innerHTML = `<h4 class="lbl">${esc(t('rz.reklama'))}</h4>
+      <div class="ad-slot" id="${poziom.id}"></div><p class="note offers-note">${esc(t('rz.reklamaInfo'))}</p>`;
+    WIDE.addEventListener('change', () => { if (pz.open) loadAd(WIDE.matches ? 'pion' : 'poziom'); });
+  }
+  loadAd(WIDE.matches && adSlot('pion') ? 'pion' : 'poziom');
 }
 
 function viewMoney() {
