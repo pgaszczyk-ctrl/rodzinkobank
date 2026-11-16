@@ -852,6 +852,7 @@ function setAuthMode(m) {
   $('authSubmit').textContent = t(m === 'login' ? 'auth.zaloguj' : 'auth.zaloz');
   $('authPass').autocomplete = m === 'login' ? 'current-password' : 'new-password';
   $('authForgot').hidden = m !== 'login';
+  $('authTerms').hidden = m === 'login';
   authMsg('');
 }
 function authMsg(text, kind = 'err') {

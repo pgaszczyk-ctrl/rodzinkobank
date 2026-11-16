@@ -116,6 +116,7 @@ export const TEKSTY = {
     'zg.tytul': 'Cookies i prywatność',
     'zg.opis': 'Do działania Groszaków potrzebne są tylko niezbędne dane w tej przeglądarce. Za Twoją zgodą włączymy też statystyki odwiedzin (Google Analytics) i reklamy partnerskie w strefie rodzica. Zgodę możesz w każdej chwili zmienić.',
     'zg.polityka': 'Polityka prywatności',
+    'zg.regulamin': 'Regulamin',
     'zg.niezbedne': 'Niezbędne',
     'zg.niezbedneOpis': 'Logowanie, dane trybu próbnego i zapamiętanie tego wyboru. Zawsze włączone.',
     'zg.analityka': 'Analityczne',

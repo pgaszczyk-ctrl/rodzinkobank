@@ -52,6 +52,7 @@
   h2.sec { font: 800 20px/1.2 "Baloo 2", system-ui, sans-serif; margin: 22px 0 8px; }
   footer { text-align: center; font-size: 12px; opacity: .55; margin-top: 30px; }
   footer .legal { display: flex; gap: 14px; justify-content: center; margin-top: 4px; }
+  #authTerms { margin: 10px 0 0; } #authTerms a { color: inherit; font-weight: 800; }
   footer .legal a, footer .legal .link { color: inherit; font-weight: 700; padding: 6px 0; font-size: 12px; }
   /* okienko zgody na cookies */
   #consent { position: fixed; inset: auto 0 0 0; z-index: 60; display: flex; justify-content: center; padding: 0 10px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
@@ -219,7 +220,7 @@
   <div id="road"></div>
 
   <footer><span data-t="app.tytul"></span>
-    <span class="legal"><a href="./polityka.html" data-t="zg.polityka"></a><button type="button" class="link" id="cookieBtn" data-t="zg.zmien" hidden></button></span>
+    <span class="legal"><a href="./regulamin.html" data-t="zg.regulamin"></a><a href="./polityka.html" data-t="zg.polityka"></a><button type="button" class="link" id="cookieBtn" data-t="zg.zmien" hidden></button></span>
   </footer>
 </main>
 
@@ -265,6 +266,8 @@
       <button class="btn light small" id="authForgot" type="button" data-t="auth.zapomnialem"></button>
       <button class="btn light small" id="authClose" type="button" data-t="auth.zamknij"></button>
     </div>
+    <p class="note" id="authTerms" hidden>Zakładając konto, akceptujesz <a href="./regulamin.html" target="_blank" rel="noopener">Regulamin</a>
+      i potwierdzasz, że znasz <a href="./polityka.html" target="_blank" rel="noopener">Politykę prywatności</a>. Konto może założyć osoba pełnoletnia.</p>
     <div class="msg" id="authMsg" hidden></div>
   </form>
 </dialog>

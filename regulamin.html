@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Regulamin – Groszaki</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg: #fbf3e4; --card: #fffaf0; --ink: #4a2c1a; --line: #ead9bb; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 500 16px/1.6 Nunito, system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1, h2 { font-family: "Baloo 2", system-ui, sans-serif; line-height: 1.15; }
+  h1 { font-size: 34px; margin: 10px 0 4px; }
+  h2 { font-size: 22px; margin: 34px 0 6px; }
+  a { color: inherit; font-weight: 800; }
+  .meta { opacity: .7; margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 6px; border-top: 1px solid var(--line); }
+  th { font-weight: 800; }
+  .wrap { overflow-x: auto; }
+  .btn { display: inline-block; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font: 800 15px Nunito, system-ui, sans-serif; padding: 11px 18px; cursor: pointer; }
+  .btn.light { background: none; color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+  .back { display: inline-block; margin-bottom: 6px; }
+  /* okienko zgody – te same zasady co w aplikacji */
+  #consent { position: fixed; inset: auto 0 0 0; z-index: 60; display: flex; justify-content: center; padding: 0 10px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
+  .consent-box { pointer-events: auto; width: min(560px, 100%); max-height: 85dvh; overflow-y: auto; background: var(--card); border-radius: 20px; padding: 16px 18px; box-shadow: 0 10px 40px rgba(0,0,0,.3); border: 1px solid var(--line); }
+  .consent-box h3 { margin: 0 0 6px; font-size: 18px; }
+  .consent-box p { margin: 0; font-size: 14px; }
+  .consent-details { display: grid; gap: 10px; margin-top: 12px; }
+  .consent-details label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+  .consent-details input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+  .consent-details span { display: grid; }
+  .consent-details small { opacity: .7; font-size: 13px; }
+  .consent-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .consent-actions .btn.light { grid-column: 1 / -1; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">‹ Wróć do Groszaków</a> · <a href="./polityka.html">Polityka prywatności</a>
+  <h1>Regulamin serwisu Groszaki</h1>
+  <p class="meta">Obowiązuje od 16 listopada 2026 r.</p>
+
+  <div class="card">
+    <p><b>W skrócie.</b> Groszaki to bezpłatna aplikacja do prowadzenia rodzinnej ewidencji kieszonkowego.
+    Nie jest bankiem i nie przechowuje prawdziwych pieniędzy: saldo, odsetki i cele to zapisy, które prowadzi rodzic.
+    Konto zakłada osoba pełnoletnia. Konto można w każdej chwili usunąć.</p>
+  </div>
+
+  <h2>§ 1. Kto prowadzi serwis</h2>
+  <ol>
+    <li>Serwis Groszaki dostępny pod adresem groszaki.pl (dalej „Serwis”) prowadzi <b>Paweł Gąszczyk</b>
+      pod marką Magicownia.pl (dalej „Usługodawca”).</li>
+    <li>Kontakt: <a href="mailto:magicownia@gmail.com">magicownia@gmail.com</a>.</li>
+    <li>Regulamin jest regulaminem w rozumieniu art. 8 ustawy z dnia 18 lipca 2002 r. o świadczeniu usług
+      drogą elektroniczną.</li>
+  </ol>
+
+  <h2>§ 2. Pojęcia</h2>
+  <ol>
+    <li><b>Rodzic</b> – pełnoletnia osoba, która założyła konto w Serwisie albo dołączyła do rodziny kodem rodziny.</li>
+    <li><b>Dziecko</b> – osoba, dla której Rodzic prowadzi skarbiec; korzysta z Serwisu przez link lub kod QR od Rodzica, bez konta.</li>
+    <li><b>Skarbiec</b> – prowadzona przez Rodzica ewidencja wpłat, wypłat, odsetek i celów jednego Dziecka.</li>
+    <li><b>Tryb próbny</b> – korzystanie z Serwisu bez konta; dane zostają wyłącznie w przeglądarce użytkownika.</li>
+  </ol>
+
+  <h2>§ 3. Co oferuje Serwis</h2>
+  <ol>
+    <li>Usługodawca udostępnia bezpłatnie: prowadzenie Skarbców, naliczanie odsetek według stawek ustalonych przez Rodzica,
+      cele oszczędnościowe z prognozą, kalendarz, podgląd Skarbca dla Dziecka oraz wspólne prowadzenie Skarbców przez dwóch Rodziców.</li>
+    <li><b>Serwis nie jest bankiem ani instytucją płatniczą</b>, nie przyjmuje, nie przechowuje i nie przekazuje pieniędzy.
+      Kwoty w Serwisie są wyłącznie zapisami Rodzica. Odsetki nalicza aplikacja według zasad ustalonych przez Rodzica;
+      Usługodawca ich nie wypłaca. To, czy i jak Rodzic rozlicza zapisy z Dzieckiem, zależy wyłącznie od Rodzica.</li>
+    <li>Serwis ma charakter edukacyjny i nie stanowi doradztwa finansowego ani inwestycyjnego.</li>
+    <li>W strefie Rodzica, za jego zgodą wyrażoną w ustawieniach cookies, mogą być wyświetlane reklamy partnerów
+      (np. produktów bankowych). Reklamy są oznaczone, a umowę z reklamodawcą zawiera się bezpośrednio z nim,
+      na jego warunkach. Usługodawca może otrzymać od partnera prowizję. Na ekranie Dziecka reklamy nie są wyświetlane.</li>
+  </ol>
+
+  <h2>§ 4. Wymagania techniczne</h2>
+  <p>Do korzystania z Serwisu potrzebne są: urządzenie z dostępem do internetu, aktualna przeglądarka
+  (Chrome, Safari, Firefox lub Edge) z włączoną obsługą JavaScript i pamięci przeglądarki oraz, w przypadku konta,
+  adres e-mail. Tryb próbny wymaga, by przeglądarka nie usuwała danych strony.</p>
+
+  <h2>§ 5. Konto i umowa</h2>
+  <ol>
+    <li>Umowa o korzystanie z Serwisu zostaje zawarta z chwilą założenia konta (podania adresu e-mail i hasła oraz
+      potwierdzenia adresu). Umowa jest zawierana na czas nieokreślony i jest nieodpłatna.</li>
+    <li>Konto może założyć wyłącznie osoba pełnoletnia. Rodzic odpowiada za to, aby wprowadzać dane Dziecka tylko
+      w zakresie potrzebnym do prowadzenia Skarbca (wystarczy imię lub pseudonim).</li>
+    <li>Rodzic dba o poufność hasła oraz linku i kodu QR Dziecka. Każdy, kto ma link Dziecka, może oglądać jego Skarbiec
+      i zmieniać jego cele; link można w każdej chwili wymienić w strefie Rodzica.</li>
+    <li>Rodzic może w każdej chwili, bez podania przyczyny, rozwiązać umowę, wysyłając prośbę o usunięcie konta na adres
+      z § 1. Konto i dane Skarbców usuwamy niezwłocznie, nie później niż w ciągu 14 dni.</li>
+    <li>Rodzic będący konsumentem może odstąpić od umowy w ciągu 14 dni od jej zawarcia bez podania przyczyny,
+      wysyłając oświadczenie na adres z § 1. Ponieważ Serwis jest bezpłatny, odstąpienie nie wiąże się z żadnymi kosztami.</li>
+    <li>Usługodawca może rozwiązać umowę z zachowaniem 30-dniowego wypowiedzenia, informując Rodzica e-mailem,
+      a bez wypowiedzenia – gdy Rodzic rażąco narusza Regulamin (np. narusza bezpieczeństwo Serwisu).
+      Przed rozwiązaniem umowy Rodzic może poprosić o kopię swoich danych.</li>
+  </ol>
+
+  <h2>§ 6. Zasady korzystania</h2>
+  <ol>
+    <li>Zabronione jest dostarczanie treści o charakterze bezprawnym, w tym obraźliwych, naruszających prawa innych osób
+      lub dobra osobiste, a także wpisywanie w polach tekstowych danych osób trzecich, które nie są potrzebne do prowadzenia Skarbca.</li>
+    <li>Zabronione jest działanie zakłócające pracę Serwisu, w tym zautomatyzowane zasypywanie go zapytaniami
+      oraz próby dostępu do cudzych danych.</li>
+  </ol>
+
+  <h2>§ 7. Dostępność i odpowiedzialność</h2>
+  <ol>
+    <li>Usługodawca dokłada starań, by Serwis działał bez przerw i błędów, ale nie gwarantuje ciągłej dostępności.
+      Przerwy techniczne mogą wynikać z prac konserwacyjnych lub awarii dostawców.</li>
+    <li>Wyliczenia w Serwisie (odsetki, prognozy celów) mają charakter poglądowy. Usługodawca nie odpowiada za decyzje
+      podjęte na ich podstawie ani za rozliczenia między Rodzicem a Dzieckiem.</li>
+    <li>Dane w Trybie próbnym są przechowywane tylko w przeglądarce; ich utrata (np. po wyczyszczeniu przeglądarki)
+      nie może zostać przez Usługodawcę cofnięta.</li>
+    <li>Postanowienia tego paragrafu nie ograniczają odpowiedzialności Usługodawcy wobec konsumentów w zakresie,
+      w jakim nie pozwalają na to przepisy prawa.</li>
+  </ol>
+
+  <h2>§ 8. Reklamacje</h2>
+  <ol>
+    <li>Reklamacje dotyczące działania Serwisu można zgłaszać na adres z § 1, opisując problem i podając adres e-mail konta.</li>
+    <li>Usługodawca odpowiada na reklamację w ciągu 14 dni od jej otrzymania, e-mailem.</li>
+    <li>Konsument może skorzystać z pozasądowych sposobów rozpatrywania sporów, m.in. pomocy miejskiego lub powiatowego
+      rzecznika konsumentów albo Wojewódzkiego Inspektoratu Inspekcji Handlowej. Szczegóły: uokik.gov.pl.</li>
+  </ol>
+
+  <h2>§ 9. Dane osobowe</h2>
+  <p>Zasady przetwarzania danych osobowych i używania cookies opisuje <a href="./polityka.html">Polityka prywatności</a>.</p>
+
+  <h2>§ 10. Zmiany Regulaminu i postanowienia końcowe</h2>
+  <ol>
+    <li>Usługodawca może zmienić Regulamin z ważnych przyczyn, w szczególności zmiany przepisów, zakresu usług
+      lub względów bezpieczeństwa. O zmianie informuje w Serwisie i e-mailem co najmniej 14 dni przed jej wejściem w życie.
+      Rodzic, który nie akceptuje zmian, może przed tym dniem rozwiązać umowę zgodnie z § 5 ust. 4.</li>
+    <li>W sprawach nieuregulowanych stosuje się prawo polskie, w szczególności Kodeks cywilny, ustawę o świadczeniu usług
+      drogą elektroniczną i ustawę o prawach konsumenta. Wybór prawa nie pozbawia konsumenta ochrony przysługującej
+      mu na podstawie przepisów kraju jego zamieszkania.</li>
+    <li>Regulamin jest dostępny bezpłatnie pod adresem groszaki.pl/regulamin.html; można go zapisać lub wydrukować.</li>
+  </ol>
+</main>
+</body>
+</html>
